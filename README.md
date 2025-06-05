@@ -1,24 +1,28 @@
 # 3D Interactive Portfolio
 
-A Three.js-powered 3D portfolio with interactive objects and optimized loading.
+A modern Three.js-powered 3D portfolio with interactive objects, glass morphism design, and engaging user experience.
 
 ## Features
 
-- **Interactive 3D Model**: Hover over objects to highlight them
-- **Click Interactions**: Click on specific objects for actions:
+- **Interactive 3D Model**: Hover and click on objects throughout the virtual room
+- **Modern Glass Morphism UI**: Beautiful popups with backdrop blur effects
+- **Engaging Loading Screen**: Animated logo and progress bar
+- **Welcome Experience**: Guided introduction to the portfolio
+- **Responsive Design**: Works on desktop and mobile devices
+- **Click Interactions**: Interactive objects reveal different content:
   - 📄 **Resume**: Opens PDF in new tab
-  - 💻 **MacBook**: Future projects showcase
-  - 📱 **Phone**: Future contact info
-  - 📓 **Notebook**: Future blog/notes
-  - 🏀 **Ball, 1, 2**: Future animations
-  - 🗺️ **Manchester, Map**: Future location info
+  - 👤 **About Objects**: Detailed about me information
+  - 💻 **Tech Objects**: Project showcase and portfolio
+  - 📱 **Contact Items**: Contact information and social links
+  - 🌍 **Location Items**: Background and origin story
+  - 📝 **Blog Items**: Link to blog and writings
 
 ## Performance Optimizations
 
-- **Draco Compression**: Model compressed from 179.61 MB to 40.63 MB (77.4% reduction)
-- **Optimized Materials**: Enhanced lighting response
-- **Throttled Mouse Events**: Smooth 60fps interactions
+- **Draco Compression**: Model optimized for web delivery
+- **Enhanced Materials**: Optimized lighting response
 - **Efficient Raycasting**: Only checks interactive objects
+- **Modern Loading Screen**: Engaging user experience
 
 ## Technologies Used
 
@@ -52,11 +56,13 @@ A Three.js-powered 3D portfolio with interactive objects and optimized loading.
 
 - **Mouse/Touch**: Rotate the camera around the model
 - **Scroll/Pinch**: Zoom in and out
-- **Resume Button**: Click to open resume in a new tab
+- **Click Objects**: Interactive elements throughout the room
+- **Hover Effects**: Visual feedback on interactive objects
 
 ## File Structure
 
-- `index.html` - Main HTML file
-- `src/main.js` - Main JavaScript application
-- `public/portfolio.glb` - 3D room model
+- `index.html` - Main HTML file with modern loading screen
+- `style.css` - Modern CSS with glass morphism and animations
+- `src/main.js` - Clean, production-ready JavaScript application
+- `public/portfolio.glb` - Optimized 3D room model
 - `public/Nazym Zhiyengaliyeva Resume.pdf` - Resume file

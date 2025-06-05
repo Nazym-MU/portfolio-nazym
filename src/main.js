@@ -36,10 +36,12 @@ class Room3DViewer {
         // Create renderer
         this.renderer = new THREE.WebGLRenderer({ 
             antialias: true,
-            alpha: true 
+            alpha: false,
+            premultipliedAlpha: false
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setClearColor(0x1a1a2e, 1.0);
         
         // Shadow and lighting settings
         this.renderer.shadowMap.enabled = true;
@@ -47,33 +49,30 @@ class Room3DViewer {
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.5;
-        
         this.renderer.useLegacyLights = false;
         this.renderer.physicallyCorrectLights = true;
 
         const container = document.getElementById('canvas-container');
-        container.appendChild(this.renderer.domElement);
+        if (container) {
+            container.appendChild(this.renderer.domElement);
+            this.renderer.domElement.style.position = 'absolute';
+            this.renderer.domElement.style.top = '0';
+            this.renderer.domElement.style.left = '0';
+            this.renderer.domElement.style.zIndex = '1';
+            this.renderer.domElement.style.display = 'block';
+        }
 
-        // Setup controls
+        // Setup controls, lighting, model, and events
         this.setupControls();
-
-        // Setup lighting
         this.setupLighting();
-
-        // Load 3D model
         this.loadModel();
-
-        // Setup event listeners
         this.setupEventListeners();
-
-        // Start render loop
         this.animate();
     }
 
     setupControls() {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         
-        // Limit vertical rotation (prevent going under the floor or too high)
         this.controls.minPolarAngle = Math.PI / 6; // 30 degrees from top
         this.controls.maxPolarAngle = Math.PI / 2.2; // Not quite 90 degrees
         
@@ -136,7 +135,7 @@ class Room3DViewer {
         rimLight.position.set(-10, 5, -10);
         this.scene.add(rimLight);
 
-        // Store lights for debugging
+        // Store lights for reference
         this.lights = {
             ambient: ambientLight,
             directional: directionalLight,
@@ -146,8 +145,6 @@ class Room3DViewer {
             hemisphere: hemisphereLight,
             rim: rimLight
         };
-
-        console.log('Lighting setup complete with enhanced illumination');
     }
 
     loadModel() {
@@ -173,7 +170,12 @@ class Room3DViewer {
                         child.receiveShadow = true;
                         
                         // Check if this mesh should have hover interactions
-                        const hoverMeshes = ['map', 'resume', 'almaty', 'aboutme', 'projects', 'macbook', 'phone', 'notebook', 'jersey'];
+                        const hoverMeshes = [
+                            'map', 'almaty', 'notebook', 'sticky_notes', 'tape',
+                            'table', 'resume', 'aboutme', 'projects', 'macbook', 
+                            'phone', 'jersey', 'about', 'project', 'laptop', 
+                            'computer', 'Object_17', 'Object_0', 'Object_22'
+                        ];
                         const isHoverMesh = hoverMeshes.some(meshName => 
                             child.name.toLowerCase().includes(meshName.toLowerCase())
                         );
@@ -217,30 +219,61 @@ class Room3DViewer {
                 // Add to scene
                 this.scene.add(this.model);
                 
-                // Hide loading
-                if (loadingElement) {
-                    loadingElement.style.display = 'none';
+                // Hide loading screen with modern animation
+                const loadingScreen = document.getElementById('loading');
+                if (loadingScreen) {
+                    loadingScreen.classList.add('fade-out');
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 500);
                 }
                 
-                console.log('3D Model loaded successfully');
+                // Show welcome popup after a brief delay
+                setTimeout(() => {
+                    this.showWelcomePopup();
+                }, 800);
+                
+                // Show interaction hints
+                setTimeout(() => {
+                    this.showInteractionHints();
+                }, 2000);
             },
             (progress) => {
-                // Show loading progress
+                // Show loading progress with modern styling
                 const percentComplete = (progress.loaded / progress.total) * 100;
-                const loadingElement = document.getElementById('loading');
+                const loadingScreen = document.getElementById('loading');
                 const loadingBar = document.getElementById('loading-bar');
+                const loadingPercentage = document.getElementById('loading-percentage');
                 
-                if (loadingElement) {
-                    loadingElement.querySelector('div').textContent = `Loading: ${Math.round(percentComplete)}%`;
-                }
                 if (loadingBar) {
                     loadingBar.style.width = `${percentComplete}%`;
                 }
+                if (loadingPercentage) {
+                    loadingPercentage.textContent = `${Math.round(percentComplete)}%`;
+                }
+                
+                // Update loading text based on progress
+                const loadingText = document.querySelector('.loading-text');
+                if (loadingText) {
+                    if (percentComplete < 30) {
+                        loadingText.textContent = 'Initializing 3D Space...';
+                    } else if (percentComplete < 60) {
+                        loadingText.textContent = 'Loading Room Objects...';
+                    } else if (percentComplete < 90) {
+                        loadingText.textContent = 'Applying Textures & Lighting...';
+                    } else {
+                        loadingText.textContent = 'Almost Ready!';
+                    }
+                }
             },
             (error) => {
-                console.error('Error loading 3D model:', error);
-                if (loadingElement) {
-                    loadingElement.textContent = 'Error loading model';
+                const loadingScreen = document.getElementById('loading');
+                if (loadingScreen) {
+                    const loadingText = loadingScreen.querySelector('.loading-text');
+                    if (loadingText) {
+                        loadingText.textContent = 'Error loading model. Please refresh.';
+                        loadingText.style.color = '#ff6b6b';
+                    }
                 }
             }
         );
@@ -312,8 +345,39 @@ class Room3DViewer {
     }
 
     onMouseClick(event) {
+        // Ignore clicks on UI elements
+        if (event.target.closest('.popup') || 
+            event.target.closest('.large-popup') ||
+            event.target.tagName === 'BUTTON') {
+            return;
+        }
+
         if (this.currentHover) {
             this.handleMeshClick(this.currentHover);
+        } else {
+            // Manual raycasting check as fallback
+            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            
+            if (this.model) {
+                const allMeshes = [];
+                this.model.traverse((child) => {
+                    if (child.isMesh) {
+                        allMeshes.push(child);
+                    }
+                });
+                
+                const intersects = this.raycaster.intersectObjects(allMeshes);
+                if (intersects.length > 0) {
+                    const clickedMesh = intersects[0].object;
+                    
+                    // Check if this mesh is interactive
+                    if (this.hoverObjects.includes(clickedMesh)) {
+                        this.handleMeshClick(clickedMesh);
+                    }
+                }
+            }
         }
     }
 
@@ -345,62 +409,417 @@ class Room3DViewer {
     handleMeshClick(mesh) {
         const meshName = mesh.name.toLowerCase();
         
-        // Handle different mesh interactions
+        // Handle different mesh interactions based on actual mesh names
         if (meshName.includes('resume')) {
-            // Open resume PDF
             window.open('/Nazym Zhiyengaliyeva Resume.pdf', '_blank');
         } else if (meshName.includes('map')) {
-            console.log('Map clicked - could show location');
-        } else if (meshName.includes('macbook') || meshName.includes('notebook')) {
-            // Could show portfolio/projects
-            console.log('Laptop clicked - could show projects');
-        } else if (meshName.includes('phone')) {
-            // Could show contact info
-            console.log('Phone clicked - could show contact info');
+            this.showMapPopup();
+        } else if (meshName.includes('almaty')) {
+            this.showAlmatyPopup();
+        } else if (meshName.includes('notebook')) {
+            this.showNotebookPopup();
+        } else if (meshName.includes('sticky_notes') || meshName.includes('tape')) {
+            this.showAboutOverlay();
+        } else if (meshName.includes('table') || meshName.includes('object_17') || meshName.includes('object_0')) {
+            this.showProjectsOverlay();
+        } else if (meshName.includes('aboutme') || meshName.includes('about')) {
+            this.showAboutOverlay();
+        } else if (meshName.includes('projects') || meshName.includes('project')) {
+            this.showProjectsOverlay();
         } else if (meshName.includes('jersey')) {
-            // Could show education info
-            console.log('Manchester clicked - could show education');
-        } else if (meshName.includes('almaty')) {
-            // Could show education info
-            console.log('Manchester clicked - could show education');
-        } else if (meshName.includes('aboutme') || meshName.includes('projects')) {
-            // Could show specific projects or achievements
-            console.log('Number clicked');
-        } else if (meshName.includes('almaty')) {
-            // Could show specific projects or achievements
-            console.log('Almaty clicked');
+            this.showJerseyPopup();
+        } else if (meshName.includes('macbook') || meshName.includes('laptop')) {
+            this.showProjectsOverlay();
+        } else if (meshName.includes('phone')) {
+            this.showPhonePopup();
         } else {
-            console.log(`Clicked on: ${mesh.name}`);
+            // Generic popup for unspecified interactive objects
+            this.createPopup('generic-popup', `
+                <h3>🎯 Interactive Object</h3>
+                <p>You clicked on: <strong>${mesh.name}</strong></p>
+                <p>This object is interactive! More content coming soon.</p>
+            `);
         }
         
-        // Add a click animation
+        // Add click animation
         this.animateClick(mesh);
+    }
+
+    // Popup methods for small informational popups
+    showMapPopup() {
+        this.createPopup('map-popup', `
+            <h3>🗺️ Travel & Adventure</h3>
+            <p>I love traveling and these are the places I've been to!</p>
+        `);
+    }
+
+    showAlmatyPopup() {
+        this.createPopup('almaty-popup', `
+            <h3>🏔️ Almaty, Kazakhstan</h3>
+            <p>I'm from Almaty, Kazakhstan, a very special city to me. Known for its beautiful mountains and rich culture!</p>
+        `);
+    }
+
+    showNotebookPopup() {
+        this.createPopup('notebook-popup', `
+            <h3>📓 My Blog</h3>
+            <p>Welcome to my digital thoughts and experiences!</p>
+            <a href="https://medium.com/@nazym" target="_blank" class="blog-btn">Visit My Medium Blog</a>
+        `);
+    }
+
+    showJerseyPopup() {
+        this.createPopup('jersey-popup', `
+            <h3>⚽ Manchester United</h3>
+            <p>Glory Glory Man United! I'm a passionate supporter of Manchester United and love everything about this incredible club.</p>
+        `);
+    }
+
+    showPhonePopup() {
+        this.createPopup('phone-popup', `
+            <h3>📱 Always Connected</h3>
+            <p>Ready to chat and collaborate! Feel free to reach out for any opportunities or just to say hello.</p>
+        `);
+    }
+
+    // Large popup methods for detailed content
+    showAboutOverlay() {
+        this.createLargePopup('about-popup', `
+            <div class="large-popup-header">
+                <h3>About Me</h3>
+                <button class="close-btn" onclick="this.closest('.large-popup').remove()">&times;</button>
+            </div>
+            <div class="large-popup-content">
+                <div class="about-content">
+                    <div class="about-text">
+                        <h3>Hi, I'm Nazym Zhiyengaliyeva!</h3>
+                        <p>I'm a passionate developer with experience in web development, 3D graphics, and user experience design. Originally from the beautiful city of Almaty, Kazakhstan, I bring a unique perspective to technology and design.</p>
+                        
+                        <h4>What I Do:</h4>
+                        <ul>
+                            <li>Frontend Development with React, Vue.js, and vanilla JavaScript</li>
+                            <li>3D Graphics and WebGL with Three.js</li>
+                            <li>Backend Development with Node.js and Python</li>
+                            <li>UI/UX Design and User Experience</li>
+                        </ul>
+
+                        <h4>Technologies I Love:</h4>
+                        <div class="tech-stack">
+                            <span class="tech-item">JavaScript</span>
+                            <span class="tech-item">TypeScript</span>
+                            <span class="tech-item">React</span>
+                            <span class="tech-item">Vue.js</span>
+                            <span class="tech-item">Three.js</span>
+                            <span class="tech-item">Node.js</span>
+                            <span class="tech-item">Python</span>
+                            <span class="tech-item">Blender</span>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-info">
+                        <h4>Let's Connect!</h4>
+                        <div class="contact-links">
+                            <p>📧 <a href="mailto:nazym.zhiyengaliyeva@example.com">nazym.zhiyengaliyeva@example.com</a></p>
+                            <p>💼 <a href="https://linkedin.com/in/nazym-zhiyengaliyeva" target="_blank">LinkedIn Profile</a></p>
+                            <p>🐙 <a href="https://github.com/nazym-zhiyengaliyeva" target="_blank">GitHub Profile</a></p>
+                            <p>📝 <a href="https://medium.com/@nazym" target="_blank">Medium Blog</a></p>
+                            <p>📱 <a href="tel:+1234567890">+1 (234) 567-890</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+
+    showProjectsOverlay() {
+        this.createLargePopup('projects-popup', `
+            <div class="large-popup-header">
+                <h3>My Projects</h3>
+                <button class="close-btn" onclick="this.closest('.large-popup').remove()">&times;</button>
+            </div>
+            <div class="large-popup-content">
+                <div class="project-grid">
+                    <div class="project-card">
+                        <div class="project-image">
+                            <div class="placeholder-img">🌐</div>
+                        </div>
+                        <div class="project-info">
+                            <h3>3D Portfolio Website</h3>
+                            <p>An interactive 3D portfolio built with Three.js and Blender, featuring Draco compression and responsive design.</p>
+                            <div class="tech-stack">
+                                <span class="tech-tag">Three.js</span>
+                                <span class="tech-tag">Blender</span>
+                                <span class="tech-tag">JavaScript</span>
+                                <span class="tech-tag">WebGL</span>
+                            </div>
+                            <div class="project-links">
+                                <a href="#" target="_blank" class="btn-demo">Live Demo</a>
+                                <a href="#" target="_blank" class="btn-github">GitHub</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-card">
+                        <div class="project-image">
+                            <div class="placeholder-img">⚛️</div>
+                        </div>
+                        <div class="project-info">
+                            <h3>React Task Manager</h3>
+                            <p>A modern task management application with drag-and-drop functionality, built with React and styled-components.</p>
+                            <div class="tech-stack">
+                                <span class="tech-tag">React</span>
+                                <span class="tech-tag">TypeScript</span>
+                                <span class="tech-tag">Styled Components</span>
+                                <span class="tech-tag">Node.js</span>
+                            </div>
+                            <div class="project-links">
+                                <a href="#" target="_blank" class="btn-demo">Live Demo</a>
+                                <a href="#" target="_blank" class="btn-github">GitHub</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-card">
+                        <div class="project-image">
+                            <div class="placeholder-img">🎮</div>
+                        </div>
+                        <div class="project-info">
+                            <h3>WebGL Game Engine</h3>
+                            <p>A lightweight 2D game engine built from scratch using WebGL and modern JavaScript, featuring physics and particle systems.</p>
+                            <div class="tech-stack">
+                                <span class="tech-tag">WebGL</span>
+                                <span class="tech-tag">JavaScript</span>
+                                <span class="tech-tag">GLSL</span>
+                                <span class="tech-tag">Canvas</span>
+                            </div>
+                            <div class="project-links">
+                                <a href="#" target="_blank" class="btn-demo">Live Demo</a>
+                                <a href="#" target="_blank" class="btn-github">GitHub</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-card">
+                        <div class="project-image">
+                            <div class="placeholder-img">📊</div>
+                        </div>
+                        <div class="project-info">
+                            <h3>Data Visualization Dashboard</h3>
+                            <p>An interactive dashboard for data visualization using D3.js and Vue.js, with real-time updates and responsive charts.</p>
+                            <div class="tech-stack">
+                                <span class="tech-tag">Vue.js</span>
+                                <span class="tech-tag">D3.js</span>
+                                <span class="tech-tag">Python</span>
+                                <span class="tech-tag">Flask</span>
+                            </div>
+                            <div class="project-links">
+                                <a href="#" target="_blank" class="btn-demo">Live Demo</a>
+                                <a href="#" target="_blank" class="btn-github">GitHub</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+
+    // Welcome popup for first-time visitors
+    showWelcomePopup() {
+        this.createLargePopup('welcome-popup', `
+            <div class="welcome-popup-content">
+                <div class="welcome-header">
+                    <h1 class="welcome-title">🎉 Welcome to My Virtual Room!</h1>
+                    <div class="welcome-subtitle">An Interactive 3D Portfolio Experience</div>
+                </div>
+                
+                <div class="welcome-body">
+                    <p>Hello there! You've just entered my personal virtual space where creativity meets technology.</p>
+                    <p><strong>Click on objects</strong> throughout the room to learn more about me, explore my projects, and discover my journey as a developer.</p>
+                    
+                    <div class="welcome-features">
+                        <div class="welcome-feature">
+                            <span class="welcome-feature-icon">💼</span>
+                            <span class="welcome-feature-text">Explore My Projects & Code</span>
+                        </div>
+                        <div class="welcome-feature">
+                            <span class="welcome-feature-icon">👨‍💻</span>
+                            <span class="welcome-feature-text">Learn About My Skills & Experience</span>
+                        </div>
+                        <div class="welcome-feature">
+                            <span class="welcome-feature-icon">📖</span>
+                            <span class="welcome-feature-text">Read My Blog & Thoughts</span>
+                        </div>
+                        <div class="welcome-feature">
+                            <span class="welcome-feature-icon">🏔️</span>
+                            <span class="welcome-feature-text">Discover My Background & Journey</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="welcome-button" onclick="this.closest('.large-popup').remove()">
+                    Let's Gooooo! 🚀
+                </button>
+            </div>
+        `);
+    }
+
+    // Show interaction hints
+    showInteractionHints() {
+        const hints = document.createElement('div');
+        hints.className = 'interaction-hints';
+        hints.innerHTML = `
+            <div class="hint-item">
+                <span class="hint-icon">🖱️</span>
+                <span class="hint-text">Move mouse to explore</span>
+            </div>
+            <div class="hint-item">
+                <span class="hint-icon">👆</span>
+                <span class="hint-text">Click objects to interact</span>
+            </div>
+            <div class="hint-item">
+                <span class="hint-icon">🔍</span>
+                <span class="hint-text">Look for hover effects</span>
+            </div>
+        `;
+        document.body.appendChild(hints);
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+            if (hints.parentNode) {
+                hints.remove();
+            }
+        }, 10000);
+    }
+
+    // Utility methods for creating popups and large popups
+    createPopup(id, content) {
+        // Remove existing popup if any
+        const existing = document.getElementById(id);
+        if (existing) existing.remove();
+
+        const popup = document.createElement('div');
+        popup.id = id;
+        popup.className = 'popup';
+        popup.innerHTML = `
+            <div class="popup-content">
+                <button class="close-btn" onclick="this.closest('.popup').remove()">&times;</button>
+                ${content}
+            </div>
+        `;
+        
+        // Ensure popup is visible
+        popup.style.cssText = `
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 999999 !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background: rgba(15, 15, 35, 0.98) !important;
+            border: 2px solid #4a90e2 !important;
+            border-radius: 20px !important;
+            color: white !important;
+            max-width: 450px !important;
+            width: 90% !important;
+            padding: 1rem !important;
+        `;
+        
+        document.body.appendChild(popup);
+
+        // Auto-close after 8 seconds
+        setTimeout(() => {
+            if (document.getElementById(id)) {
+                popup.remove();
+            }
+        }, 8000);
+    }
+
+    createLargePopup(id, content) {
+        // Remove existing large popup if any
+        const existing = document.getElementById(id);
+        if (existing) existing.remove();
+
+        const popup = document.createElement('div');
+        popup.id = id;
+        popup.className = 'large-popup';
+        popup.innerHTML = content;
+        
+        // Ensure popup is visible
+        popup.style.cssText = `
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 999999 !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background: rgba(15, 15, 35, 0.98) !important;
+            border: 2px solid #4a90e2 !important;
+            border-radius: 24px !important;
+            color: white !important;
+            max-width: 90vw !important;
+            max-height: 85vh !important;
+            width: 850px !important;
+            padding: 2rem !important;
+        `;
+        
+        document.body.appendChild(popup);
+
+        // Add click outside to close
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) {
+                popup.remove();
+            }
+        });
+
+        // Add escape key to close
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                popup.remove();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+        
+        return popup;
     }
 
     animateClick(mesh) {
         if (!mesh.userData.isHoverable) return;
         
-        // Quick scale animation on click
-        const originalScale = mesh.scale.clone();
+        // Quick scale animation for click feedback
+        const originalScale = mesh.userData.initialScale.clone();
         const clickScale = originalScale.clone().multiplyScalar(0.9);
         
-        // Scale down
+        // Scale down quickly
         mesh.scale.copy(clickScale);
         
-        // Scale back up after a short delay
+        // Scale back to hover state after short delay
         setTimeout(() => {
-            mesh.scale.copy(originalScale);
-        }, 100);
+            if (this.currentHover === mesh) {
+                // If still hovering, return to hover scale
+                mesh.scale.copy(originalScale).multiplyScalar(1.1);
+            } else {
+                // If not hovering, return to normal scale
+                mesh.scale.copy(originalScale);
+            }
+        }, 150);
     }
 
     animate() {
         requestAnimationFrame(() => this.animate());
         
+        // Update controls
         this.controls.update();
+        
+        // Render the scene
         this.renderer.render(this.scene, this.camera);
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    new Room3DViewer();
+    window.room3D = new Room3DViewer();
 });

@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "compress-model": "node compress-model.js"
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "",
@@ -15,9 +14,5 @@
   "dependencies": {
     "three": "^0.177.0",
     "vite": "^6.3.5"
-  },
-  "devDependencies": {
-    "fs-extra": "^11.3.0",
-    "gltf-pipeline": "^4.1.0"
   }
 }
