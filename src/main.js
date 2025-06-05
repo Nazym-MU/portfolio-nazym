@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 class Room3DViewer {
@@ -9,6 +10,12 @@ class Room3DViewer {
         this.renderer = null;
         this.controls = null;
         this.model = null;
+        this.lights = {};
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+        this.hoverObjects = [];
+        this.currentHover = null;
+        
         this.init();
     }
 
@@ -24,28 +31,26 @@ class Room3DViewer {
             0.1,
             1000
         );
-        this.camera.position.set(5, 5, 5);
+        this.camera.position.set(-20, 15, 20);
 
-        // Create renderer with enhanced settings for better lighting
+        // Create renderer
         this.renderer = new THREE.WebGLRenderer({ 
             antialias: true,
             alpha: true 
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setPixelRatio(window.devicePixelRatio);
         
-        // Enhanced shadow and lighting settings
+        // Shadow and lighting settings
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.5; // Increased for brighter lighting
+        this.renderer.toneMappingExposure = 1.5;
         
-        // Enable physically correct lighting
         this.renderer.useLegacyLights = false;
         this.renderer.physicallyCorrectLights = true;
 
-        // Add renderer to DOM
         const container = document.getElementById('canvas-container');
         container.appendChild(this.renderer.domElement);
 
@@ -74,7 +79,7 @@ class Room3DViewer {
         
         // Limit horizontal rotation for a more controlled view
         this.controls.minAzimuthAngle = -Math.PI / 2; // -90 degrees
-        this.controls.maxAzimuthAngle = Math.PI / 2;  // 90 degrees
+        this.controls.maxAzimuthAngle = 0;  // 90 degrees
         
         // Zoom limits
         this.controls.minDistance = 3;
@@ -143,42 +148,21 @@ class Room3DViewer {
         };
 
         console.log('Lighting setup complete with enhanced illumination');
-
-        // Optional: Add light helpers for debugging (uncomment to see light positions)
-        // this.addLightHelpers();
-    }
-
-    addLightHelpers() {
-        // Add helpers to visualize light positions
-        if (this.lights?.directional) {
-            const directionalHelper = new THREE.DirectionalLightHelper(this.lights.directional, 2);
-            this.scene.add(directionalHelper);
-        }
-
-        if (this.lights?.point1) {
-            const pointHelper1 = new THREE.PointLightHelper(this.lights.point1, 1);
-            this.scene.add(pointHelper1);
-        }
-
-        if (this.lights?.point2) {
-            const pointHelper2 = new THREE.PointLightHelper(this.lights.point2, 1);
-            this.scene.add(pointHelper2);
-        }
-
-        if (this.lights?.point3) {
-            const pointHelper3 = new THREE.PointLightHelper(this.lights.point3, 1);
-            this.scene.add(pointHelper3);
-        }
-
-        console.log('Light helpers added for debugging');
     }
 
     loadModel() {
+        // Setup DRACO loader for compression
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+        dracoLoader.preload();
+        
         const loader = new GLTFLoader();
+        loader.setDRACOLoader(dracoLoader);
+        
         const loadingElement = document.getElementById('loading');
 
         loader.load(
-            '/model-low.glb',
+            '/portfolio.glb',
             (gltf) => {
                 this.model = gltf.scene;
                 
@@ -187,6 +171,21 @@ class Room3DViewer {
                     if (child.isMesh) {
                         child.castShadow = true;
                         child.receiveShadow = true;
+                        
+                        // Check if this mesh should have hover interactions
+                        const hoverMeshes = ['map', 'resume', 'almaty', 'aboutme', 'projects', 'macbook', 'phone', 'notebook', 'jersey'];
+                        const isHoverMesh = hoverMeshes.some(meshName => 
+                            child.name.toLowerCase().includes(meshName.toLowerCase())
+                        );
+                        
+                        if (isHoverMesh) {
+                            this.hoverObjects.push(child);
+                            // Store initial transform data for hover effects
+                            child.userData.initialScale = new THREE.Vector3().copy(child.scale);
+                            child.userData.initialPosition = new THREE.Vector3().copy(child.position);
+                            child.userData.initialRotation = new THREE.Euler().copy(child.rotation);
+                            child.userData.isHoverable = true;
+                        }
                         
                         // Enhance material appearance and lighting response
                         if (child.material) {
@@ -215,60 +214,36 @@ class Room3DViewer {
                     }
                 });
 
-                console.log('Model materials enhanced for better lighting response');
-
-                // Center and scale the model if needed
-                const box = new THREE.Box3().setFromObject(this.model);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
-                
-                // Center the model
-                this.model.position.x = -center.x;
-                this.model.position.y = -center.y;
-                this.model.position.z = -center.z;
-
-                // Scale if too big or small
-                const maxDimension = Math.max(size.x, size.y, size.z);
-                if (maxDimension > 10) {
-                    const scale = 8 / maxDimension;
-                    this.model.scale.multiplyScalar(scale);
-                }
-
+                // Add to scene
                 this.scene.add(this.model);
                 
-                // Hide loading text
-                loadingElement.style.display = 'none';
-
-                // Focus camera on the model
-                this.focusOnModel();
+                // Hide loading
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+                
+                console.log('3D Model loaded successfully');
             },
             (progress) => {
-                const percentComplete = (progress.loaded / progress.total * 100);
-                loadingElement.textContent = `Loading 3D Model... ${Math.round(percentComplete)}%`;
+                // Show loading progress
+                const percentComplete = (progress.loaded / progress.total) * 100;
+                const loadingElement = document.getElementById('loading');
+                const loadingBar = document.getElementById('loading-bar');
+                
+                if (loadingElement) {
+                    loadingElement.querySelector('div').textContent = `Loading: ${Math.round(percentComplete)}%`;
+                }
+                if (loadingBar) {
+                    loadingBar.style.width = `${percentComplete}%`;
+                }
             },
             (error) => {
-                console.error('Error loading model:', error);
-                loadingElement.textContent = 'Error loading 3D model. Please check if the file exists.';
-                loadingElement.style.color = '#ff6b6b';
+                console.error('Error loading 3D model:', error);
+                if (loadingElement) {
+                    loadingElement.textContent = 'Error loading model';
+                }
             }
         );
-    }
-
-    focusOnModel() {
-        if (this.model) {
-            const box = new THREE.Box3().setFromObject(this.model);
-            const size = box.getSize(new THREE.Vector3());
-            const maxDimension = Math.max(size.x, size.y, size.z);
-            
-            // Position camera at a good distance
-            const distance = maxDimension * 1.5;
-            this.camera.position.set(distance, distance * 0.8, distance);
-            this.camera.lookAt(0, 0, 0);
-            
-            // Update controls target
-            this.controls.target.set(0, 0, 0);
-            this.controls.update();
-        }
     }
 
     setupEventListeners() {
@@ -279,7 +254,7 @@ class Room3DViewer {
             this.renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Handle visibility change (pause when tab is hidden)
+        // Handle visibility change (pause when tab is hidden for performance)
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.controls.enabled = false;
@@ -288,65 +263,144 @@ class Room3DViewer {
             }
         });
 
-        // Lighting controls
-        this.setupLightingControls();
+        // Mouse move event for hover detection
+        window.addEventListener('mousemove', (event) => {
+            this.onMouseMove(event);
+        });
+
+        // Click events for interactions
+        window.addEventListener('click', (event) => {
+            this.onMouseClick(event);
+        });
     }
 
-    setupLightingControls() {
-        // Ambient light control
-        const ambientSlider = document.getElementById('ambient-intensity');
-        if (ambientSlider) {
-            ambientSlider.addEventListener('input', (e) => {
-                if (this.lights?.ambient) {
-                    this.lights.ambient.intensity = parseFloat(e.target.value);
-                }
-            });
-        }
+    onMouseMove(event) {
+        // Calculate mouse position in normalized device coordinates
+        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        // Directional light control
-        const directionalSlider = document.getElementById('directional-intensity');
-        if (directionalSlider) {
-            directionalSlider.addEventListener('input', (e) => {
-                if (this.lights?.directional) {
-                    this.lights.directional.intensity = parseFloat(e.target.value);
-                }
-            });
-        }
+        // Update raycaster
+        this.raycaster.setFromCamera(this.mouse, this.camera);
 
-        // Point lights control
-        const pointSlider = document.getElementById('point-intensity');
-        if (pointSlider) {
-            pointSlider.addEventListener('input', (e) => {
-                const intensity = parseFloat(e.target.value);
-                if (this.lights?.point1) this.lights.point1.intensity = intensity;
-                if (this.lights?.point2) this.lights.point2.intensity = intensity * 0.8;
-                if (this.lights?.point3) this.lights.point3.intensity = intensity * 0.7;
-            });
-        }
+        // Check for intersections with hover objects
+        const intersects = this.raycaster.intersectObjects(this.hoverObjects);
 
-        // Hemisphere light control
-        const hemisphereSlider = document.getElementById('hemisphere-intensity');
-        if (hemisphereSlider) {
-            hemisphereSlider.addEventListener('input', (e) => {
-                if (this.lights?.hemisphere) {
-                    this.lights.hemisphere.intensity = parseFloat(e.target.value);
+        if (intersects.length > 0) {
+            const hoveredObject = intersects[0].object;
+            
+            if (this.currentHover !== hoveredObject) {
+                // Reset previous hover
+                if (this.currentHover && this.currentHover.userData.isHoverable) {
+                    this.resetHover(this.currentHover);
                 }
-            });
+                
+                // Apply hover effect
+                this.currentHover = hoveredObject;
+                this.applyHoverEffect(hoveredObject);
+                
+                // Change cursor
+                document.body.style.cursor = 'pointer';
+            }
+        } else {
+            // No intersection
+            if (this.currentHover) {
+                this.resetHover(this.currentHover);
+                this.currentHover = null;
+                document.body.style.cursor = 'default';
+            }
         }
+    }
+
+    onMouseClick(event) {
+        if (this.currentHover) {
+            this.handleMeshClick(this.currentHover);
+        }
+    }
+
+    applyHoverEffect(mesh) {
+        if (!mesh.userData.isHoverable) return;
+        
+        // Scale up slightly on hover
+        const hoverScale = 1.1;
+        mesh.scale.copy(mesh.userData.initialScale).multiplyScalar(hoverScale);
+        
+        // Slight position offset for floating effect
+        mesh.position.copy(mesh.userData.initialPosition);
+        mesh.position.y += 0.05;
+        
+        // Slight rotation for dynamic effect
+        mesh.rotation.copy(mesh.userData.initialRotation);
+        mesh.rotation.y += 0.1;
+    }
+
+    resetHover(mesh) {
+        if (!mesh.userData.isHoverable) return;
+        
+        // Reset to initial values
+        mesh.scale.copy(mesh.userData.initialScale);
+        mesh.position.copy(mesh.userData.initialPosition);
+        mesh.rotation.copy(mesh.userData.initialRotation);
+    }
+
+    handleMeshClick(mesh) {
+        const meshName = mesh.name.toLowerCase();
+        
+        // Handle different mesh interactions
+        if (meshName.includes('resume')) {
+            // Open resume PDF
+            window.open('/Nazym Zhiyengaliyeva Resume.pdf', '_blank');
+        } else if (meshName.includes('map')) {
+            console.log('Map clicked - could show location');
+        } else if (meshName.includes('macbook') || meshName.includes('notebook')) {
+            // Could show portfolio/projects
+            console.log('Laptop clicked - could show projects');
+        } else if (meshName.includes('phone')) {
+            // Could show contact info
+            console.log('Phone clicked - could show contact info');
+        } else if (meshName.includes('jersey')) {
+            // Could show education info
+            console.log('Manchester clicked - could show education');
+        } else if (meshName.includes('almaty')) {
+            // Could show education info
+            console.log('Manchester clicked - could show education');
+        } else if (meshName.includes('aboutme') || meshName.includes('projects')) {
+            // Could show specific projects or achievements
+            console.log('Number clicked');
+        } else if (meshName.includes('almaty')) {
+            // Could show specific projects or achievements
+            console.log('Almaty clicked');
+        } else {
+            console.log(`Clicked on: ${mesh.name}`);
+        }
+        
+        // Add a click animation
+        this.animateClick(mesh);
+    }
+
+    animateClick(mesh) {
+        if (!mesh.userData.isHoverable) return;
+        
+        // Quick scale animation on click
+        const originalScale = mesh.scale.clone();
+        const clickScale = originalScale.clone().multiplyScalar(0.9);
+        
+        // Scale down
+        mesh.scale.copy(clickScale);
+        
+        // Scale back up after a short delay
+        setTimeout(() => {
+            mesh.scale.copy(originalScale);
+        }, 100);
     }
 
     animate() {
         requestAnimationFrame(() => this.animate());
         
-        // Update controls
         this.controls.update();
-        
-        // Render scene
         this.renderer.render(this.scene, this.camera);
     }
 }
 
-// Initialize the 3D viewer when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     new Room3DViewer();
 });

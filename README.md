@@ -1,14 +1,24 @@
-# 3D Portfolio Website
+# 3D Interactive Portfolio
 
-A Three.js-powered 3D portfolio website showcasing a room model with interactive controls.
+A Three.js-powered 3D portfolio with interactive objects and optimized loading.
 
 ## Features
 
-- 3D room model display using Three.js
-- Interactive camera controls with limited rotation and zoom
-- Resume download functionality
-- Responsive design
-- Modern lighting and shadows
+- **Interactive 3D Model**: Hover over objects to highlight them
+- **Click Interactions**: Click on specific objects for actions:
+  - 📄 **Resume**: Opens PDF in new tab
+  - 💻 **MacBook**: Future projects showcase
+  - 📱 **Phone**: Future contact info
+  - 📓 **Notebook**: Future blog/notes
+  - 🏀 **Ball, 1, 2**: Future animations
+  - 🗺️ **Manchester, Map**: Future location info
+
+## Performance Optimizations
+
+- **Draco Compression**: Model compressed from 179.61 MB to 40.63 MB (77.4% reduction)
+- **Optimized Materials**: Enhanced lighting response
+- **Throttled Mouse Events**: Smooth 60fps interactions
+- **Efficient Raycasting**: Only checks interactive objects
 
 ## Technologies Used
 
@@ -48,5 +58,5 @@ A Three.js-powered 3D portfolio website showcasing a room model with interactive
 
 - `index.html` - Main HTML file
 - `src/main.js` - Main JavaScript application
-- `public/model-low.glb` - 3D room model
+- `public/portfolio.glb` - 3D room model
 - `public/Nazym Zhiyengaliyeva Resume.pdf` - Resume file
