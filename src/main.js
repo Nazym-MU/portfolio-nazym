@@ -76,7 +76,6 @@ class Room3DViewer {
         this.controls.minPolarAngle = Math.PI / 6; // 30 degrees from top
         this.controls.maxPolarAngle = Math.PI / 2.2; // Not quite 90 degrees
         
-        // Limit horizontal rotation for a more controlled view
         this.controls.minAzimuthAngle = -Math.PI / 2; // -90 degrees
         this.controls.maxAzimuthAngle = 0;  // 90 degrees
         
@@ -126,16 +125,13 @@ class Room3DViewer {
         pointLight3.position.set(0, 8, 0);
         this.scene.add(pointLight3);
 
-        // Hemisphere light for natural outdoor lighting - Enhanced
         const hemisphereLight = new THREE.HemisphereLight(0x87ceeb, 0x362d1d, 0.8);
         this.scene.add(hemisphereLight);
 
-        // Add rim lighting for better definition
         const rimLight = new THREE.DirectionalLight(0x4a90e2, 1.0);
         rimLight.position.set(-10, 5, -10);
         this.scene.add(rimLight);
 
-        // Store lights for reference
         this.lights = {
             ambient: ambientLight,
             directional: directionalLight,
@@ -155,8 +151,7 @@ class Room3DViewer {
         
         const loader = new GLTFLoader();
         loader.setDRACOLoader(dracoLoader);
-        
-        const loadingElement = document.getElementById('loading');
+
 
         loader.load(
             '/portfolio.glb',
@@ -171,10 +166,8 @@ class Room3DViewer {
                         
                         // Check if this mesh should have hover interactions
                         const hoverMeshes = [
-                            'map', 'almaty', 'notebook', 'sticky_notes', 'tape',
-                            'table', 'resume', 'aboutme', 'projects', 'macbook', 
-                            'phone', 'jersey', 'about', 'project', 'laptop', 
-                            'computer', 'Object_17', 'Object_0', 'Object_22'
+                            'map', 'almaty', 'notebook', 'resume', 'aboutme', 'projects', 'macbook', 
+                            'Plane012_1', 'jersey', 'Plane003_1', 'ggb', 
                         ];
                         const isHoverMesh = hoverMeshes.some(meshName => 
                             child.name.toLowerCase().includes(meshName.toLowerCase())
@@ -185,7 +178,6 @@ class Room3DViewer {
                             // Store initial transform data for hover effects
                             child.userData.initialScale = new THREE.Vector3().copy(child.scale);
                             child.userData.initialPosition = new THREE.Vector3().copy(child.position);
-                            child.userData.initialRotation = new THREE.Euler().copy(child.rotation);
                             child.userData.isHoverable = true;
                         }
                         
@@ -231,17 +223,12 @@ class Room3DViewer {
                 // Show welcome popup after a brief delay
                 setTimeout(() => {
                     this.showWelcomePopup();
-                }, 800);
+                }, 0);
                 
-                // Show interaction hints
-                setTimeout(() => {
-                    this.showInteractionHints();
-                }, 2000);
             },
             (progress) => {
                 // Show loading progress with modern styling
                 const percentComplete = (progress.loaded / progress.total) * 100;
-                const loadingScreen = document.getElementById('loading');
                 const loadingBar = document.getElementById('loading-bar');
                 const loadingPercentage = document.getElementById('loading-percentage');
                 
@@ -252,30 +239,7 @@ class Room3DViewer {
                     loadingPercentage.textContent = `${Math.round(percentComplete)}%`;
                 }
                 
-                // Update loading text based on progress
-                const loadingText = document.querySelector('.loading-text');
-                if (loadingText) {
-                    if (percentComplete < 30) {
-                        loadingText.textContent = 'Initializing 3D Space...';
-                    } else if (percentComplete < 60) {
-                        loadingText.textContent = 'Loading Room Objects...';
-                    } else if (percentComplete < 90) {
-                        loadingText.textContent = 'Applying Textures & Lighting...';
-                    } else {
-                        loadingText.textContent = 'Almost Ready!';
-                    }
-                }
             },
-            (error) => {
-                const loadingScreen = document.getElementById('loading');
-                if (loadingScreen) {
-                    const loadingText = loadingScreen.querySelector('.loading-text');
-                    if (loadingText) {
-                        loadingText.textContent = 'Error loading model. Please refresh.';
-                        loadingText.style.color = '#ff6b6b';
-                    }
-                }
-            }
         );
     }
 
@@ -392,9 +356,6 @@ class Room3DViewer {
         mesh.position.copy(mesh.userData.initialPosition);
         mesh.position.y += 0.05;
         
-        // Slight rotation for dynamic effect
-        mesh.rotation.copy(mesh.userData.initialRotation);
-        mesh.rotation.y += 0.1;
     }
 
     resetHover(mesh) {
@@ -403,7 +364,6 @@ class Room3DViewer {
         // Reset to initial values
         mesh.scale.copy(mesh.userData.initialScale);
         mesh.position.copy(mesh.userData.initialPosition);
-        mesh.rotation.copy(mesh.userData.initialRotation);
     }
 
     handleMeshClick(mesh) {
@@ -418,27 +378,16 @@ class Room3DViewer {
             this.showAlmatyPopup();
         } else if (meshName.includes('notebook')) {
             this.showNotebookPopup();
-        } else if (meshName.includes('sticky_notes') || meshName.includes('tape')) {
+        } else if (meshName.includes('aboutme') || meshName.includes('ggb')) {
             this.showAboutOverlay();
-        } else if (meshName.includes('table') || meshName.includes('object_17') || meshName.includes('object_0')) {
-            this.showProjectsOverlay();
-        } else if (meshName.includes('aboutme') || meshName.includes('about')) {
-            this.showAboutOverlay();
-        } else if (meshName.includes('projects') || meshName.includes('project')) {
+        } else if (meshName.includes('projects')) {
             this.showProjectsOverlay();
         } else if (meshName.includes('jersey')) {
             this.showJerseyPopup();
-        } else if (meshName.includes('macbook') || meshName.includes('laptop')) {
+        } else if (meshName.includes('macbook') || meshName.includes('Plane003_1')) {
             this.showProjectsOverlay();
-        } else if (meshName.includes('phone')) {
+        } else if (meshName.includes('Plane012_1')) {
             this.showPhonePopup();
-        } else {
-            // Generic popup for unspecified interactive objects
-            this.createPopup('generic-popup', `
-                <h3>🎯 Interactive Object</h3>
-                <p>You clicked on: <strong>${mesh.name}</strong></p>
-                <p>This object is interactive! More content coming soon.</p>
-            `);
         }
         
         // Add click animation
@@ -628,70 +577,21 @@ class Room3DViewer {
         this.createLargePopup('welcome-popup', `
             <div class="welcome-popup-content">
                 <div class="welcome-header">
-                    <h1 class="welcome-title">🎉 Welcome to My Virtual Room!</h1>
-                    <div class="welcome-subtitle">An Interactive 3D Portfolio Experience</div>
+                    <h1 class="welcome-title">Welcome to My Virtual Room!</h1>
                 </div>
                 
                 <div class="welcome-body">
-                    <p>Hello there! You've just entered my personal virtual space where creativity meets technology.</p>
-                    <p><strong>Click on objects</strong> throughout the room to learn more about me, explore my projects, and discover my journey as a developer.</p>
-                    
-                    <div class="welcome-features">
-                        <div class="welcome-feature">
-                            <span class="welcome-feature-icon">💼</span>
-                            <span class="welcome-feature-text">Explore My Projects & Code</span>
-                        </div>
-                        <div class="welcome-feature">
-                            <span class="welcome-feature-icon">👨‍💻</span>
-                            <span class="welcome-feature-text">Learn About My Skills & Experience</span>
-                        </div>
-                        <div class="welcome-feature">
-                            <span class="welcome-feature-icon">📖</span>
-                            <span class="welcome-feature-text">Read My Blog & Thoughts</span>
-                        </div>
-                        <div class="welcome-feature">
-                            <span class="welcome-feature-icon">🏔️</span>
-                            <span class="welcome-feature-text">Discover My Background & Journey</span>
-                        </div>
-                    </div>
+                    <p>This is my virtual space. <strong>Click on objects</strong> throughout the room to learn more about me</p>
+    
                 </div>
                 
                 <button class="welcome-button" onclick="this.closest('.large-popup').remove()">
-                    Let's Gooooo! 🚀
+                    Let's gooooooo!
                 </button>
             </div>
         `);
     }
 
-    // Show interaction hints
-    showInteractionHints() {
-        const hints = document.createElement('div');
-        hints.className = 'interaction-hints';
-        hints.innerHTML = `
-            <div class="hint-item">
-                <span class="hint-icon">🖱️</span>
-                <span class="hint-text">Move mouse to explore</span>
-            </div>
-            <div class="hint-item">
-                <span class="hint-icon">👆</span>
-                <span class="hint-text">Click objects to interact</span>
-            </div>
-            <div class="hint-item">
-                <span class="hint-icon">🔍</span>
-                <span class="hint-text">Look for hover effects</span>
-            </div>
-        `;
-        document.body.appendChild(hints);
-        
-        // Auto-hide after 10 seconds
-        setTimeout(() => {
-            if (hints.parentNode) {
-                hints.remove();
-            }
-        }, 10000);
-    }
-
-    // Utility methods for creating popups and large popups
     createPopup(id, content) {
         // Remove existing popup if any
         const existing = document.getElementById(id);
