@@ -4,21 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nazym Zhiyengaliyeva - 3D Portfolio</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles.css">
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@v0.153.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@v0.153.0/examples/jsm/"
+        }
+    }
+    </script>
 </head>
 <body>
-    <div id="canvas-container">
-        <!-- Modern Loading Screen -->
-        <div class="loading-screen" id="loading">
-            <div class="loading-content">
-                <div class="loading-progress">
-                    <div class="loading-bar" id="loading-bar"></div>
-                </div>
-                <div class="loading-percentage" id="loading-percentage">0%</div>
-            </div>
-        </div>
-    </div>
-
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="./main.js"></script>
 </body>
 </html>
