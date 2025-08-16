@@ -3,13 +3,20 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+const canvas = document.querySelector("#about-me-canvas");
+const sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+};
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+let manchesterObject = null;
+
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x000000);
-renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -19,11 +26,12 @@ document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 1, 1000);
 camera.position.set(-10, 7, 20);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
+controls.dampingFactor = 0.05;
 controls.enablePan = false;
 controls.minDistance = 5;
 controls.maxDistance = 20;
@@ -57,7 +65,11 @@ spotLight.shadow.bias = -0.001
 scene.add(spotLight);
 
 // Loader
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath("public/draco/");
+
 const loader = new GLTFLoader().setPath('public/');
+loader.setDRACOLoader(dracoLoader);
 loader.load('portfolio.glb', (glb) => {
     const mesh = glb.scene;
 
@@ -66,16 +78,41 @@ loader.load('portfolio.glb', (glb) => {
             child.castShadow = true;
             child.receiveShadow = true;
         }
-    })
+
+        if (child.name.includes("manchester")) {
+            manchesterObject = child;
+        }
+    });
 
     mesh.position.set(0, 1.05, -1);
     scene.add(mesh)
 })
 
-function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-}
+// Event listeners
+window.addEventListener("resize", () => {
+    sizes.width = window.innerWidth;
+    sizes.height = window.innerHeight;
+    
+    // Update camera
+    camera.aspect = sizes.width / sizes.height
+    camera.updateProjectionMatrix();
 
-animate()
+    // Update renderer
+    renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+})
+
+const animate = () => {
+    controls.update();
+
+    // Animate manchester
+   if (manchesterObject) {
+        manchesterObject.rotation.y += 0.05
+   }
+    
+    renderer.render(scene, camera);
+
+    requestAnimationFrame(animate);
+};
+
+animate();
