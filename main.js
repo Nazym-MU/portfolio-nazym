@@ -18,11 +18,22 @@ const modals = {
     jersey: document.querySelector(".modal.jersey")
 }
 
+let touchHappened = false;
+
 document.querySelectorAll(".modal-exit-button").forEach(button => {
-    button.addEventListener("click", (e) => {
+    button.addEventListener("touchend", (e) => {
+        touchHappened = true;
+        e.preventDefault();
         const modal = e.target.closest(".modal");
         hideModal(modal);
-    })
+    }, {passive: false});
+
+    button.addEventListener("click", (e) => {
+        if (touchHappened) return;
+        e.preventDefault();
+        const modal = e.target.closest(".modal");
+        hideModal(modal);
+    }, {passive: false});
 })
 
 const showModal = (modal) => {
@@ -107,11 +118,23 @@ scene.add(spotLight);
 // Event listeners
 
 window.addEventListener("mousemove", (e) => {
+    touchHappened = false;
     pointer.x = (e.clientX / sizes.width) * 2 - 1;
     pointer.y = - (e.clientY / sizes.height) * 2 + 1;
 });
 
-window.addEventListener("click", (e) => {
+window.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    pointer.x = (e.touches[0].clientX / sizes.width) * 2 - 1;
+    pointer.y = - (e.touches[0].clientY / sizes.height) * 2 + 1;
+}, { passive: false });
+
+window.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    handleRaycasterInteraction();
+}, { passive: false });
+
+function handleRaycasterInteraction() {
     raycaster.setFromCamera(pointer, camera);
     const currentIntersects = raycaster.intersectObjects(raycasterObjects);
 
@@ -134,7 +157,9 @@ window.addEventListener("click", (e) => {
             showModal(modals.jersey);
         }
     }
-})
+};
+
+window.addEventListener("click", handleRaycasterInteraction);
 
 // Loader
 const dracoLoader = new DRACOLoader();
@@ -157,6 +182,9 @@ loader.load('portfolio.glb', (glb) => {
 
         if (clickableObjects.some(objName => child.name.includes(objName))) {
             raycasterObjects.push(child);
+            child.userData.initialScale = new THREE.Vector3().copy(child.scale);
+            child.userData.initialPosition = new THREE.Vector3().copy(child.position);
+            child.userData.initialRotation = new THREE.Euler().copy(child.rotation);
         }
     });
 
@@ -176,7 +204,43 @@ window.addEventListener("resize", () => {
     // Update renderer
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-})
+});
+
+function playHoverAnimation(object, isHovering) {
+    gsap.killTweensOf(object.scale);
+    gsap.killTweensOf(object.rotation);
+    gsap.killTweensOf(object.position);
+
+    if (isHovering) {
+        gsap.to(object.scale, {
+            x: object.userData.initialScale.x * 1.2, 
+            y: object.userData.initialScale.y * 1.2, 
+            z: object.userData.initialScale.z * 1.2,
+            duration: 0.5,
+            ease: "bounce.out(1.8)",
+        });
+        gsap.to(object.rotation, {
+            y: object.userData.initialRotation.y + Math.PI / 16, 
+            duration: 0.5,
+            ease: "bounce.out(1.8)",
+        });
+    } else {
+        gsap.to(object.scale, {
+            x: object.userData.initialScale.x, 
+            y: object.userData.initialScale.y, 
+            z: object.userData.initialScale.z,
+            duration: 0.5,
+            ease: "bounce.out(1.8)",
+        });
+        gsap.to(object.rotation, {
+            y: object.userData.initialRotation.y, 
+            duration: 0.5,
+            ease: "bounce.out(1.8)",
+        });
+    }
+}
+
+let currentIntersectObject = null;
 
 const animate = () => {
     controls.update();
@@ -186,29 +250,30 @@ const animate = () => {
         manchesterObject.rotation.y += 0.05
    }
 
-   raycasterObjects.forEach(obj => {
-    if (obj.material && obj.material.color) {
-        obj.material.color.set(0xffffff);
-    };
-   })
-
    // Raycaster
    raycaster.setFromCamera(pointer, camera);
    const currentIntersects = raycaster.intersectObjects(raycasterObjects);
 
-   for (let i = 0; i < currentIntersects.length; i++) {
-    currentIntersects[i].object.material.color.set(0xff0000);
-   }
-
    if (currentIntersects.length > 0) {
-    const currentIntersectObject = currentIntersects[0].object;
+    const intersectedObject = currentIntersects[0].object;
 
-    if (clickableObjects.some(objName => currentIntersectObject.name.includes(objName))) {
+    if (clickableObjects.some(objName => intersectedObject.name.includes(objName))) {
+        if (currentIntersectObject != intersectedObject) {
+            if (currentIntersectObject) {
+                playHoverAnimation(currentIntersectObject, false);
+            }
+            currentIntersectObject = intersectedObject;
+            playHoverAnimation(currentIntersectObject, true);
+        }
         document.body.style.cursor = "pointer";
     } else {
         document.body.style.cursor = "default";
     }
   } else {
+    if (currentIntersectObject) {
+        playHoverAnimation(currentIntersectObject, false);
+        currentIntersectObject = false;
+    }
     document.body.style.cursor = "default";
   }
     
