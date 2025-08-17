@@ -154,7 +154,7 @@ function handleRaycasterInteraction() {
         const object = currentIntersects[0].object;
 
         if (object.name.includes("resume")) {
-            window.open("/public/Nazym Zhiyengaliyeva Resume.pdf", "_blank", "noopener,noreferrer");
+            window.open("Nazym Zhiyengaliyeva Resume.pdf", "_blank", "noopener,noreferrer");
         }
 
         if (object.name.includes("aboutme") || object.name.includes("ggb")) {
@@ -247,34 +247,65 @@ function playReveal() {
 
 // Loader
 const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath("public/draco/");
+const isProduction = window.location.protocol === 'https:' || window.location.hostname !== 'localhost';
+const dracoPath = isProduction ? './draco/' : './draco/';
+const modelPath = isProduction ? 'portfolio.glb' : 'public/portfolio.glb';
+dracoLoader.setDecoderPath(dracoPath);
 
-const loader = new GLTFLoader(manager).setPath('public/');
+const loader = new GLTFLoader(manager);
 loader.setDRACOLoader(dracoLoader);
-loader.load('portfolio.glb', (glb) => {
-    const mesh = glb.scene;
 
-    mesh.traverse((child) => {
-        if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
+const modelPaths = ['portfolio.glb', './portfolio.glb', 'public/portfolio.glb'];
+let loadAttempt = 0;
+
+function tryLoadModel() {
+    if (loadAttempt >= modelPaths.length) {
+        console.error('Failed to load model from all attempted paths');
+        return;
+    }
+    
+    const currentPath = modelPaths[loadAttempt];
+    console.log(`Attempting to load model from: ${currentPath}`);
+    
+    loader.load(
+        currentPath,
+        (glb) => {
+            console.log('Model loaded successfully from:', currentPath);
+            const mesh = glb.scene;
+
+            mesh.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+
+                if (child.name.includes("manchester")) {
+                    manchesterObject = child;
+                }
+
+                if (clickableObjects.some(objName => child.name.includes(objName))) {
+                    raycasterObjects.push(child);
+                    child.userData.initialScale = new THREE.Vector3().copy(child.scale);
+                    child.userData.initialPosition = new THREE.Vector3().copy(child.position);
+                    child.userData.initialRotation = new THREE.Euler().copy(child.rotation);
+                }
+            });
+
+            mesh.position.set(0, 1.05, -1);
+            scene.add(mesh);
+        },
+        (progress) => {
+            console.log('Loading progress:', progress);
+        },
+        (error) => {
+            console.error(`Failed to load from ${currentPath}:`, error);
+            loadAttempt++;
+            tryLoadModel();
         }
+    );
+}
 
-        if (child.name.includes("manchester")) {
-            manchesterObject = child;
-        }
-
-        if (clickableObjects.some(objName => child.name.includes(objName))) {
-            raycasterObjects.push(child);
-            child.userData.initialScale = new THREE.Vector3().copy(child.scale);
-            child.userData.initialPosition = new THREE.Vector3().copy(child.position);
-            child.userData.initialRotation = new THREE.Euler().copy(child.rotation);
-        }
-    });
-
-    mesh.position.set(0, 1.05, -1);
-    scene.add(mesh)
-})
+tryLoadModel();
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -282,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const filterBtns = document.querySelectorAll('.filter-btn')
     const projectCards = document.querySelectorAll('.project-card')
     
-    // Search functionality
+    // Search
     if (searchBar) {
         searchBar.addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase()
@@ -316,11 +347,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
     })
     
-    // Modal animation functionality
     const modals = document.querySelectorAll('.modal')
     const windowControls = document.querySelectorAll('.window-control')
     
-    // Add show animation when modal opens
     modals.forEach(modal => {
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
