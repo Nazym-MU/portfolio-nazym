@@ -247,65 +247,49 @@ function playReveal() {
 
 // Loader
 const dracoLoader = new DRACOLoader();
-const isProduction = window.location.protocol === 'https:' || window.location.hostname !== 'localhost';
-const dracoPath = isProduction ? './draco/' : './draco/';
-const modelPath = isProduction ? 'portfolio.glb' : 'public/portfolio.glb';
-dracoLoader.setDecoderPath(dracoPath);
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
 
 const loader = new GLTFLoader(manager);
 loader.setDRACOLoader(dracoLoader);
 
-const modelPaths = ['portfolio.glb', './portfolio.glb', 'public/portfolio.glb'];
-let loadAttempt = 0;
+// Simple approach - just use the root path for production
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const modelPath = isLocal ? 'public/portfolio.glb' : 'portfolio.glb';
 
-function tryLoadModel() {
-    if (loadAttempt >= modelPaths.length) {
-        console.error('Failed to load model from all attempted paths');
-        return;
+loader.load(
+    modelPath,
+    (glb) => {
+        console.log('Model loaded successfully');
+        const mesh = glb.scene;
+
+        mesh.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+
+            if (child.name.includes("manchester")) {
+                manchesterObject = child;
+            }
+
+            if (clickableObjects.some(objName => child.name.includes(objName))) {
+                raycasterObjects.push(child);
+                child.userData.initialScale = new THREE.Vector3().copy(child.scale);
+                child.userData.initialPosition = new THREE.Vector3().copy(child.position);
+                child.userData.initialRotation = new THREE.Euler().copy(child.rotation);
+            }
+        });
+
+        mesh.position.set(0, 1.05, -1);
+        scene.add(mesh);
+    },
+    (progress) => {
+        console.log('Loading progress:', progress);
+    },
+    (error) => {
+        console.error('Failed to load model:', error);
     }
-    
-    const currentPath = modelPaths[loadAttempt];
-    console.log(`Attempting to load model from: ${currentPath}`);
-    
-    loader.load(
-        currentPath,
-        (glb) => {
-            console.log('Model loaded successfully from:', currentPath);
-            const mesh = glb.scene;
-
-            mesh.traverse((child) => {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                }
-
-                if (child.name.includes("manchester")) {
-                    manchesterObject = child;
-                }
-
-                if (clickableObjects.some(objName => child.name.includes(objName))) {
-                    raycasterObjects.push(child);
-                    child.userData.initialScale = new THREE.Vector3().copy(child.scale);
-                    child.userData.initialPosition = new THREE.Vector3().copy(child.position);
-                    child.userData.initialRotation = new THREE.Euler().copy(child.rotation);
-                }
-            });
-
-            mesh.position.set(0, 1.05, -1);
-            scene.add(mesh);
-        },
-        (progress) => {
-            console.log('Loading progress:', progress);
-        },
-        (error) => {
-            console.error(`Failed to load from ${currentPath}:`, error);
-            loadAttempt++;
-            tryLoadModel();
-        }
-    );
-}
-
-tryLoadModel();
+);
 
 
 document.addEventListener('DOMContentLoaded', function() {
