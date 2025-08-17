@@ -20,7 +20,7 @@ const modals = {
 
 let touchHappened = false;
 
-document.querySelectorAll(".modal-exit-button").forEach(button => {
+document.querySelectorAll(".close").forEach(button => {
     button.addEventListener("touchend", (e) => {
         touchHappened = true;
         e.preventDefault();
@@ -76,6 +76,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x2a2a3a)
 
 const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 1, 1000);
 camera.position.set(-10, 7, 20);
@@ -106,14 +107,25 @@ groundMesh.castShadow = false;
 groundMesh.receiveShadow = true;
 scene.add(groundMesh);
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-scene.add(ambientLight);
+const ambientLight = new THREE.AmbientLight(0x404080, 0.4) // Soft blue ambient
+scene.add(ambientLight)
 
-const spotLight = new THREE.SpotLight(0xffffff, 3, 100, 0.2, 0.5);
-spotLight.position.set(0, 25, 0);
-spotLight.castShadow = true;
-spotLight.shadow.bias = -0.001
-scene.add(spotLight);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
+directionalLight.position.set(10, 10, 5)
+directionalLight.castShadow = true
+scene.add(directionalLight)
+
+const pointLight1 = new THREE.PointLight(0xff6b9d, 0.6, 100)
+pointLight1.position.set(-20, 10, 10)
+scene.add(pointLight1)
+
+const pointLight2 = new THREE.PointLight(0x6bcfff, 0.6, 100)
+pointLight2.position.set(20, 10, -10)
+scene.add(pointLight2)
+
+const pointLight3 = new THREE.PointLight(0xffeb3b, 0.4, 100)
+pointLight3.position.set(0, -10, 20)
+scene.add(pointLight3)
 
 // Event listeners
 
@@ -263,6 +275,76 @@ loader.load('portfolio.glb', (glb) => {
     mesh.position.set(0, 1.05, -1);
     scene.add(mesh)
 })
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchBar = document.getElementById('project-search')
+    const filterBtns = document.querySelectorAll('.filter-btn')
+    const projectCards = document.querySelectorAll('.project-card')
+    
+    // Search functionality
+    if (searchBar) {
+        searchBar.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase()
+            projectCards.forEach(card => {
+                const title = card.querySelector('h4').textContent.toLowerCase()
+                if (title.includes(searchTerm)) {
+                    card.style.display = 'block'
+                } else {
+                    card.style.display = 'none'
+                }
+            })
+        })
+    }
+    
+    // Filter functionality
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active button
+            filterBtns.forEach(b => b.classList.remove('active'))
+            this.classList.add('active')
+            
+            const filter = this.getAttribute('data-filter')
+            
+            projectCards.forEach(card => {
+                if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                    card.style.display = 'block'
+                } else {
+                    card.style.display = 'none'
+                }
+            })
+        })
+    })
+    
+    // Modal animation functionality
+    const modals = document.querySelectorAll('.modal')
+    const windowControls = document.querySelectorAll('.window-control')
+    
+    // Add show animation when modal opens
+    modals.forEach(modal => {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'style' && modal.style.display === 'block') {
+                    modal.classList.add('show')
+                } else if (mutation.attributeName === 'style' && modal.style.display === 'none') {
+                    modal.classList.remove('show')
+                }
+            })
+        })
+        observer.observe(modal, { attributes: true })
+    })
+    
+    // Window control animations
+    windowControls.forEach(control => {
+        control.addEventListener('click', function() {
+            if (this.classList.contains('close')) {
+                const modal = this.closest('.modal')
+                modal.style.display = 'none'
+            }
+        })
+    })
+})
+
 
 // Event listeners
 window.addEventListener("resize", () => {

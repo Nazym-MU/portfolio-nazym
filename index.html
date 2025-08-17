@@ -24,29 +24,228 @@
     </div>
     <div id="app"></div>
     
+    <!-- About Me Modal -->
     <div class="aboutme modal">
-        <h1 class="modal-title">About Me</h1>
-        <button class="modal-exit-button">EXIT MODAL</button>
+        <div class="modal-header">
+            <div class="window-controls">
+                <button class="window-control close"></button>
+                <button class="window-control minimize"></button>
+                <button class="window-control maximize"></button>
+            </div>
+        </div>
+        <div class="modal-content">
+            <div class="modal-body">
+                <h1 class="modal-title">About Me</h1>
+                
+                <div class="about-container">
+                    <div class="about-left">
+                        <p class="modal-paragraph-text">
+                            Hi! I'm Nazym, a junior at Minerva University with experience in machine learning, web development, and 3D technologies. 
+                        </p>
+                        <p class="modal-paragraph-text" style="margin-top: 16px;">
+                            I'm currently pursuing my studies while traveling and working on projects in different countries that combine my interests in AI, web development, and creative coding. I also love football, Rubik's cubes, and physics!
+                        </p>
+                    </div>
+                    <div class="about-right">
+                        <img src="public/images/profile.JPG" alt="me" class="profile-pic">
+                        <div class="contact-info">
+                            <h3>Contact</h3>
+                            <p>nazym@uni.minerva.edu</p>
+                            <p>LinkedIn</p>
+                            <p>GitHub</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline">
+                    <h3>Experience Timeline</h3>
+                    <div class="timeline-container">
+                        <div class="timeline-horizontal">
+                            <div class="timeline-item">
+                                <h4>Technical Instructor</h4>
+                                <div class="company">iD Tech Camps</div>
+                                <div class="date">June 2025 - August 2025 • Berkeley, CA</div>
+                            </div>
+
+                            <div class="timeline-item">
+                                <h4>Tech Lead</h4>
+                                <div class="company">Google Developers Group</div>
+                                <div class="date">January 2024 - May 2024 • Seoul, South Korea</div>
+                            </div>
+                            
+                            <div class="timeline-item">
+                                <h4>Software Engineer Intern</h4>
+                                <div class="company">Jubo Health Technologies</div>
+                                <div class="date">September 2024 - December 2024 • Taipei, Taiwan</div>
+                            </div>
+                            
+                            <div class="timeline-item">
+                                <h4>Technical Project Management Intern</h4>
+                                <div class="company">Mastercard</div>
+                                <div class="date">June 2024 - August 2024 • Kazakhstan</div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Projects Modal -->
     <div class="projects modal">
-        <h1 class="modal-title">Projects</h1>
-        <button class="modal-exit-button">EXIT MODAL</button>
+        <div class="modal-header">
+            <div class="window-controls">
+                <button class="window-control close"></button>
+                <button class="window-control minimize"></button>
+                <button class="window-control maximize"></button>
+            </div>
+        </div>
+        <div class="modal-content">
+            <div class="modal-body">
+                <h1 class="modal-title">Projects</h1>
+                
+                <div class="search-container">
+                    <input type="text" class="search-bar" placeholder="Search projects by name..." id="project-search">
+                </div>
+                
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="machine-learning">Machine Learning</button>
+                    <button class="filter-btn" data-filter="web-development">Web Development</button>
+                    <button class="filter-btn" data-filter="3d">3D</button>
+                </div>
+                
+                <div class="projects-grid" id="projects-grid">
+                    <div class="project-card" data-category="machine-learning">
+                        <h4>ML Project 1</h4>
+                        <div class="project-stack">PyTorch</div>
+                        <div class="project-description">[...]</div>
+                        <div class="project-buttons">
+                            <a href="#" class="project-btn github">GitHub</a>
+                            <a href="#" class="project-btn demo">Demo</a>
+                        </div>
+                    </div>
+                    
+                    <div class="project-card" data-category="3d">
+                        <h4>3D Portfolio Website</h4>
+                        <div class="project-stack">Three.js, HTML, CSS, JavaScript</div>
+                        <div class="project-description">Interactive 3D portfolio showcasing my projects and experiences.</div>
+                        <div class="project-buttons">
+                            <a href="#" class="project-btn github">GitHub</a>
+                            <a href="#" class="project-btn demo">Live Site</a>
+                        </div>
+                    </div>
+                    
+                    <div class="project-card" data-category="web-development">
+                        <h4>AI Adoption Assessment Tool</h4>
+                        <div class="project-stack">React, Node.js, MongoDB</div>
+                        <div class="project-description">[...]</div>
+                        <div class="project-buttons">
+                            <a href="#" class="project-btn github">GitHub</a>
+                            <a href="#" class="project-btn demo">Demo</a>
+                        </div>
+                    </div>
+                    
+                    <div class="project-card" data-category="web-development">
+                        <h4>Kazakh language learning app</h4>
+                        <div class="project-stack">TypeScript, Next.js, React, Neon, Drizzle ORM</div>
+                        <div class="project-description">Duolingo-style web app to learn Kazakh language.</div>
+                        <div class="project-buttons">
+                            <a href="#" class="project-btn github">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Blog Modal -->
     <div class="book modal">
-        <h1 class="modal-title">Blog</h1>
-        <button class="modal-exit-button">EXIT MODAL</button>
+        <div class="modal-header">
+            <div class="window-controls">
+                <button class="window-control close"></button>
+                <button class="window-control minimize"></button>
+                <button class="window-control maximize"></button>
+            </div>
+        </div>
+        <div class="modal-content">
+            <div class="modal-body">
+                <h1 class="modal-title">Blog</h1>
+                <p class="modal-paragraph-text">
+                    I write about machine learning, data science, web development, and my travel experiences on Medium. 
+                </p>
+                <div class="blog-button-container">
+                    <a href="https://medium.com/@your-medium-handle" target="_blank" class="btn btn-primary">
+                        Visit My Blog
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="map modal">
-        <h1 class="modal-title">Traveling</h1>
-        <button class="modal-exit-button">EXIT MODAL</button>
+
+    <!-- Map Modal -->
+    <div class="map modal" id="map-modal">
+        <div class="modal-header">
+            <div class="window-controls">
+                <button class="window-control close"></button>
+                <button class="window-control minimize"></button>
+                <button class="window-control maximize"></button>
+            </div>
+        </div>
+        <div class="modal-content">
+            <div class="modal-image-header">
+                <img
+                    class="map-image"
+                    src="public/images/map.jpeg"
+                    alt="Map"
+                />
+            </div>
+            <div class="modal-body">
+                <h1 class="modal-title">Traveling</h1>
+                <p class="modal-paragraph-text">
+                    Through my university, I've studied in 3 countries: USA, Taiwan, and South Korea.
+                    I want to travel as much as I can!
+                </p>
+            </div>
+        </div>
     </div>
-    <div class="jersey modal">
-        <h1 class="modal-title">Manchester United</h1>
-        <button class="modal-exit-button">EXIT MODAL</button>
+
+    <!-- Jersey Modal -->
+    <div class="jersey modal" id="jersey-modal">
+        <div class="modal-header">
+            <div class="window-controls">
+                <button class="window-control close"></button>
+                <button class="window-control minimize"></button>
+                <button class="window-control maximize"></button>
+            </div>
+        </div>
+        <div class="modal-content">
+            <div class="modal-image-header">
+                <img
+                    class="bruno-image"
+                    src="public/images/bruno.jpeg"
+                    alt="Bruno Fernandes"
+                />
+            </div>
+            <div class="modal-body">
+                <h1 class="modal-title">Manchester United</h1>
+                <p class="modal-paragraph-text">
+                    Manchester United is my life, my source of happiness and pain,
+                    my passion, my inspiration, the love of my life. I met them in 2019
+                    in Astana, Kazakhstan, and it was one of the best days of my life.
+                    The second time I met them was on August 3, 2025 in Atlanta, Georgia.
+                    My GOAT is Bruno Fernandes.
+                    I dream of visiting Old Trafford one day.
+                </p>
+            </div>
+        </div>
     </div>
+
     <div id="experience">
         <canvas id="experience-canvas" class="experience-canvas"></canvas>
     </div>
+    
     <script type="module" src="./main.js"></script>
 </body>
 </html>
