@@ -3,13 +3,19 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-const canvas = document.querySelector("#about-me-canvas");
+const canvas = document.querySelector("#experience-canvas");
 const sizes = {
     width: window.innerWidth,
     height: window.innerHeight,
 };
 
 let manchesterObject = null;
+
+const clickableObjects = ["macbook", "book", "map", "ggb", "jersey", "almaty", "rubik", "aboutme", "projects", "kzchoco", "resume"];
+const raycasterObjects = [];
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -64,6 +70,26 @@ spotLight.castShadow = true;
 spotLight.shadow.bias = -0.001
 scene.add(spotLight);
 
+// Event listeners
+
+window.addEventListener("mousemove", (e) => {
+    pointer.x = (e.clientX / sizes.width) * 2 - 1;
+    pointer.y = - (e.clientY / sizes.height) * 2 + 1;
+});
+
+window.addEventListener("click", (e) => {
+    raycaster.setFromCamera(pointer, camera);
+    const currentIntersects = raycaster.intersectObjects(raycasterObjects);
+
+    if (currentIntersects.length > 0) {
+        const object = currentIntersects[0].object;
+
+        if (object.name.includes("resume")) {
+            window.open("/public/Nazym Zhiyengaliyeva Resume.pdf", "_blank", "noopener,noreferrer");
+        }
+    }
+})
+
 // Loader
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath("public/draco/");
@@ -81,6 +107,10 @@ loader.load('portfolio.glb', (glb) => {
 
         if (child.name.includes("manchester")) {
             manchesterObject = child;
+        }
+
+        if (clickableObjects.some(objName => child.name.includes(objName))) {
+            raycasterObjects.push(child);
         }
     });
 
@@ -109,6 +139,26 @@ const animate = () => {
    if (manchesterObject) {
         manchesterObject.rotation.y += 0.05
    }
+
+   // Raycaster
+   raycaster.setFromCamera(pointer, camera);
+   const currentIntersects = raycaster.intersectObjects(raycasterObjects);
+
+   for (let i = 0; i < currentIntersects.length; i++) {
+    currentIntersects[i].object.material.color.set(0xff0000);
+   }
+
+   if (currentIntersects.length > 0) {
+    const currentIntersectObject = currentIntersects[0].object;
+
+    if (clickableObjects.some(objName => currentIntersectObject.name.includes(objName))) {
+        document.body.style.cursor = "pointer";
+    } else {
+        document.body.style.cursor = "default";
+    }
+  } else {
+    document.body.style.cursor = "default";
+  }
     
     renderer.render(scene, camera);
 
