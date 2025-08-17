@@ -252,9 +252,14 @@ dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
 const loader = new GLTFLoader(manager);
 loader.setDRACOLoader(dracoLoader);
 
-// Simple approach - just use the root path for production
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const modelPath = isLocal ? 'public/portfolio.glb' : 'portfolio.glb';
+let modelPath;
+
+if (isLocal) {
+    modelPath = 'public/portfolio.glb';
+} else {
+    modelPath = 'https://github.com/Nazym-MU/portfolio-nazym/raw/main/public/portfolio.glb';
+}
 
 loader.load(
     modelPath,
