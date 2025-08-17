@@ -161,11 +161,83 @@ function handleRaycasterInteraction() {
 
 window.addEventListener("click", handleRaycasterInteraction);
 
+const manager = new THREE.LoadingManager();
+const loadingScreen = document.querySelector(".loading-screen");
+const loadingScreenButton = document.querySelector(".loading-screen-button");
+
+manager.onLoad = function () {
+    loadingScreenButton.style.border = "8px solid #2a0f4e";
+    loadingScreenButton.style.background = "#401d49";
+    loadingScreenButton.style.color = "#e6dede";
+    loadingScreenButton.style.boxShadow = "rgba(0, 0, 0, 0.24) 0px 3px 8px";
+    loadingScreenButton.textContent = "Enter!";
+    loadingScreenButton.style.cursor = "pointer";
+    loadingScreenButton.style.transition = "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)";
+    let isDisabled = false;
+
+    function handleEnter() {
+        if (isDisabled) return;
+
+        loadingScreenButton.style.border = "8px solid #6e5e9c";
+        loadingScreenButton.style.background = "#ead7ef";
+        loadingScreenButton.style.color = "#6e5e9c";
+        loadingScreenButton.style.boxShadow = "none";
+        loadingScreenButton.textContent = "Welcome to my 3D virtual room! Interact with elements to get to know me <3";
+        loadingScreen.style.background = "#ead7ef";
+        isDisabled = true;
+
+        playReveal();
+    }
+
+    loadingScreenButton.addEventListener("mouseenter", () => {
+        loadingScreenButton.style.transform = "scale(1.3)";
+    });
+
+    loadingScreenButton.addEventListener("touchend", (e) => {
+        touchHappened = true;
+        e.preventDefault();
+        handleEnter();
+    });
+
+    loadingScreenButton.addEventListener("click", (e) => {
+        if (touchHappened) return;
+        handleEnter();
+    });
+
+    loadingScreenButton.addEventListener("mouseleave", () => {
+        loadingScreenButton.style.transform = "none";
+    });
+};
+
+function playReveal() {
+    const tl = gsap.timeline();
+
+    tl.to(loadingScreen, {
+        scale: 0.5,
+        duration: 1.2,
+        delay: 0.25,
+        ease: "back.in(1.8)",
+    }).to(
+        loadingScreen,
+        {
+            y: "200vh",
+            rotateX: 45,
+            rotateY: -35,
+            duration: 1.2,
+            ease: "back.in(1.8)",
+            onComplete: () => {
+                loadingScreen.remove();
+            },
+        },
+        "-=0.1"
+    );
+}
+
 // Loader
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath("public/draco/");
 
-const loader = new GLTFLoader().setPath('public/');
+const loader = new GLTFLoader(manager).setPath('public/');
 loader.setDRACOLoader(dracoLoader);
 loader.load('portfolio.glb', (glb) => {
     const mesh = glb.scene;
@@ -213,14 +285,9 @@ function playHoverAnimation(object, isHovering) {
 
     if (isHovering) {
         gsap.to(object.scale, {
-            x: object.userData.initialScale.x * 1.2, 
-            y: object.userData.initialScale.y * 1.2, 
-            z: object.userData.initialScale.z * 1.2,
-            duration: 0.5,
-            ease: "bounce.out(1.8)",
-        });
-        gsap.to(object.rotation, {
-            y: object.userData.initialRotation.y + Math.PI / 16, 
+            x: object.userData.initialScale.x * 1.4, 
+            y: object.userData.initialScale.y * 1.4, 
+            z: object.userData.initialScale.z * 1.4,
             duration: 0.5,
             ease: "bounce.out(1.8)",
         });

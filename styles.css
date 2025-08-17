@@ -45,3 +45,29 @@ canvas {
     z-index: 9999;
     display: none;
 }
+
+/* Loading screen */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    background-color: #2a0f4e;
+    border-radius: 48px;
+}
+
+.loading-screen-button {
+    font-family: "Motley Forces";
+    background-color: transparent;
+    padding: 10px 40px;
+    outline: none;
+    color: #e6dede;
+    border-radius: 1.2rem;
+    border: none;
+    font-size: 42px;
+}
