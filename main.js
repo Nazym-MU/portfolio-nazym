@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import gsap from "gsap";
 
 const canvas = document.querySelector("#experience-canvas");
 const sizes = {
@@ -9,9 +10,45 @@ const sizes = {
     height: window.innerHeight,
 };
 
+const modals = {
+    aboutme: document.querySelector(".modal.aboutme"),
+    projects: document.querySelector(".modal.projects"),
+    book: document.querySelector(".modal.book"),
+    map: document.querySelector(".modal.map"),
+    jersey: document.querySelector(".modal.jersey")
+}
+
+document.querySelectorAll(".modal-exit-button").forEach(button => {
+    button.addEventListener("click", (e) => {
+        const modal = e.target.closest(".modal");
+        hideModal(modal);
+    })
+})
+
+const showModal = (modal) => {
+    modal.style.display = "block";
+
+    gsap.set(modal, {opacity: 0});
+
+    gsap.to(modal, {
+        opacity: 1,
+        duration: 0.5,
+    });
+}
+
+const hideModal = (modal) => {
+    gsap.to(modal, {
+        opacity: 0,
+        duration: 0.5,
+        onComplete: () => {
+            modal.style.display = "none";
+        }
+    });
+}
+
 let manchesterObject = null;
 
-const clickableObjects = ["macbook", "book", "map", "ggb", "jersey", "almaty", "rubik", "aboutme", "projects", "kzchoco", "resume"];
+const clickableObjects = ["macbook", "book", "map", "ggb", "jersey", "aboutme", "projects", "resume"];
 const raycasterObjects = [];
 
 const raycaster = new THREE.Raycaster();
@@ -20,15 +57,12 @@ const pointer = new THREE.Vector2();
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(sizes.width, sizes.height);
 renderer.setClearColor(0x000000);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-document.body.appendChild(renderer.domElement);
-
 
 const scene = new THREE.Scene();
 
@@ -87,6 +121,18 @@ window.addEventListener("click", (e) => {
         if (object.name.includes("resume")) {
             window.open("/public/Nazym Zhiyengaliyeva Resume.pdf", "_blank", "noopener,noreferrer");
         }
+
+        if (object.name.includes("aboutme") || object.name.includes("ggb")) {
+            showModal(modals.aboutme);
+        } else if (object.name.includes("projects") || object.name.includes("macbook")) {
+            showModal(modals.projects);
+        } else if (object.name.includes("book")) {
+            showModal(modals.book);
+        } else if (object.name.includes("map")) {
+            showModal(modals.map);
+        } else if (object.name.includes("jersey")) {
+            showModal(modals.jersey);
+        }
     }
 })
 
@@ -139,6 +185,12 @@ const animate = () => {
    if (manchesterObject) {
         manchesterObject.rotation.y += 0.05
    }
+
+   raycasterObjects.forEach(obj => {
+    if (obj.material && obj.material.color) {
+        obj.material.color.set(0xffffff);
+    };
+   })
 
    // Raycaster
    raycaster.setFromCamera(pointer, camera);

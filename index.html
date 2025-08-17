@@ -10,14 +10,36 @@
         {
             "imports": {
                 "three": "https://unpkg.com/three@v0.153.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@v0.153.0/examples/jsm/"
+                "three/addons/": "https://unpkg.com/three@v0.153.0/examples/jsm/",
+                "gsap": "https://unpkg.com/gsap@3.12.2/index.js"
         }
     }
     </script>
 </head>
 <body>
     <div id="app"></div>
-    <div class="experience">
+    
+    <div class="aboutme modal">
+        <h1 class="modal-title">About Me</h1>
+        <button class="modal-exit-button">EXIT MODAL</button>
+    </div>
+    <div class="projects modal">
+        <h1 class="modal-title">Projects</h1>
+        <button class="modal-exit-button">EXIT MODAL</button>
+    </div>
+    <div class="book modal">
+        <h1 class="modal-title">Blog</h1>
+        <button class="modal-exit-button">EXIT MODAL</button>
+    </div>
+    <div class="map modal">
+        <h1 class="modal-title">Traveling</h1>
+        <button class="modal-exit-button">EXIT MODAL</button>
+    </div>
+    <div class="jersey modal">
+        <h1 class="modal-title">Manchester United</h1>
+        <button class="modal-exit-button">EXIT MODAL</button>
+    </div>
+    <div id="experience">
         <canvas id="experience-canvas" class="experience-canvas"></canvas>
     </div>
     <script type="module" src="./main.js"></script>
