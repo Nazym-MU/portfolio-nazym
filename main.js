@@ -252,13 +252,11 @@ dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
 const loader = new GLTFLoader(manager);
 loader.setDRACOLoader(dracoLoader);
 
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const modelPath = isLocal ? 'public/portfolio.glb' : 'portfolio.glb';
+const modelPath = "https://nazym-portfolio-assets.s3.us-east-2.amazonaws.com/portfolio.glb";
 
 loader.load(
     modelPath,
     (glb) => {
-        console.log('Model loaded successfully');
         const mesh = glb.scene;
 
         mesh.traverse((child) => {
@@ -283,10 +281,16 @@ loader.load(
         scene.add(mesh);
     },
     (progress) => {
-        console.log('Loading progress:', progress);
+        const percentage = (progress.loaded / progress.total * 100).toFixed(2);
+        if (loadingScreenButton) {
+            loadingScreenButton.textContent = `Loading... ${percentage}%`;
+        }
     },
     (error) => {
         console.error('Failed to load model:', error);
+        if (loadingScreenButton) {
+            loadingScreenButton.textContent = 'Failed to load model';
+        }
     }
 );
 
