@@ -107,25 +107,27 @@ groundMesh.castShadow = false;
 groundMesh.receiveShadow = true;
 scene.add(groundMesh);
 
-const ambientLight = new THREE.AmbientLight(0x404080, 0.4) // Soft blue ambient
-scene.add(ambientLight)
+const ambientLight = new THREE.AmbientLight(0x404080, 0.6);
+scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
-directionalLight.position.set(10, 10, 5)
-directionalLight.castShadow = true
-scene.add(directionalLight)
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+directionalLight.position.set(10, 10, 5);
+directionalLight.castShadow = true;
+scene.add(directionalLight);
 
-const pointLight1 = new THREE.PointLight(0xff6b9d, 0.6, 100)
-pointLight1.position.set(-20, 10, 10)
-scene.add(pointLight1)
+const directionalLight2 = new THREE.DirectionalLight(0xff6b9d, 0.5);
+directionalLight2.position.set(-10, 8, 5);
+directionalLight2.castShadow = false;
+scene.add(directionalLight2);
 
-const pointLight2 = new THREE.PointLight(0x6bcfff, 0.6, 100)
-pointLight2.position.set(20, 10, -10)
-scene.add(pointLight2)
+const directionalLight3 = new THREE.DirectionalLight(0x6bcfff, 0.6);
+directionalLight3.position.set(10, 8, -5);
+directionalLight3.castShadow = false;
+scene.add(directionalLight3);
 
-const pointLight3 = new THREE.PointLight(0xffeb3b, 0.4, 100)
-pointLight3.position.set(0, -10, 20)
-scene.add(pointLight3)
+const warmAmbientLight = new THREE.AmbientLight(0xffeb3b, 0.4);
+scene.add(warmAmbientLight);
+
 
 // Event listeners
 
