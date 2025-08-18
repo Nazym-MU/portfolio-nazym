@@ -253,13 +253,7 @@ const loader = new GLTFLoader(manager);
 loader.setDRACOLoader(dracoLoader);
 
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-let modelPath;
-
-if (isLocal) {
-    modelPath = 'public/portfolio.glb';
-} else {
-    modelPath = 'https://github.com/Nazym-MU/portfolio-nazym/raw/main/public/portfolio.glb';
-}
+const modelPath = isLocal ? 'public/portfolio.glb' : 'portfolio.glb';
 
 loader.load(
     modelPath,
