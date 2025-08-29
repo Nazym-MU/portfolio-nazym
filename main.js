@@ -76,7 +76,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x2a2a3a)
+scene.background = new THREE.Color(0xdfdfdf)
 
 const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 1, 1000);
 camera.position.set(-10, 7, 20);
@@ -95,10 +95,10 @@ controls.autoRotate = false;
 controls.target = new THREE.Vector3(0, 1, 0);
 controls.update();
 
-const groundGeometry = new THREE.PlaneGeometry(20, 20, 32, 32);
+const groundGeometry = new THREE.CircleGeometry(12, 64);
 groundGeometry.rotateX(-Math.PI / 2);
 const groundMaterial = new THREE.MeshStandardMaterial({
-    color: 0x111111,
+    color: 0x70798c,
     side: THREE.DoubleSide
 });
 
@@ -180,9 +180,9 @@ const loadingScreen = document.querySelector(".loading-screen");
 const loadingScreenButton = document.querySelector(".loading-screen-button");
 
 manager.onLoad = function () {
-    loadingScreenButton.style.border = "8px solid #2a0f4e";
-    loadingScreenButton.style.background = "#401d49";
-    loadingScreenButton.style.color = "#e6dede";
+    loadingScreenButton.style.border = "8px solid #071013";
+    loadingScreenButton.style.background = "#70798c";
+    loadingScreenButton.style.color = "#dfdfdf";
     loadingScreenButton.style.boxShadow = "rgba(0, 0, 0, 0.24) 0px 3px 8px";
     loadingScreenButton.textContent = "Enter!";
     loadingScreenButton.style.cursor = "pointer";
@@ -192,12 +192,12 @@ manager.onLoad = function () {
     function handleEnter() {
         if (isDisabled) return;
 
-        loadingScreenButton.style.border = "8px solid #6e5e9c";
-        loadingScreenButton.style.background = "#ead7ef";
-        loadingScreenButton.style.color = "#6e5e9c";
+        loadingScreenButton.style.border = "8px solid #70798c";
+        loadingScreenButton.style.background = "#dfdfdf";
+        loadingScreenButton.style.color = "#70798c";
         loadingScreenButton.style.boxShadow = "none";
-        loadingScreenButton.textContent = "Welcome to my 3D virtual room! Interact with elements to get to know me <3";
-        loadingScreen.style.background = "#ead7ef";
+        loadingScreenButton.textContent = "Welcome to my 3D virtual room!";
+        loadingScreen.style.background = "#dfdfdf";
         isDisabled = true;
 
         playReveal();
