@@ -72,7 +72,7 @@ let manchesterObject = null;
 
 const clickableObjects = ["macbook", "notebook_2", "map", "ggb", "jersey", "aboutme", "projects", 
     "resume", "almaty", "vynil", "book_pink", "book_brown", "book_black", "ball", "rock", "candle", 
-    "ipad", "rubik", "tulips", "chair", "ole", "kzchoco"];
+    "ipad", "rubik", "tulips", "ole", "kzchoco", "apple-pencil"];
 const raycasterObjects = [];
 
 const raycaster = new THREE.Raycaster();
@@ -230,9 +230,10 @@ const loadingScreen = document.querySelector(".loading-screen");
 const loadingScreenButton = document.querySelector(".loading-screen-button");
 
 manager.onLoad = function () {
-    loadingScreenButton.style.border = "8px solid #071013";
-    loadingScreenButton.style.background = "#70798c";
+    loadingScreenButton.style.border = "8px solid #dfdfdf";
+    loadingScreenButton.style.background = "#303848ff";
     loadingScreenButton.style.color = "#dfdfdf";
+    loadingScreen.style.background = "#303848ff"
     loadingScreenButton.style.boxShadow = "rgba(0, 0, 0, 0.24) 0px 3px 8px";
     loadingScreenButton.textContent = "Enter!";
     loadingScreenButton.style.cursor = "pointer";
@@ -242,12 +243,12 @@ manager.onLoad = function () {
     function handleEnter() {
         if (isDisabled) return;
 
-        loadingScreenButton.style.border = "8px solid #70798c";
-        loadingScreenButton.style.background = "#dfdfdf";
-        loadingScreenButton.style.color = "#70798c";
+        loadingScreenButton.style.border = "8px solid #dfdfdf";
+        loadingScreenButton.style.background = "#303848ff";
+        loadingScreenButton.style.color = "#dfdfdf";
         loadingScreenButton.style.boxShadow = "none";
-        loadingScreenButton.textContent = "Welcome to my 3D virtual room!";
-        loadingScreen.style.background = "#dfdfdf";
+        loadingScreenButton.innerHTML = "Welcome to my 3D virtual room!<br> Interact with elements (play some music,<br> kick the ball, explore) to get to know me!";
+        loadingScreen.style.background = "#303848ff";
         isDisabled = true;
 
         playReveal();
@@ -278,16 +279,14 @@ function playReveal() {
 
     tl.to(loadingScreen, {
         scale: 0.5,
-        duration: 1.2,
+        duration: 2.0,
         delay: 0.25,
         ease: "back.in(1.8)",
     }).to(
         loadingScreen,
         {
             y: "200vh",
-            rotateX: 45,
-            rotateY: -35,
-            duration: 1.2,
+            duration: 1.3,
             ease: "back.in(1.8)",
             onComplete: () => {
                 loadingScreen.remove();
@@ -442,6 +441,7 @@ function playClickAnimation(object) {
         gsap.killTweensOf(object.rotation);
         
         if (ballRolledOut) {
+            ballRolledOut = false;
             gsap.to(object.position, {
                 z: object.userData.initialPosition.z,
                 duration: 5.0,
@@ -451,11 +451,9 @@ function playClickAnimation(object) {
                 x: object.userData.initialRotation.x,
                 duration: 5.0,
                 ease: "power2.out",
-                onComplete: () => {
-                    ballRolledOut = false;
-                }
             });
         } else {
+            ballRolledOut = true;
             gsap.to(object.position, {
                 z: object.userData.initialPosition.z - 3.5,
                 duration: 5.0,
@@ -465,9 +463,6 @@ function playClickAnimation(object) {
                 x: object.userData.initialRotation.x - Math.PI * 4,
                 duration: 5.0,
                 ease: "power2.out",
-                onComplete: () => {
-                    ballRolledOut = true;
-                }
             });
         }
     }
@@ -506,7 +501,7 @@ function playHoverAnimation(object, isHovering) {
                 y: object.userData.initialScale.y * 1.4, 
                 z: object.userData.initialScale.z * 1.4,
                 duration: 0.5,
-                ease: "bounce.out(1.8)",
+                ease: "power2.out",
             });
             gsap.to(object.position, {
                 y: object.userData.initialPosition.y + 0.2,
@@ -518,7 +513,7 @@ function playHoverAnimation(object, isHovering) {
             gsap.to(object.position, {
                 y: object.userData.initialPosition.y + 0.13,
                 duration: 0.5,
-                ease: "bounce.out(1.8)"
+                ease: "power2.out"
             });
         // vynil         
         } else if (objectName.includes('vynil')) {
@@ -527,14 +522,14 @@ function playHoverAnimation(object, isHovering) {
                 y: object.userData.initialScale.y * 1.08, 
                 z: object.userData.initialScale.z * 1.08,
                 duration: 0.5,
-                ease: "bounce.out(1.8)"
+                ease: "power2.out"
             });
             gsap.to(object.position, {
                 x: object.userData.initialPosition.x - 0.4,
                 y: object.userData.initialPosition.y - 0.4,
                 z: object.userData.initialPosition.z - 0.5,
                 duration: 0.5,
-                ease: "bounce.out(1.8)"
+                ease: "power2.out"
             });
         // candle and books
          } else if (objectName.includes('candle') || (objectName.includes('book_b')) || (objectName.includes('book_pink'))) {
@@ -543,14 +538,14 @@ function playHoverAnimation(object, isHovering) {
                 y: object.userData.initialScale.y * 1.1, 
                 z: object.userData.initialScale.z * 1.1,
                 duration: 0.5,
-                ease: "bounce.out(1.8)",
+                ease: "power2.out",
             });
             gsap.to(object.position, {
                 x: object.userData.initialPosition.x - 0.4,
                 y: object.userData.initialPosition.y + 0.1,
                 z: object.userData.initialPosition.z - 0.5,
                 duration: 0.5,
-                ease: "bounce.out(1.8)",
+                ease: "power2.out",
             });
         // about me and projects
         } else if (objectName.includes('aboutme')) {
@@ -576,7 +571,7 @@ function playHoverAnimation(object, isHovering) {
                 y: object.userData.initialScale.y * 1.1, 
                 z: object.userData.initialScale.z * 1.1,
                 duration: 0.5,
-                ease: "bounce.out(1.8)",
+                ease: "power2.out",
             });
         }
     } else {
@@ -586,21 +581,21 @@ function playHoverAnimation(object, isHovering) {
                 y: object.userData.initialScale.y, 
                 z: object.userData.initialScale.z,
                 duration: 0.5,
-                ease: "bounce.out(1.8)",
+                ease: "power2.out",
             });
             gsap.to(object.rotation, {
                 x: object.userData.initialRotation.x,
                 y: object.userData.initialRotation.y,
                 z: object.userData.initialRotation.z,
                 duration: 0.5,
-                ease: "bounce.out(1.8)",
+                ease: "power2.out",
             });
             gsap.to(object.position, {
                 x: object.userData.initialPosition.x,
                 y: object.userData.initialPosition.y,
                 z: object.userData.initialPosition.z,
                 duration: 0.5,
-                ease: "bounce.out(1.8)",
+                ease: "power2.out",
             });
         }
     }
