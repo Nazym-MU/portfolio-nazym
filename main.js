@@ -70,7 +70,9 @@ const hideModal = (modal) => {
 
 let manchesterObject = null;
 
-const clickableObjects = ["macbook", "book", "map", "ggb", "jersey", "aboutme", "projects", "resume"];
+const clickableObjects = ["macbook", "notebook_2", "map", "ggb", "jersey", "aboutme", "projects", 
+    "resume", "almaty", "vynil", "book_pink", "book_brown", "book_black", "ball", "rock", "candle", 
+    "ipad", "rubik", "tulips", "chair", "ole", "kzchoco"];
 const raycasterObjects = [];
 
 const raycaster = new THREE.Raycaster();
@@ -101,7 +103,6 @@ const textureMap = {
     rock_1: "public/textures/rock-1.webp",
     rock_2: "public/textures/rock-2.webp",
     background: "public/textures/background-texture.webp",
-    ball: "public/textures/ball.webp",
     ball: "public/textures/ball.webp",
     bed: "public/textures/bed.webp",
     candle: "public/textures/candle.webp",
@@ -333,7 +334,7 @@ loader.load(modelPath, (glb) => {
     (progress) => {
         const percentage = (progress.loaded / progress.total * 100).toFixed(2);
         if (loadingScreenButton) {
-            loadingScreenButton.textContent = `Loading... ${percentage}%`;
+            loadingScreenButton.textContent = `Loading...`;
         }
     },
     (error) => {
@@ -376,9 +377,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             projectCards.forEach(card => {
                 if (filter === 'all' || card.getAttribute('data-category') === filter) {
-                    card.style.display = 'block'
+                    card.style.display = 'block';
                 } else {
-                    card.style.display = 'none'
+                    card.style.display = 'none';
                 }
             })
         })
@@ -431,14 +432,89 @@ function playHoverAnimation(object, isHovering) {
     gsap.killTweensOf(object.rotation);
     gsap.killTweensOf(object.position);
 
+    const objectName = object.name.toLowerCase();
+
     if (isHovering) {
-        gsap.to(object.scale, {
-            x: object.userData.initialScale.x * 1.4, 
-            y: object.userData.initialScale.y * 1.4, 
-            z: object.userData.initialScale.z * 1.4,
-            duration: 0.5,
-            ease: "bounce.out(1.8)",
-        });
+        // mac
+        if (objectName.includes('macbook') || (objectName.includes('notebook_2'))) {
+            gsap.to(object.scale, {
+                x: object.userData.initialScale.x * 1.4, 
+                y: object.userData.initialScale.y * 1.4, 
+                z: object.userData.initialScale.z * 1.4,
+                duration: 0.5,
+                ease: "bounce.out(1.8)",
+            });
+            gsap.to(object.position, {
+                y: object.userData.initialPosition.y + 0.2,
+                duration: 0.5,
+                ease: "power2.out"
+            });
+        // tulips
+        } else if (objectName.includes('tulips') || (objectName.includes('rock'))) {
+            gsap.to(object.position, {
+                y: object.userData.initialPosition.y + 0.13,
+                duration: 0.5,
+                ease: "bounce.out(1.8)"
+            });
+        // vynil         
+        } else if (objectName.includes('vynil')) {
+            gsap.to(object.scale, {
+                x: object.userData.initialScale.x * 1.08, 
+                y: object.userData.initialScale.y * 1.08, 
+                z: object.userData.initialScale.z * 1.08,
+                duration: 0.5,
+                ease: "bounce.out(1.8)"
+            });
+            gsap.to(object.position, {
+                x: object.userData.initialPosition.x - 0.4,
+                y: object.userData.initialPosition.y - 0.4,
+                z: object.userData.initialPosition.z - 0.5,
+                duration: 0.5,
+                ease: "bounce.out(1.8)"
+            });
+        // candle and books
+         } else if (objectName.includes('candle') || (objectName.includes('book_b')) || (objectName.includes('book_pink'))) {
+            gsap.to(object.scale, {
+                x: object.userData.initialScale.x * 1.1, 
+                y: object.userData.initialScale.y * 1.1, 
+                z: object.userData.initialScale.z * 1.1,
+                duration: 0.5,
+                ease: "bounce.out(1.8)",
+            });
+            gsap.to(object.position, {
+                x: object.userData.initialPosition.x - 0.4,
+                y: object.userData.initialPosition.y + 0.1,
+                z: object.userData.initialPosition.z - 0.5,
+                duration: 0.5,
+                ease: "bounce.out(1.8)",
+            });
+        // about me and projects
+         } else if (objectName.includes('aboutme')) {
+                gsap.to(object.rotation, {
+                    z: object.userData.initialRotation.z + 0.05,
+                    duration: 0.5,
+                    ease: "power2.out",
+                }); 
+                gsap.to(object.position, {
+                    y: object.userData.initialPosition.y + 0.4 ,
+                    duration: 0.5,
+                    ease: "power2.out",
+                }); 
+        } else if (objectName.includes('projects')) {
+            gsap.to(object.rotation, {
+                z: object.userData.initialRotation.z - 0.05,
+                duration: 0.5,
+                ease: "power2.out",
+            });
+        } else {
+            gsap.to(object.scale, {
+                x: object.userData.initialScale.x * 1.1, 
+                y: object.userData.initialScale.y * 1.1, 
+                z: object.userData.initialScale.z * 1.1,
+                duration: 0.5,
+                ease: "bounce.out(1.8)",
+            });
+        }
     } else {
         gsap.to(object.scale, {
             x: object.userData.initialScale.x, 
@@ -448,7 +524,16 @@ function playHoverAnimation(object, isHovering) {
             ease: "bounce.out(1.8)",
         });
         gsap.to(object.rotation, {
-            y: object.userData.initialRotation.y, 
+            x: object.userData.initialRotation.x,
+            y: object.userData.initialRotation.y,
+            z: object.userData.initialRotation.z,
+            duration: 0.5,
+            ease: "bounce.out(1.8)",
+        });
+        gsap.to(object.position, {
+            x: object.userData.initialPosition.x,
+            y: object.userData.initialPosition.y,
+            z: object.userData.initialPosition.z,
             duration: 0.5,
             ease: "bounce.out(1.8)",
         });
