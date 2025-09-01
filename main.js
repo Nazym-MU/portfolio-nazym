@@ -13,7 +13,7 @@ const sizes = {
 const textureLoader = new THREE.TextureLoader();
 
 const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath('public/draco/');
+dracoLoader.setDecoderPath('draco/');
 
 // Loader
 const manager = new THREE.LoadingManager();
@@ -92,59 +92,59 @@ camera.position.set(-10, 7, 20);
 
 
 const textureMap = {
-    aboutme: "public/textures/palka-texture.webp",
-    projects: "public/textures/palka-texture.webp",
-    Cylinder: "public/textures/wall.webp",
-    book_black: "public/textures/black-book-texture.webp",
-    book_brown: "public/textures/brown-book.webp",
-    book_pink: "public/textures/book-pink-texture.webp",
-    goal_tor: "public/textures/goal-tor.webp",
-    notebook_2: "public/textures/notebook-2-texture.webp",
-    rock_1: "public/textures/rock-1.webp",
-    rock_2: "public/textures/rock-2.webp",
-    background: "public/textures/background-texture.webp",
-    ball: "public/textures/ball.webp",
-    bed: "public/textures/bed.webp",
-    candle: "public/textures/candle.webp",
-    floor: "public/textures/floor-texture.webp",
-    'frame-1': "public/textures/frame-1-texture.webp",
-    'frame-2': "public/textures/frames-texture.webp",
-    'frame-3': "public/textures/frames-texture.webp",
-    'frame-4': "public/textures/frames-texture.webp",
-    'frame-5': "public/textures/frames-texture.webp",
-    goalpost: "public/textures/goalpost.webp",
-    grass: "public/textures/grass-small.webp",
-    'grass-2': "public/textures/grass-small.webp",
-    ipad: "public/textures/ipad.webp",
-    macbook: "public/textures/mac-texture.webp",
-    shelf: "public/textures/shelf-texture.webp",
-    vynil: "public/textures/shelf-texture.webp",
-    notebook_1: "public/textures/notebook-texture.webp",
-    palka: "public/textures/palka-texture.webp",
-    pillow: "public/textures/pillow-texture.webp",
-    resume: "public/textures/resume-texture.webp",
-    roof: "public/textures/roof-texture.webp",
-    rubik: "public/textures/rubik-texture.webp",
-    rug: "public/textures/rug.webp",
-    table: "public/textures/table-texture.webp",
-    tulips: "public/textures/tulips.webp",
-    vase: "public/textures/vase-texture.webp",
-    wall: "public/textures/wall.webp",
-    field: "public/textures/roof-texture.webp",
-    chair: "public/textures/table-texture.webp",
-    'chair-wheel': "public/textures/ipad.webp",
-    phone: "public/textures/ipad.webp",
-    'bruno-frame': "public/textures/ipad.webp",
-    almaty: "public/textures/almaty.webp",
-    manchester: "public/textures/bruno.webp",
-    lingard: "public/textures/lingard.webp",
-    ole: "public/textures/ole.webp",
-    kzchoco: "public/textures/kzchoco.webp",
-    map: "public/textures/map.webp",
-    'never-gonna-stop': "public/textures/tifo.webp",
-    ggb: "public/textures/ggb.webp",
-    jersey:  "public/textures/jersey.webp",
-    'apple-pencil': "public/textures/mac-texture.webp"
+    aboutme: "textures/palka-texture.webp",
+    projects: "textures/palka-texture.webp",
+    Cylinder: "textures/wall.webp",
+    book_black: "textures/black-book-texture.webp",
+    book_brown: "textures/brown-book.webp",
+    book_pink: "textures/book-pink-texture.webp",
+    goal_tor: "textures/goal-tor.webp",
+    notebook_2: "textures/notebook-2-texture.webp",
+    rock_1: "textures/rock-1.webp",
+    rock_2: "textures/rock-2.webp",
+    background: "textures/background-texture.webp",
+    ball: "textures/ball.webp",
+    bed: "textures/bed.webp",
+    candle: "textures/candle.webp",
+    floor: "textures/floor-texture.webp",
+    'frame-1': "textures/frame-1-texture.webp",
+    'frame-2': "textures/frames-texture.webp",
+    'frame-3': "textures/frames-texture.webp",
+    'frame-4': "textures/frames-texture.webp",
+    'frame-5': "textures/frames-texture.webp",
+    goalpost: "textures/goalpost.webp",
+    grass: "textures/grass-small.webp",
+    'grass-2': "textures/grass-small.webp",
+    ipad: "textures/ipad.webp",
+    macbook: "textures/mac-texture.webp",
+    shelf: "textures/shelf-texture.webp",
+    vynil: "textures/shelf-texture.webp",
+    notebook_1: "textures/notebook-texture.webp",
+    palka: "textures/palka-texture.webp",
+    pillow: "textures/pillow-texture.webp",
+    resume: "textures/resume-texture.webp",
+    roof: "textures/roof-texture.webp",
+    rubik: "textures/rubik-texture.webp",
+    rug: "textures/rug.webp",
+    table: "textures/table-texture.webp",
+    tulips: "textures/tulips.webp",
+    vase: "textures/vase-texture.webp",
+    wall: "textures/wall.webp",
+    field: "textures/roof-texture.webp",
+    chair: "textures/table-texture.webp",
+    'chair-wheel': "textures/ipad.webp",
+    phone: "textures/ipad.webp",
+    'bruno-frame': "textures/ipad.webp",
+    almaty: "textures/almaty.webp",
+    manchester: "textures/bruno.webp",
+    lingard: "textures/lingard.webp",
+    ole: "textures/ole.webp",
+    kzchoco: "textures/kzchoco.webp",
+    map: "textures/map.webp",
+    'never-gonna-stop': "textures/tifo.webp",
+    ggb: "textures/ggb.webp",
+    jersey:  "textures/jersey.webp",
+    'apple-pencil': "textures/mac-texture.webp"
 }
 
 const loadedTextures = {};
@@ -297,7 +297,7 @@ function playReveal() {
 }
 
 
-const modelPath = "public/models/portfolio.glb";
+const modelPath = "models/portfolio.glb";
 
 loader.load(modelPath, (glb) => {
         const mesh = glb.scene;
@@ -474,7 +474,7 @@ function playClickAnimation(object) {
             isVinylPlaying = false;
         } else {
             if (!vynilAudio) {
-                vynilAudio = new Audio('public/blackbird.mp3');
+                vynilAudio = new Audio('blackbird.mp3');
             }
             vynilAudio.play();
             isVinylPlaying = true;
