@@ -203,6 +203,8 @@ function handleRaycasterInteraction() {
     if (currentIntersects.length > 0) {
         const object = currentIntersects[0].object;
 
+        playClickAnimation(object);
+
         if (object.name.includes("resume")) {
             window.open("Nazym Zhiyengaliyeva Resume.pdf", "_blank", "noopener,noreferrer");
         }
@@ -427,12 +429,74 @@ window.addEventListener("resize", () => {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
 
+let vynilAudio = null;
+let isVinylPlaying = false;
+let ballRolledOut = false;
+
+function playClickAnimation(object) {
+    const objectName = object.name.toLowerCase();
+
+    // ball
+    if (objectName.includes('ball')) {
+        gsap.killTweensOf(object.position);
+        gsap.killTweensOf(object.rotation);
+        
+        if (ballRolledOut) {
+            gsap.to(object.position, {
+                z: object.userData.initialPosition.z,
+                duration: 5.0,
+                ease: "power2.out",
+            });
+            gsap.to(object.rotation, {
+                x: object.userData.initialRotation.x,
+                duration: 5.0,
+                ease: "power2.out",
+                onComplete: () => {
+                    ballRolledOut = false;
+                }
+            });
+        } else {
+            gsap.to(object.position, {
+                z: object.userData.initialPosition.z - 3.5,
+                duration: 5.0,
+                ease: "power2.out",
+            });
+            gsap.to(object.rotation, {
+                x: object.userData.initialRotation.x - Math.PI * 4,
+                duration: 5.0,
+                ease: "power2.out",
+                onComplete: () => {
+                    ballRolledOut = true;
+                }
+            });
+        }
+    }
+    // vynil
+    else if (objectName.includes('vynil')) {
+        if (isVinylPlaying && vynilAudio) {
+            vynilAudio.pause();
+            vynilAudio.currentTime = 0;
+            isVinylPlaying = false;
+        } else {
+            if (!vynilAudio) {
+                vynilAudio = new Audio('public/blackbird.mp3');
+            }
+            vynilAudio.play();
+            isVinylPlaying = true;
+        }
+    }
+}
+
 function playHoverAnimation(object, isHovering) {
+    const objectName = object.name.toLowerCase();
+    if (objectName.includes('ball')) {
+        return;
+    }
+
     gsap.killTweensOf(object.scale);
     gsap.killTweensOf(object.rotation);
     gsap.killTweensOf(object.position);
 
-    const objectName = object.name.toLowerCase();
 
     if (isHovering) {
         // mac
@@ -489,7 +553,7 @@ function playHoverAnimation(object, isHovering) {
                 ease: "bounce.out(1.8)",
             });
         // about me and projects
-         } else if (objectName.includes('aboutme')) {
+        } else if (objectName.includes('aboutme')) {
                 gsap.to(object.rotation, {
                     z: object.userData.initialRotation.z + 0.05,
                     duration: 0.5,
@@ -516,27 +580,29 @@ function playHoverAnimation(object, isHovering) {
             });
         }
     } else {
-        gsap.to(object.scale, {
-            x: object.userData.initialScale.x, 
-            y: object.userData.initialScale.y, 
-            z: object.userData.initialScale.z,
-            duration: 0.5,
-            ease: "bounce.out(1.8)",
-        });
-        gsap.to(object.rotation, {
-            x: object.userData.initialRotation.x,
-            y: object.userData.initialRotation.y,
-            z: object.userData.initialRotation.z,
-            duration: 0.5,
-            ease: "bounce.out(1.8)",
-        });
-        gsap.to(object.position, {
-            x: object.userData.initialPosition.x,
-            y: object.userData.initialPosition.y,
-            z: object.userData.initialPosition.z,
-            duration: 0.5,
-            ease: "bounce.out(1.8)",
-        });
+        if (!objectName.includes('ball')) {
+            gsap.to(object.scale, {
+                x: object.userData.initialScale.x, 
+                y: object.userData.initialScale.y, 
+                z: object.userData.initialScale.z,
+                duration: 0.5,
+                ease: "bounce.out(1.8)",
+            });
+            gsap.to(object.rotation, {
+                x: object.userData.initialRotation.x,
+                y: object.userData.initialRotation.y,
+                z: object.userData.initialRotation.z,
+                duration: 0.5,
+                ease: "bounce.out(1.8)",
+            });
+            gsap.to(object.position, {
+                x: object.userData.initialPosition.x,
+                y: object.userData.initialPosition.y,
+                z: object.userData.initialPosition.z,
+                duration: 0.5,
+                ease: "bounce.out(1.8)",
+            });
+        }
     }
 }
 
