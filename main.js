@@ -10,6 +10,17 @@ const sizes = {
     height: window.innerHeight,
 };
 
+const textureLoader = new THREE.TextureLoader();
+
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('public/draco/');
+
+// Loader
+const manager = new THREE.LoadingManager();
+
+const loader = new GLTFLoader(manager);
+loader.setDRACOLoader(dracoLoader);
+
 const modals = {
     aboutme: document.querySelector(".modal.aboutme"),
     projects: document.querySelector(".modal.projects"),
@@ -72,14 +83,77 @@ renderer.setSize(sizes.width, sizes.height);
 renderer.setClearColor(0x000000);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xdfdfdf)
 
 const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 1, 1000);
 camera.position.set(-10, 7, 20);
+
+
+const textureMap = {
+    aboutme: "public/textures/palka-texture.webp",
+    projects: "public/textures/palka-texture.webp",
+    Cylinder: "public/textures/wall.webp",
+    book_black: "public/textures/black-book-texture.webp",
+    book_brown: "public/textures/brown-book.webp",
+    book_pink: "public/textures/book-pink-texture.webp",
+    goal_tor: "public/textures/goal-tor.webp",
+    notebook_2: "public/textures/notebook-2-texture.webp",
+    rock_1: "public/textures/rock-1.webp",
+    rock_2: "public/textures/rock-2.webp",
+    background: "public/textures/background-texture.webp",
+    ball: "public/textures/ball.webp",
+    ball: "public/textures/ball.webp",
+    bed: "public/textures/bed.webp",
+    candle: "public/textures/candle.webp",
+    floor: "public/textures/floor-texture.webp",
+    'frame-1': "public/textures/frame-1-texture.webp",
+    'frame-2': "public/textures/frames-texture.webp",
+    'frame-3': "public/textures/frames-texture.webp",
+    'frame-4': "public/textures/frames-texture.webp",
+    'frame-5': "public/textures/frames-texture.webp",
+    goalpost: "public/textures/goalpost.webp",
+    grass: "public/textures/grass-small.webp",
+    'grass-2': "public/textures/grass-small.webp",
+    ipad: "public/textures/ipad.webp",
+    macbook: "public/textures/mac-texture.webp",
+    shelf: "public/textures/shelf-texture.webp",
+    vynil: "public/textures/shelf-texture.webp",
+    notebook_1: "public/textures/notebook-texture.webp",
+    palka: "public/textures/palka-texture.webp",
+    pillow: "public/textures/pillow-texture.webp",
+    resume: "public/textures/resume-texture.webp",
+    roof: "public/textures/roof-texture.webp",
+    rubik: "public/textures/rubik-texture.webp",
+    rug: "public/textures/rug.webp",
+    table: "public/textures/table-texture.webp",
+    tulips: "public/textures/tulips.webp",
+    vase: "public/textures/vase-texture.webp",
+    wall: "public/textures/wall.webp",
+    field: "public/textures/roof-texture.webp",
+    chair: "public/textures/table-texture.webp",
+    'chair-wheel': "public/textures/ipad.webp",
+    phone: "public/textures/ipad.webp",
+    'bruno-frame': "public/textures/ipad.webp",
+    almaty: "public/textures/almaty.webp",
+    manchester: "public/textures/bruno.webp",
+    lingard: "public/textures/lingard.webp",
+    ole: "public/textures/ole.webp",
+    kzchoco: "public/textures/kzchoco.webp",
+    map: "public/textures/map.webp",
+    'never-gonna-stop': "public/textures/tifo.webp",
+    ggb: "public/textures/ggb.webp",
+    jersey:  "public/textures/jersey.webp",
+    'apple-pencil': "public/textures/mac-texture.webp"
+}
+
+const loadedTextures = {};
+
+Object.entries(textureMap).forEach(([key, path]) => {
+    const texture = textureLoader.load(path);
+    texture.flipY = false;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    loadedTextures[key] = texture;
+});
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -101,33 +175,6 @@ const groundMaterial = new THREE.MeshStandardMaterial({
     color: 0x70798c,
     side: THREE.DoubleSide
 });
-
-const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
-groundMesh.castShadow = false;
-groundMesh.receiveShadow = true;
-scene.add(groundMesh);
-
-const ambientLight = new THREE.AmbientLight(0x404080, 0.6);
-scene.add(ambientLight);
-
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-directionalLight.position.set(10, 10, 5);
-directionalLight.castShadow = true;
-scene.add(directionalLight);
-
-const directionalLight2 = new THREE.DirectionalLight(0xff6b9d, 0.5);
-directionalLight2.position.set(-10, 8, 5);
-directionalLight2.castShadow = false;
-scene.add(directionalLight2);
-
-const directionalLight3 = new THREE.DirectionalLight(0x6bcfff, 0.6);
-directionalLight3.position.set(10, 8, -5);
-directionalLight3.castShadow = false;
-scene.add(directionalLight3);
-
-const warmAmbientLight = new THREE.AmbientLight(0xffeb3b, 0.4);
-scene.add(warmAmbientLight);
-
 
 // Event listeners
 
@@ -163,7 +210,7 @@ function handleRaycasterInteraction() {
             showModal(modals.aboutme);
         } else if (object.name.includes("projects") || object.name.includes("macbook")) {
             showModal(modals.projects);
-        } else if (object.name.includes("book")) {
+        } else if (object.name.includes("notebook")) {
             showModal(modals.book);
         } else if (object.name.includes("map")) {
             showModal(modals.map);
@@ -175,7 +222,7 @@ function handleRaycasterInteraction() {
 
 window.addEventListener("click", handleRaycasterInteraction);
 
-const manager = new THREE.LoadingManager();
+
 const loadingScreen = document.querySelector(".loading-screen");
 const loadingScreenButton = document.querySelector(".loading-screen-button");
 
@@ -247,22 +294,23 @@ function playReveal() {
     );
 }
 
-// Loader
-const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
 
-const loader = new GLTFLoader(manager);
-loader.setDRACOLoader(dracoLoader);
+const modelPath = "public/models/portfolio.glb";
 
-const modelPath = "https://nazym-portfolio-assets.s3.us-east-2.amazonaws.com/portfolio.glb";
-
-loader.load(
-    modelPath,
-    (glb) => {
+loader.load(modelPath, (glb) => {
         const mesh = glb.scene;
 
         mesh.traverse((child) => {
             if (child.isMesh) {
+                Object.keys(textureMap).forEach((key) => {
+                    if (child.name.includes(key)) {
+                        const material = new THREE.MeshBasicMaterial({
+                            map: loadedTextures[key]
+                        });
+
+                        child.material = material;
+                    }
+                })
                 child.castShadow = true;
                 child.receiveShadow = true;
             }
