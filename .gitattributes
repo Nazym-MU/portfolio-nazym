@@ -1,3 +1,2 @@
-*.glb filter=lfs diff=lfs merge=lfs -text
 *.gltf filter=lfs diff=lfs merge=lfs -text
 dist/*.glb filter=lfs diff=lfs merge=lfs -text
