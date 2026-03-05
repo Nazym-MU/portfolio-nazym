@@ -30,27 +30,38 @@ const modals = {
 }
 
 let touchHappened = false;
+let isModalOpen = false;
 
-document.querySelectorAll(".close").forEach(button => {
+// Modal interactions
+document.querySelectorAll(".window-control").forEach(button => {
+    const handleAction = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const modal = button.closest(".modal");
+        
+        if (button.classList.contains('close')) {
+            hideModal(modal);
+        } else if (button.classList.contains('maximize')) {
+            modal.classList.toggle('maximized');
+        }
+    };
+
     button.addEventListener("touchend", (e) => {
         touchHappened = true;
-        e.preventDefault();
-        const modal = e.target.closest(".modal");
-        hideModal(modal);
-    }, {passive: false});
+        handleAction(e);
+    }, { passive: false });
 
     button.addEventListener("click", (e) => {
         if (touchHappened) return;
-        e.preventDefault();
-        const modal = e.target.closest(".modal");
-        hideModal(modal);
-    }, {passive: false});
+        handleAction(e);
+    }, { passive: false });
 })
 
 const showModal = (modal) => {
+    isModalOpen = true;
     modal.style.display = "block";
 
-    gsap.set(modal, {opacity: 0});
+    gsap.set(modal, { opacity: 0 });
 
     gsap.to(modal, {
         opacity: 1,
@@ -64,14 +75,16 @@ const hideModal = (modal) => {
         duration: 0.5,
         onComplete: () => {
             modal.style.display = "none";
+            modal.classList.remove('maximized');
+            isModalOpen = false;
         }
     });
 }
 
 let manchesterObject = null;
 
-const clickableObjects = ["macbook", "notebook_2", "map", "ggb", "jersey", "aboutme", "projects", 
-    "resume", "almaty", "vynil", "book_pink", "book_brown", "book_black", "ball", "rock", "candle", 
+const clickableObjects = ["macbook", "notebook_2", "map", "ggb", "jersey", "aboutme", "projects",
+    "resume", "almaty", "vynil", "book_pink", "book_brown", "book_black", "ball", "rock", "candle",
     "ipad", "rubik", "tulips", "ole", "kzchoco", "apple-pencil"];
 const raycasterObjects = [];
 
@@ -88,7 +101,19 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 1, 1000);
-camera.position.set(-10, 7, 20);
+
+function updateCameraForScreenSize() {
+    if (sizes.width < 768) {
+        camera.fov = 60;
+        camera.position.set(-15, 10, 30);
+    } else {
+        camera.fov = 45;
+        camera.position.set(-10, 7, 20);
+    }
+    camera.updateProjectionMatrix();
+}
+
+updateCameraForScreenSize();
 
 
 const textureMap = {
@@ -143,7 +168,7 @@ const textureMap = {
     map: "textures/map.webp",
     'never-gonna-stop': "textures/tifo.webp",
     ggb: "textures/ggb.webp",
-    jersey:  "textures/jersey.webp",
+    jersey: "textures/jersey.webp",
     'apple-pencil': "textures/mac-texture.webp"
 }
 
@@ -197,6 +222,7 @@ window.addEventListener("touchend", (e) => {
 }, { passive: false });
 
 function handleRaycasterInteraction() {
+    if (isModalOpen) return;
     raycaster.setFromCamera(pointer, camera);
     const currentIntersects = raycaster.intersectObjects(raycasterObjects);
 
@@ -300,38 +326,38 @@ function playReveal() {
 const modelPath = "models/portfolio.glb";
 
 loader.load(modelPath, (glb) => {
-        const mesh = glb.scene;
+    const mesh = glb.scene;
 
-        mesh.traverse((child) => {
-            if (child.isMesh) {
-                Object.keys(textureMap).forEach((key) => {
-                    if (child.name.includes(key)) {
-                        const material = new THREE.MeshBasicMaterial({
-                            map: loadedTextures[key]
-                        });
+    mesh.traverse((child) => {
+        if (child.isMesh) {
+            Object.keys(textureMap).forEach((key) => {
+                if (child.name.includes(key)) {
+                    const material = new THREE.MeshBasicMaterial({
+                        map: loadedTextures[key]
+                    });
 
-                        child.material = material;
-                    }
-                })
-                child.castShadow = true;
-                child.receiveShadow = true;
-            }
+                    child.material = material;
+                }
+            })
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
 
-            if (child.name.includes("manchester")) {
-                manchesterObject = child;
-            }
+        if (child.name.includes("manchester")) {
+            manchesterObject = child;
+        }
 
-            if (clickableObjects.some(objName => child.name.includes(objName))) {
-                raycasterObjects.push(child);
-                child.userData.initialScale = new THREE.Vector3().copy(child.scale);
-                child.userData.initialPosition = new THREE.Vector3().copy(child.position);
-                child.userData.initialRotation = new THREE.Euler().copy(child.rotation);
-            }
-        });
+        if (clickableObjects.some(objName => child.name.includes(objName))) {
+            raycasterObjects.push(child);
+            child.userData.initialScale = new THREE.Vector3().copy(child.scale);
+            child.userData.initialPosition = new THREE.Vector3().copy(child.position);
+            child.userData.initialRotation = new THREE.Euler().copy(child.rotation);
+        }
+    });
 
-        mesh.position.set(0, 1.05, -1);
-        scene.add(mesh);
-    },
+    mesh.position.set(0, 1.05, -1);
+    scene.add(mesh);
+},
     (progress) => {
         const percentage = (progress.loaded / progress.total * 100).toFixed(2);
         if (loadingScreenButton) {
@@ -347,14 +373,14 @@ loader.load(modelPath, (glb) => {
 );
 
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const searchBar = document.getElementById('project-search')
     const filterBtns = document.querySelectorAll('.filter-btn')
     const projectCards = document.querySelectorAll('.project-card')
-    
+
     // Search
     if (searchBar) {
-        searchBar.addEventListener('input', function() {
+        searchBar.addEventListener('input', function () {
             const searchTerm = this.value.toLowerCase()
             projectCards.forEach(card => {
                 const title = card.querySelector('h4').textContent.toLowerCase()
@@ -366,16 +392,16 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         })
     }
-    
+
     // Filter functionality
     filterBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             // Update active button
             filterBtns.forEach(b => b.classList.remove('active'))
             this.classList.add('active')
-            
+
             const filter = this.getAttribute('data-filter')
-            
+
             projectCards.forEach(card => {
                 if (filter === 'all' || card.getAttribute('data-category') === filter) {
                     card.style.display = 'block';
@@ -385,13 +411,12 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         })
     })
-    
+
     const modals = document.querySelectorAll('.modal')
-    const windowControls = document.querySelectorAll('.window-control')
-    
+
     modals.forEach(modal => {
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
                 if (mutation.attributeName === 'style' && modal.style.display === 'block') {
                     modal.classList.add('show')
                 } else if (mutation.attributeName === 'style' && modal.style.display === 'none') {
@@ -401,16 +426,6 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         observer.observe(modal, { attributes: true })
     })
-    
-    // Window control animations
-    windowControls.forEach(control => {
-        control.addEventListener('click', function() {
-            if (this.classList.contains('close')) {
-                const modal = this.closest('.modal')
-                modal.style.display = 'none'
-            }
-        })
-    })
 })
 
 
@@ -418,10 +433,10 @@ document.addEventListener('DOMContentLoaded', function() {
 window.addEventListener("resize", () => {
     sizes.width = window.innerWidth;
     sizes.height = window.innerHeight;
-    
+
     // Update camera
-    camera.aspect = sizes.width / sizes.height
-    camera.updateProjectionMatrix();
+    camera.aspect = sizes.width / sizes.height;
+    updateCameraForScreenSize();
 
     // Update renderer
     renderer.setSize(sizes.width, sizes.height);
@@ -439,7 +454,7 @@ function playClickAnimation(object) {
     if (objectName.includes('ball')) {
         gsap.killTweensOf(object.position);
         gsap.killTweensOf(object.rotation);
-        
+
         if (ballRolledOut) {
             ballRolledOut = false;
             gsap.to(object.position, {
@@ -497,147 +512,167 @@ function playHoverAnimation(object, isHovering) {
         // mac
         if (objectName.includes('macbook') || (objectName.includes('notebook_2'))) {
             gsap.to(object.scale, {
-                x: object.userData.initialScale.x * 1.4, 
-                y: object.userData.initialScale.y * 1.4, 
+                x: object.userData.initialScale.x * 1.4,
+                y: object.userData.initialScale.y * 1.4,
                 z: object.userData.initialScale.z * 1.4,
-                duration: 0.5,
-                ease: "power2.out",
+                duration: 0.8,
+                ease: "expo.out",
             });
             gsap.to(object.position, {
                 y: object.userData.initialPosition.y + 0.2,
-                duration: 0.5,
-                ease: "power2.out"
+                duration: 0.8,
+                ease: "expo.out"
             });
-        // tulips
+            // tulips
         } else if (objectName.includes('tulips') || (objectName.includes('rock'))) {
             gsap.to(object.position, {
                 y: object.userData.initialPosition.y + 0.13,
-                duration: 0.5,
-                ease: "power2.out"
+                duration: 0.8,
+                ease: "expo.out"
             });
-        // vynil         
+            // vynil         
         } else if (objectName.includes('vynil')) {
             gsap.to(object.scale, {
-                x: object.userData.initialScale.x * 1.08, 
-                y: object.userData.initialScale.y * 1.08, 
+                x: object.userData.initialScale.x * 1.08,
+                y: object.userData.initialScale.y * 1.08,
                 z: object.userData.initialScale.z * 1.08,
-                duration: 0.5,
-                ease: "power2.out"
+                duration: 0.8,
+                ease: "expo.out"
             });
             gsap.to(object.position, {
                 x: object.userData.initialPosition.x - 0.4,
                 y: object.userData.initialPosition.y - 0.4,
                 z: object.userData.initialPosition.z - 0.5,
-                duration: 0.5,
-                ease: "power2.out"
+                duration: 0.8,
+                ease: "expo.out"
             });
-        // candle and books
-         } else if (objectName.includes('candle') || (objectName.includes('book_b')) || (objectName.includes('book_pink'))) {
+            // candle and books
+        } else if (objectName.includes('candle') || (objectName.includes('book_b')) || (objectName.includes('book_pink'))) {
             gsap.to(object.scale, {
-                x: object.userData.initialScale.x * 1.1, 
-                y: object.userData.initialScale.y * 1.1, 
-                z: object.userData.initialScale.z * 1.1,
-                duration: 0.5,
-                ease: "power2.out",
+                x: object.userData.initialScale.x * 1.06,
+                y: object.userData.initialScale.y * 1.06,
+                z: object.userData.initialScale.z * 1.06,
+                duration: 0.8,
+                ease: "expo.out",
+            });
+            // about me and projects
+        } else if (objectName.includes('aboutme')) {
+            gsap.to(object.rotation, {
+                z: object.userData.initialRotation.z + 0.05,
+                duration: 0.8,
+                ease: "expo.out",
             });
             gsap.to(object.position, {
-                x: object.userData.initialPosition.x - 0.4,
-                y: object.userData.initialPosition.y + 0.1,
-                z: object.userData.initialPosition.z - 0.5,
-                duration: 0.5,
-                ease: "power2.out",
+                y: object.userData.initialPosition.y + 0.4,
+                duration: 0.8,
+                ease: "expo.out",
             });
-        // about me and projects
-        } else if (objectName.includes('aboutme')) {
-                gsap.to(object.rotation, {
-                    z: object.userData.initialRotation.z + 0.05,
-                    duration: 0.5,
-                    ease: "power2.out",
-                }); 
-                gsap.to(object.position, {
-                    y: object.userData.initialPosition.y + 0.4 ,
-                    duration: 0.5,
-                    ease: "power2.out",
-                }); 
         } else if (objectName.includes('projects')) {
             gsap.to(object.rotation, {
                 z: object.userData.initialRotation.z - 0.05,
-                duration: 0.5,
-                ease: "power2.out",
+                duration: 0.8,
+                ease: "expo.out",
             });
         } else {
             gsap.to(object.scale, {
-                x: object.userData.initialScale.x * 1.1, 
-                y: object.userData.initialScale.y * 1.1, 
+                x: object.userData.initialScale.x * 1.1,
+                y: object.userData.initialScale.y * 1.1,
                 z: object.userData.initialScale.z * 1.1,
-                duration: 0.5,
-                ease: "power2.out",
+                duration: 0.8,
+                ease: "expo.out",
             });
         }
     } else {
         if (!objectName.includes('ball')) {
             gsap.to(object.scale, {
-                x: object.userData.initialScale.x, 
-                y: object.userData.initialScale.y, 
+                x: object.userData.initialScale.x,
+                y: object.userData.initialScale.y,
                 z: object.userData.initialScale.z,
-                duration: 0.5,
-                ease: "power2.out",
+                duration: 0.6,
+                ease: "power3.out",
             });
             gsap.to(object.rotation, {
                 x: object.userData.initialRotation.x,
                 y: object.userData.initialRotation.y,
                 z: object.userData.initialRotation.z,
-                duration: 0.5,
-                ease: "power2.out",
+                duration: 0.6,
+                ease: "power3.out",
             });
             gsap.to(object.position, {
                 x: object.userData.initialPosition.x,
                 y: object.userData.initialPosition.y,
                 z: object.userData.initialPosition.z,
-                duration: 0.5,
-                ease: "power2.out",
+                duration: 0.6,
+                ease: "power3.out",
             });
         }
     }
 }
 
 let currentIntersectObject = null;
+let hoverGraceFrames = 0;
+const HOVER_GRACE_PERIOD = 10;
 
 const animate = () => {
     controls.update();
 
     // Animate manchester
-   if (manchesterObject) {
+    if (manchesterObject) {
         manchesterObject.rotation.y += 0.05
-   }
+    }
 
-   // Raycaster
-   raycaster.setFromCamera(pointer, camera);
-   const currentIntersects = raycaster.intersectObjects(raycasterObjects);
+    // Raycaster (with grace period to prevent jitter)
+    if (!isModalOpen) {
+        raycaster.setFromCamera(pointer, camera);
+        const currentIntersects = raycaster.intersectObjects(raycasterObjects, true);
 
-   if (currentIntersects.length > 0) {
-    const intersectedObject = currentIntersects[0].object;
+        let foundClickable = null;
+        if (currentIntersects.length > 0) {
+            let intersectedObject = currentIntersects[0].object;
 
-    if (clickableObjects.some(objName => intersectedObject.name.includes(objName))) {
-        if (currentIntersectObject != intersectedObject) {
-            if (currentIntersectObject) {
-                playHoverAnimation(currentIntersectObject, false);
+            // Find the actual clickable ancestor if it's a sub-mesh
+            let temp = intersectedObject;
+            while (temp) {
+                if (clickableObjects.some(objName => temp.name.includes(objName))) {
+                    foundClickable = temp;
+                    break;
+                }
+                temp = temp.parent;
             }
-            currentIntersectObject = intersectedObject;
-            playHoverAnimation(currentIntersectObject, true);
         }
-        document.body.style.cursor = "pointer";
+
+        if (foundClickable) {
+            hoverGraceFrames = 0;
+            if (currentIntersectObject !== foundClickable) {
+                if (currentIntersectObject) {
+                    playHoverAnimation(currentIntersectObject, false);
+                }
+                currentIntersectObject = foundClickable;
+                playHoverAnimation(currentIntersectObject, true);
+            }
+            document.body.style.cursor = "pointer";
+        } else if (currentIntersectObject) {
+            hoverGraceFrames++;
+            if (hoverGraceFrames > HOVER_GRACE_PERIOD) {
+                playHoverAnimation(currentIntersectObject, false);
+                currentIntersectObject = null;
+                hoverGraceFrames = 0;
+                document.body.style.cursor = "default";
+            } else {
+                document.body.style.cursor = "pointer";
+            }
+        } else {
+            document.body.style.cursor = "default";
+        }
     } else {
+        if (currentIntersectObject) {
+            playHoverAnimation(currentIntersectObject, false);
+            currentIntersectObject = null;
+            hoverGraceFrames = 0;
+        }
         document.body.style.cursor = "default";
     }
-  } else {
-    if (currentIntersectObject) {
-        playHoverAnimation(currentIntersectObject, false);
-        currentIntersectObject = false;
-    }
-    document.body.style.cursor = "default";
-  }
-    
+
     renderer.render(scene, camera);
 
     requestAnimationFrame(animate);

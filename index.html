@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,11 +10,11 @@
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-PHKV83PHFT"></script>
     <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
 
-    gtag('config', 'G-PHKV83PHFT');
+        gtag('config', 'G-PHKV83PHFT');
     </script>
 
     <link rel="stylesheet" href="styles.css">
@@ -28,6 +29,7 @@
     }
     </script>
 </head>
+
 <body>
     <div class="loading-screen">
         <button class="loading-screen-button">
@@ -35,7 +37,7 @@
         </button>
     </div>
     <div id="app"></div>
-    
+
     <!-- About Me Modal -->
     <div class="aboutme modal">
         <div class="modal-header">
@@ -48,23 +50,34 @@
         <div class="modal-content">
             <div class="modal-body">
                 <h1 class="modal-title">About Me</h1>
-                
+
                 <div class="about-container">
                     <div class="about-left">
                         <p class="modal-paragraph-text">
-                            Hi! I'm Nazym, a junior at Minerva University with experience in machine learning, web development, and 3D technologies. 
+                            Hi! I'm Nazym, a CS major (Math track) at Minerva University, currently pursuing my studies
+                            while traveling and working on projects in different countries (so far I've studied in the
+                            USA, Taiwan, South Korea, Argentina, and Japan). I am an incoming Software Engineering Intern at Gusto!
                         </p>
                         <p class="modal-paragraph-text" style="margin-top: 16px;">
-                            I'm currently pursuing my studies while traveling and working on projects in different countries that combine my interests in AI, web development, and creative coding. I also love football, Rubik's cubes, and physics!
+                            I'm deeply interested in hard problems like quantum mechanics and machine learning. Beyond
+                            technology, I love expressing my creativity through coding and building dynamic 3D
+                            experiences. I also love football, Rubik's cubes, and physics!
                         </p>
                     </div>
                     <div class="about-right">
                         <img src="public/images/profile.JPG" alt="me" class="profile-pic">
                         <div class="contact-info">
-                            <h3>Contact</h3>
-                            <a href="mailto:nazym@uni.minerva.edu">nazym@uni.minerva.edu</a>
-                            <p><a href="https://linkedin.com/in/zhiyengaliyeva" target="_blank">LinkedIn</p>
-                            <p><a href="https://github.com/Nazym-MU" target="_blank"></a>GitHub</p>
+                            <a href="mailto:nazym@uni.minerva.edu" class="email-link">nazym@uni.minerva.edu</a>
+                            <div class="social-links">
+                                <a href="https://linkedin.com/in/zhiyengaliyeva" target="_blank" class="social-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                                    <span>LinkedIn</span>
+                                </a>
+                                <a href="https://github.com/Nazym-MU" target="_blank" class="social-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                                    <span>GitHub</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -72,31 +85,57 @@
                 <div class="timeline">
                     <h3>Experience Timeline</h3>
                     <div class="timeline-container">
-                        <div class="timeline-horizontal">
+                        <div class="timeline-vertical">
+                            <div class="timeline-item">
+                                <h4>Research Intern</h4>
+                                <div class="company">Minerva Math Modeling Research Group</div>
+                                <div class="date">January 2026 - Present • Remote</div>
+                                <ul class="timeline-details">
+                                    <li>Working on solving Navier Stokes equations with ALE formulations and Finite
+                                        Element Method.</li>
+                                </ul>
+                            </div>
+
+                            <div class="timeline-item">
+                                <h4>Software Engineer Intern</h4>
+                                <div class="company">Nutrix AI</div>
+                                <div class="date">September 2025 - December 2025 • Buenos Aires, Argentina</div>
+                                <ul class="timeline-details">
+                                    <li>Designed and shipped 4 end-to-end product features across Go (GraphQL backend)
+                                        and React/TypeScript frontend, including gamification systems, shopping list
+                                        history, and saved recipe workflows.</li>
+                                    <li>Integrated LLM-powered recipe generation from user-provided ingredients and
+                                        titles, focusing on prompt structure, output reliability, and UX constraints.
+                                    </li>
+                                    <li>Debugged and stabilized production features by tracing resolver logic, frontend
+                                        state issues, and Firebase integrations.</li>
+                                </ul>
+                            </div>
+
+                            <div class="timeline-item">
+                                <h4>CS113 Linear Algebra Teaching Assistant</h4>
+                                <div class="company">Minerva University</div>
+                                <div class="date">September 2025 - April 2026 • Remote</div>
+                                <ul class="timeline-details">
+                                    <li>Hosted weekly office hours and mock oral exams, helping 40 students strengthen
+                                        understanding of proofs, problem sets, and key concepts.</li>
+                                    <li>Graded homework and provided detailed feedback, improving student accuracy and
+                                        comprehension across the course.</li>
+                                </ul>
+                            </div>
+
                             <div class="timeline-item">
                                 <h4>Python & Machine Learning Instructor</h4>
                                 <div class="company">iD Tech Camps</div>
                                 <div class="date">June 2025 - August 2025 • Berkeley, CA</div>
+                                <ul class="timeline-details">
+                                    <li>Taught Python & ML to high school cohorts of 24 students, guiding them
+                                        from zero experience to delivering 5-7 projects in 4 days.</li>
+                                    <li>Provided daily code reviews and debugging support, helping students refine
+                                        their apps into polished demos such as ML image classifiers and chatbots
+                                        presented at final showcases.</li>
+                                </ul>
                             </div>
-
-                            <div class="timeline-item">
-                                <h4>Tech Lead</h4>
-                                <div class="company">Google Developers Group</div>
-                                <div class="date">January 2024 - May 2024 • Seoul, South Korea</div>
-                            </div>
-                            
-                            <div class="timeline-item">
-                                <h4>Software Engineer Intern</h4>
-                                <div class="company">Jubo Health Technologies</div>
-                                <div class="date">September 2024 - December 2024 • Taipei, Taiwan</div>
-                            </div>
-                            
-                            <div class="timeline-item">
-                                <h4>Technical Project Management Intern</h4>
-                                <div class="company">Mastercard</div>
-                                <div class="date">June 2024 - August 2024 • Kazakhstan</div>
-                            </div>
-                            
                         </div>
                     </div>
                 </div>
@@ -116,81 +155,127 @@
         <div class="modal-content">
             <div class="modal-body">
                 <h1 class="modal-title">Projects</h1>
-                
+
                 <div class="search-container">
                     <input type="text" class="search-bar" placeholder="Search projects by name..." id="project-search">
                 </div>
-                
+
                 <div class="filters">
                     <button class="filter-btn active" data-filter="all">All</button>
                     <button class="filter-btn" data-filter="machine-learning">Machine Learning</button>
                     <button class="filter-btn" data-filter="web-development">Web Development</button>
                     <button class="filter-btn" data-filter="3d">3D</button>
+                    <button class="filter-btn" data-filter="notes">Notes &amp; Research</button>
                 </div>
-                
+
                 <div class="projects-grid" id="projects-grid">
                     <div class="project-card" data-category="web-development">
                         <h4>Shyraq - Language Learning Platform</h4>
                         <div class="project-stack">React, TypeScript, Next.js, Neon/Drizzle ORM</div>
-                        <div class="project-description">An interactive language learning platform with voice features, progress tracking, and gamified challenges</div>
+                        <div class="project-description">An interactive language learning platform with voice features,
+                            progress tracking, and gamified challenges</div>
                         <div class="project-buttons">
-                            <a href="https://github.com/Nazym-MU/shyraq" target="_blank" class="project-btn github">GitHub</a>
+                            <a href="https://github.com/Nazym-MU/shyraq" target="_blank"
+                                class="project-btn github">GitHub</a>
                         </div>
                     </div>
-                    
+
                     <div class="project-card" data-category="3d">
                         <h4>3D Portfolio Website</h4>
                         <div class="project-stack">Three.js, HTML, CSS, JavaScript</div>
-                        <div class="project-description">Immersive 3D portfolio showcasing my projects and experiences.</div>
+                        <div class="project-description">Immersive 3D portfolio showcasing my projects and experiences.
+                        </div>
                         <div class="project-buttons">
-                            <a href="https://github.com/Nazym-MU/portfolio-nazym" target="_blank"  class="project-btn github">GitHub</a>
+                            <a href="https://github.com/Nazym-MU/portfolio-nazym" target="_blank"
+                                class="project-btn github">GitHub</a>
                             <a href="https://www.nazym.space/" target="_blank" class="project-btn demo">Live Site</a>
-                        </div>
-                    </div>
-                    
-                    <div class="project-card" data-category="web-development">
-                        <h4>AI Adoption Assessment Tool</h4>
-                        <div class="project-stack">React, Node.js, MongoDB</div>
-                        <div class="project-description">An assessment platform for financial institutions with dynamic questioning and automated personalized PDF-reports.</div>
-                        <div class="project-buttons">
-                            <a href="https://github.com/Nazym-MU/assessment-backend" target="_blank" class="project-btn github">GitHub</a>
-                            <a href="https://mastercard-ai-solutions.vercel.app/" target="_blank" class="project-btn demo">Demo</a>
-                        </div>
-                    </div>
-                    
-                    <div class="project-card" data-category="web-development">
-                        <h4>Voiceletter.ai</h4>
-                        <div class="project-stack">OpenAI API, Swift, Node.js</div>
-                        <div class="project-description">cross-platform AI-powered news application with automatic summarization and text-to-speech conversion.</div>
-                        <div class="project-buttons">
-                            <a href="https://github.com/Nazym-MU/Voiceletter.ai" target="_blank" class="project-btn github">GitHub</a>
                         </div>
                     </div>
 
                     <div class="project-card" data-category="web-development">
-                        <h4>AI Discipline App</h4>
-                        <div class="project-stack">Next.js, TypeScript, PostgreSQL, Gemini API</div>
-                        <div class="project-description">Full-stack mental health application with voice-to-text planning, AI-powered reflection analysis, and mood tracking</div>
+                        <h4>FEM Equations Visualizer</h4>
+                        <div class="project-stack">Python, Finite Element Method, Navier-Stokes</div>
+                        <div class="project-description">Interactive visualizer for Finite Element Method equations from Navier-Stokes / ALE research. Connects equations from one to another, tracks revisions, and enables side-by-side comparison.</div>
                         <div class="project-buttons">
-                            <a href="https://github.com/Nazym-MU/lessonsoftoday" target="_blank" class="project-btn github">GitHub</a>
+                            <a href="https://github.com/Nazym-MU/interactive-fem/" target="_blank"
+                                class="project-btn github">GitHub</a>
+                            <a href="https://nazym-mu.github.io/interactive-fem/" target="_blank"
+                                class="project-btn demo">Live Site</a>
+                        </div>
+                    </div>
+
+                    <div class="project-card" data-category="notes">
+                        <h4>Obsidian MCP with Claude</h4>
+                        <div class="project-stack">Model Context Protocol, Claude Desktop, TypeScript, Obsidian</div>
+                        <div class="project-description">MCP server that lets Claude Desktop interact directly with my Obsidian vault: reads, writes, and navigates notes. Used for AI-assisted daily planning.</div>
+                        <div class="project-buttons">
+                            <a href="https://github.com/Nazym-MU/obsidian-claude" target="_blank"
+                                class="project-btn github">GitHub</a>
+                        </div>
+                    </div>
+
+                    <div class="project-card" data-category="notes">
+                        <h4>Quantum Mechanics Notes</h4>
+                        <div class="project-stack">Obsidian, LaTeX, Markdown</div>
+                        <div class="project-description">Personal Obsidian vault for quantum mechanics (NS142): interconnected notes mapping how concepts relate, from wave functions to operators. Reflects how I think through physics.</div>
+                        <div class="project-buttons">
+                            <a href="https://github.com/Nazym-MU/quantum" target="_blank"
+                                class="project-btn github">GitHub</a>
+                        </div>
+                    </div>
+
+                    <div class="project-card" data-category="notes">
+                        <h4>Real Analysis Notes</h4>
+                        <div class="project-stack">Obsidian, LaTeX, Markdown</div>
+                        <div class="project-description">Structured Obsidian vault on real analysis (CS144): proofs, definitions, and theorems linked by concept. Built for easy access of definitions and theorems.</div>
+                        <div class="project-buttons">
+                            <a href="https://github.com/Nazym-MU/real-analysis" target="_blank"
+                                class="project-btn github">GitHub</a>
+                        </div>
+                    </div>
+
+                    <div class="project-card" data-category="notes">
+                        <h4>Navier-Stokes Notes</h4>
+                        <div class="project-stack">Obsidian, LaTeX, Markdown</div>
+                        <div class="project-description">Research notes on Navier-Stokes equations with ALE formulations and FEM.</div>
+                        <div class="project-buttons">
+                            <a href="https://github.com/Nazym-MU/fluid-mechanics" target="_blank"
+                                class="project-btn github">GitHub</a>
                         </div>
                     </div>
 
                     <div class="project-card" data-category="machine-learning">
                         <h4>Neural Networks from Scratch</h4>
                         <div class="project-stack">PyTorch, Jupyter Notebook</div>
-                        <div class="project-description">Collection of detailed notebooks that implement micrograd and basic language models from fundamentals.</div>
+                        <div class="project-description">Collection of detailed notebooks that implement micrograd and
+                            basic language models from fundamentals.</div>
                         <div class="project-buttons">
-                            <a href="https://github.com/Nazym-MU/neural-nets-intro" target="_blank" class="project-btn github">GitHub</a>
+                            <a href="https://github.com/Nazym-MU/neural-nets-intro" target="_blank"
+                                class="project-btn github">GitHub</a>
                         </div>
                     </div>
 
                     <div class="project-card" data-category="machine-learning">
                         <h4>Snake Game: Reinforcement Learning</h4>
                         <div class="project-stack">PyTorch, Q-Learning</div>
-                        <div class="project-description">Reinforcement learning agent with Q-Learning neural networks that masters Snake game through trial-and-error.</div>
+                        <div class="project-description">Reinforcement learning agent with Q-Learning neural networks
+                            that masters Snake game through trial-and-error.</div>
                         <div class="project-buttons">
-                            <a href="https://github.com/Nazym-MU/snake-game-rl" target="_blank" class="project-btn github">GitHub</a>
+                            <a href="https://github.com/Nazym-MU/snake-game-rl" target="_blank"
+                                class="project-btn github">GitHub</a>
+                        </div>
+                    </div>
+
+                    <div class="project-card" data-category="web-development">
+                        <h4>AI Adoption Assessment Tool</h4>
+                        <div class="project-stack">React, Node.js, MongoDB</div>
+                        <div class="project-description">An assessment platform for financial institutions with dynamic
+                            questioning and automated personalized PDF-reports.</div>
+                        <div class="project-buttons">
+                            <a href="https://github.com/Nazym-MU/assessment-backend" target="_blank"
+                                class="project-btn github">GitHub</a>
+                            <a href="https://mastercard-ai-solutions.vercel.app/" target="_blank"
+                                class="project-btn demo">Demo</a>
                         </div>
                     </div>
                 </div>
@@ -211,7 +296,7 @@
             <div class="modal-body">
                 <h1 class="modal-title">Blog</h1>
                 <p class="modal-paragraph-text">
-                    I write about machine learning, data science, web development, and my travel experiences on Medium. 
+                    I write about machine learning, data science, web development, and my travel experiences on Medium.
                 </p>
                 <div class="blog-button-container">
                     <a href="https://medium.com/@nazym" target="_blank" class="btn btn-primary">
@@ -233,16 +318,12 @@
         </div>
         <div class="modal-content">
             <div class="modal-image-header">
-                <img
-                    class="map-image"
-                    src="public/images/map.jpeg"
-                    alt="Map"
-                />
+                <img class="map-image" src="public/images/map.jpeg" alt="Map" />
             </div>
             <div class="modal-body">
                 <h1 class="modal-title">Traveling</h1>
                 <p class="modal-paragraph-text">
-                    Through my university, I've studied in 3 countries: USA, Taiwan, and South Korea.
+                    Through my university, I've studied in 5 countries: USA, Taiwan, South Korea, Argentina, and Japan.
                     I want to travel as much as I can!
                 </p>
             </div>
@@ -260,11 +341,7 @@
         </div>
         <div class="modal-content">
             <div class="modal-image-header">
-                <img
-                    class="bruno-image"
-                    src="public/images/bruno.jpeg"
-                    alt="Bruno Fernandes"
-                />
+                <img class="bruno-image" src="public/images/bruno.jpeg" alt="Bruno Fernandes" />
             </div>
             <div class="modal-body">
                 <h1 class="modal-title">Manchester United</h1>
@@ -283,7 +360,8 @@
     <div id="experience">
         <canvas id="experience-canvas" class="experience-canvas"></canvas>
     </div>
-    
+
     <script type="module" src="./src/main.js"></script>
 </body>
+
 </html>
