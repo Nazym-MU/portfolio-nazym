@@ -149,6 +149,8 @@ canvas {
     background: transparent;
     max-height: calc(88vh - 48px);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
 
 .modal.maximized .modal-content {

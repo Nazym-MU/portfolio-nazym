@@ -195,6 +195,37 @@ controls.autoRotate = false;
 controls.target = new THREE.Vector3(0, 1, 0);
 controls.update();
 
+// Mobile: enable two-finger pan and wider view range
+function applyMobileControls() {
+    if (window.innerWidth < 768) {
+        controls.enablePan = true;
+        controls.touches = {
+            ONE: THREE.TOUCH.ROTATE,
+            TWO: THREE.TOUCH.DOLLY_PAN
+        };
+        controls.minDistance = 4;
+        controls.maxDistance = 28;
+        controls.minAzimuthAngle = -Math.PI * 0.75;
+        controls.maxAzimuthAngle = Math.PI * 0.15;
+        controls.panSpeed = 0.8;
+
+        // Clamp pan range so user can't drift too far
+        controls.addEventListener('change', () => {
+            const target = controls.target;
+            target.x = Math.max(-6, Math.min(6, target.x));
+            target.y = Math.max(-1, Math.min(5, target.y));
+            target.z = Math.max(-6, Math.min(6, target.z));
+        });
+    } else {
+        controls.enablePan = false;
+        controls.minDistance = 5;
+        controls.maxDistance = 20;
+        controls.minAzimuthAngle = -Math.PI / 2;
+        controls.maxAzimuthAngle = 0;
+    }
+}
+applyMobileControls();
+
 const groundGeometry = new THREE.CircleGeometry(12, 64);
 groundGeometry.rotateX(-Math.PI / 2);
 const groundMaterial = new THREE.MeshStandardMaterial({
@@ -211,12 +242,15 @@ window.addEventListener("mousemove", (e) => {
 });
 
 window.addEventListener("touchstart", (e) => {
+    if (e.target.closest('.modal')) return;
     e.preventDefault();
     pointer.x = (e.touches[0].clientX / sizes.width) * 2 - 1;
     pointer.y = - (e.touches[0].clientY / sizes.height) * 2 + 1;
 }, { passive: false });
 
 window.addEventListener("touchend", (e) => {
+    // Don't intercept touches inside modals
+    if (e.target.closest('.modal')) return;
     e.preventDefault();
     handleRaycasterInteraction();
 }, { passive: false });
@@ -441,6 +475,9 @@ window.addEventListener("resize", () => {
     // Update renderer
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // Re-apply mobile/desktop controls
+    applyMobileControls();
 });
 
 let vynilAudio = null;
