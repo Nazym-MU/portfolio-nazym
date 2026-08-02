@@ -102,6 +102,36 @@ const BOARD_COLUMNS = [
     { key: "done", label: "Done" },
 ];
 
+// A soft, glass-friendly palette. Projects are assigned a color by their order in
+// the data so the mapping is stable across renders (Old Trafford always the same
+// hue, etc.). Colors are used at low opacity as pill backgrounds — no neon.
+const PROJECT_COLORS = [
+    "#7dd3fc", // sky blue
+    "#fca5a5", // coral
+    "#6ee7b7", // mint
+    "#fcd34d", // amber
+    "#c4b5fd", // lilac
+    "#f9a8d4", // pink
+    "#93c5fd", // periwinkle
+    "#fdba74", // orange
+];
+
+let projectColorMap = null;
+
+// Build a stable project → color map from the tickets, once per data load.
+function getProjectColor(project) {
+    if (!projectColorMap) {
+        projectColorMap = {};
+        const order = boardData?.projects
+            ? Object.keys(boardData.projects)
+            : [...new Set((boardData?.tickets || []).map((t) => t.project).filter(Boolean))];
+        order.forEach((slug, i) => {
+            projectColorMap[slug] = PROJECT_COLORS[i % PROJECT_COLORS.length];
+        });
+    }
+    return projectColorMap[project] || "#9ca3af";
+}
+
 const EDIT_TOKEN_STORAGE_KEY = "tickets-edit-token";
 let editToken = localStorage.getItem(EDIT_TOKEN_STORAGE_KEY);
 
@@ -125,7 +155,7 @@ function loadBoardData() {
     if (boardLoading) return boardLoading;
     boardLoading = fetch("tickets.json", { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
-        .then((data) => { boardData = data; return data; })
+        .then((data) => { boardData = data; projectColorMap = null; return data; })
         .catch((err) => {
             console.error("Failed to load tickets.json:", err);
             // Do NOT cache the failure: clear boardLoading so the next open retries
@@ -138,7 +168,7 @@ function loadBoardData() {
 
 // ---- Card rendering -------------------------------------------------------
 
-function renderTicketCard(t) {
+function renderTicketCard(t, showProject = false) {
     const detail = `
         <div class="ticket-detail">
             ${t.done_when ? `<p class="ticket-detail-row"><span class="ticket-detail-label">Done when</span>${escapeHtml(t.done_when)}</p>` : ""}
@@ -146,6 +176,11 @@ function renderTicketCard(t) {
             ${t.milestone ? `<p class="ticket-detail-row"><span class="ticket-detail-label">Milestone</span>${escapeHtml(t.milestone)}</p>` : ""}
             ${Array.isArray(t.blocks) && t.blocks.length ? `<p class="ticket-detail-row"><span class="ticket-detail-label">Blocks</span>${t.blocks.map(escapeHtml).join(", ")}</p>` : ""}
         </div>`;
+    // Colored project pill — shown on the Board tab (mixed columns) so you can tell
+    // at a glance which project a card belongs to. Redundant in a story's own view.
+    const pill = showProject && t.project
+        ? `<span class="ticket-project" style="--proj:${getProjectColor(t.project)}">${escapeHtml(t.project)}</span>`
+        : "";
     return `
         <div class="ticket-card ${t.status === "done" ? "is-done" : ""}"
              data-id="${escapeHtml(t.id)}"
@@ -155,6 +190,7 @@ function renderTicketCard(t) {
                 <span class="ticket-cat">${escapeHtml(t.category || "")}</span>
             </div>
             <p class="ticket-title">${escapeHtml(t.title)}</p>
+            ${pill}
             ${detail}
         </div>`;
 }
@@ -169,7 +205,7 @@ function renderBoardView(tickets) {
         BOARD_COLUMNS.map((col) => {
             const items = tickets.filter((t) => t.status === col.key);
             const cards = items.length
-                ? items.map(renderTicketCard).join("")
+                ? items.map((t) => renderTicketCard(t, true)).join("")
                 : `<div class="board-column-empty">—</div>`;
             return `
                 <div class="board-column" data-status="${col.key}">
@@ -240,7 +276,7 @@ function renderStoryDetail(tickets, project) {
         const upcoming = mtickets.length === 0;
         const body = upcoming
             ? `<div class="phase-upcoming">Not started yet</div>`
-            : `<div class="milestone-tickets">${mtickets.map(renderTicketCard).join("")}</div>`;
+            : `<div class="milestone-tickets">${mtickets.map((t) => renderTicketCard(t)).join("")}</div>`;
         return `
             <div class="milestone-block ${upcoming ? "is-upcoming" : ""}">
                 <div class="milestone-head">

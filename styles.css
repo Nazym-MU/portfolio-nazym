@@ -813,6 +813,33 @@ canvas {
     margin: 0;
 }
 
+/* Colored project pill on Board-tab cards. --proj is set inline per project;
+   a color-dot + tinted background keep it readable on glass without going neon. */
+.ticket-project {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 9px;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: rgba(255, 255, 255, 0.9);
+    background: color-mix(in srgb, var(--proj, #9ca3af) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--proj, #9ca3af) 45%, transparent);
+    border-radius: 999px;
+    padding: 3px 10px 3px 8px;
+    max-width: 100%;
+}
+
+.ticket-project::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--proj, #9ca3af);
+    flex-shrink: 0;
+}
+
 /* Expanded card detail (revealed on click) */
 .ticket-detail {
     margin-top: 10px;
