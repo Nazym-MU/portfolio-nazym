@@ -381,6 +381,32 @@
         </div>
     </div>
 
+    <!-- Ticket Board Modal (opened by the iPad) -->
+    <div class="board modal" id="board-modal">
+        <div class="modal-header">
+            <div class="window-controls">
+                <button class="window-control close"></button>
+                <button class="window-control minimize"></button>
+                <button class="window-control maximize"></button>
+            </div>
+        </div>
+        <div class="modal-content">
+            <div class="board-body">
+                <div class="board-topbar">
+                    <div>
+                        <h1 class="board-title">Ticket Board</h1>
+                        <p class="board-subtitle">What I'm building, learning, and reading — read live from my Obsidian vault.</p>
+                    </div>
+                    <div class="board-stats" id="board-stats"><!-- filled by JS --></div>
+                </div>
+                <div class="board-columns" id="board-columns">
+                    <!-- columns + cards injected by renderBoard() -->
+                    <div class="board-empty">Loading tickets…</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="experience">
         <canvas id="experience-canvas" class="experience-canvas"></canvas>
     </div>

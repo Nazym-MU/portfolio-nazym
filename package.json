@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "tickets": "node scripts/build-tickets.js",
+    "dev": "npm run tickets && vite",
+    "build": "npm run tickets && vite build",
     "preview": "vite preview"
   },
   "keywords": [],

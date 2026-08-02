@@ -26,7 +26,8 @@ const modals = {
     projects: document.querySelector(".modal.projects"),
     book: document.querySelector(".modal.book"),
     map: document.querySelector(".modal.map"),
-    jersey: document.querySelector(".modal.jersey")
+    jersey: document.querySelector(".modal.jersey"),
+    board: document.querySelector(".modal.board")
 }
 
 let touchHappened = false;
@@ -79,6 +80,121 @@ const hideModal = (modal) => {
             isModalOpen = false;
         }
     });
+}
+
+// ---------------------------------------------------------------------------
+// Ticket board (opened by the iPad)
+// Reads public/tickets.json — produced at build time from the Obsidian vault by
+// scripts/build-tickets.js, which already filtered out private tickets. This is
+// a read view: no drag-and-drop, no editing. State changes happen in the vault.
+// ---------------------------------------------------------------------------
+const BOARD_COLUMNS = [
+    { key: "backlog", label: "Backlog" },
+    { key: "todo", label: "To Do" },
+    { key: "doing", label: "Doing" },
+    { key: "done", label: "Done" },
+];
+
+const CATEGORY_COLORS = {
+    project: "#7dd3fc",
+    learning: "#fcd34d",
+    paper: "#f9a8d4",
+    book: "#6ee7b7",
+    listen: "#c4b5fd",
+    writing: "#fca5a5",
+    admin: "#cbd5e1",
+};
+
+let boardData = null;      // cached tickets.json payload
+let boardLoading = null;   // in-flight fetch promise
+
+function escapeHtml(str) {
+    return String(str ?? "").replace(/[&<>"']/g, (c) => (
+        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+}
+
+function loadBoardData() {
+    if (boardData) return Promise.resolve(boardData);
+    if (boardLoading) return boardLoading;
+    boardLoading = fetch("tickets.json", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
+        .then((data) => { boardData = data; return data; })
+        .catch((err) => {
+            console.error("Failed to load tickets.json:", err);
+            return { tickets: [] };
+        });
+    return boardLoading;
+}
+
+function renderBoardStats(tickets) {
+    const done = tickets.filter((t) => t.status === "done").length;
+    const active = tickets.filter((t) => t.status === "todo" || t.status === "doing").length;
+    const stats = [
+        { num: tickets.length, label: "Public" },
+        { num: active, label: "Active" },
+        { num: done, label: "Done" },
+    ];
+    return stats
+        .map((s) => `<div class="board-stat"><span class="num">${s.num}</span><span class="label">${s.label}</span></div>`)
+        .join("");
+}
+
+function renderTicketCard(t) {
+    const color = CATEGORY_COLORS[t.category] || "#888";
+    const est = t.estimate ? `<span class="ticket-est">${t.estimate}m</span>` : "";
+    const doneWhen = t.done_when
+        ? `<p class="ticket-done-when">${escapeHtml(t.done_when)}</p>`
+        : "";
+    return `
+        <div class="ticket-card ${t.status === "done" ? "is-done" : ""}" style="--card-accent:${color}">
+            <div class="ticket-top">
+                <span class="ticket-id">${escapeHtml(t.id)}</span>
+                ${est}
+            </div>
+            <span class="ticket-cat">${escapeHtml(t.category || "")}</span>
+            <p class="ticket-title">${escapeHtml(t.title)}</p>
+            ${doneWhen}
+        </div>`;
+}
+
+function renderBoard(data) {
+    const tickets = (data && data.tickets) || [];
+    const statsEl = document.getElementById("board-stats");
+    const columnsEl = document.getElementById("board-columns");
+    if (!columnsEl) return;
+
+    if (statsEl) statsEl.innerHTML = renderBoardStats(tickets);
+
+    if (tickets.length === 0) {
+        columnsEl.innerHTML = `<div class="board-empty">No public tickets yet. Add some to the vault's Tickets/ folder and rebuild.</div>`;
+        return;
+    }
+
+    columnsEl.innerHTML = BOARD_COLUMNS.map((col) => {
+        const items = tickets.filter((t) => t.status === col.key);
+        const cards = items.length
+            ? items.map(renderTicketCard).join("")
+            : `<div class="board-column-empty">—</div>`;
+        return `
+            <div class="board-column" data-status="${col.key}">
+                <div class="board-column-head">
+                    <span class="board-column-name">${col.label}</span>
+                    <span class="board-column-count">${items.length}</span>
+                </div>
+                ${cards}
+            </div>`;
+    }).join("");
+}
+
+function openBoard() {
+    showModal(modals.board);
+    // Render whatever we have (or a loading state), then hydrate from the fetch.
+    if (boardData) {
+        renderBoard(boardData);
+    } else {
+        loadBoardData().then(renderBoard);
+    }
 }
 
 let manchesterObject = null;
@@ -279,6 +395,8 @@ function handleRaycasterInteraction() {
             showModal(modals.map);
         } else if (object.name.includes("jersey")) {
             showModal(modals.jersey);
+        } else if (object.name.includes("ipad")) {
+            openBoard();
         }
     }
 };

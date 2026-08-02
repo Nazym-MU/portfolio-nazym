@@ -604,3 +604,230 @@ canvas {
     .modal-body { padding: 24px; }
     .social-links { justify-content: center; }
 }
+
+/* ========================================================================
+   Ticket Board (opened by the iPad)
+   Dark-glass theme to match the room's other modals; category colors are
+   used as accents only. Renders a read-only Kanban of public tickets.
+   ======================================================================== */
+
+/* Category accent colors (from the tickets skill) */
+:root {
+    --cat-project:  #7dd3fc;  /* blue   */
+    --cat-learning: #fcd34d;  /* yellow */
+    --cat-paper:    #f9a8d4;  /* pink   */
+    --cat-book:     #6ee7b7;  /* green  */
+    --cat-listen:   #c4b5fd;  /* lilac  */
+    --cat-writing:  #fca5a5;  /* coral  */
+    --cat-admin:    #cbd5e1;  /* gray   */
+}
+
+/* The board wants more room than a text modal */
+.modal.board {
+    width: 1180px;
+    max-width: 94vw;
+    max-height: 90vh;
+}
+
+.board-body {
+    padding: 32px 36px 40px;
+    color: #e6e6e6;
+}
+
+.board-topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+}
+
+.board-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.03em;
+}
+
+.board-subtitle {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+    max-width: 460px;
+    line-height: 1.5;
+}
+
+/* Compact stat chips in the top-right */
+.board-stats {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.board-stat {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 10px 16px;
+    min-width: 78px;
+    text-align: center;
+}
+
+.board-stat .num {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.board-stat .label {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Four columns */
+.board-columns {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.board-column {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 120px;
+}
+
+.board-column-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 4px 0;
+}
+
+.board-column-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.board-column-count {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    padding: 2px 9px;
+}
+
+/* Cards */
+.ticket-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-left: 3px solid var(--card-accent, #888);
+    border-radius: 10px;
+    padding: 12px 14px 12px 15px;
+    transition: transform 0.2s ease, background 0.2s ease;
+    cursor: default;
+}
+
+.ticket-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.ticket-card.is-done { opacity: 0.62; }
+
+.ticket-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 7px;
+}
+
+.ticket-id {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--card-accent, #aaa);
+}
+
+.ticket-est {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.ticket-cat {
+    display: inline-block;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--card-accent, #aaa);
+    background: color-mix(in srgb, var(--card-accent, #888) 16%, transparent);
+    border-radius: 6px;
+    padding: 2px 7px;
+    margin-bottom: 8px;
+}
+
+.ticket-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #f2f2f2;
+    line-height: 1.35;
+    margin: 0 0 8px 0;
+}
+
+.ticket-done-when {
+    font-size: 0.74rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0;
+}
+
+.ticket-done-when::before {
+    content: "done when ";
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.62rem;
+    color: rgba(255, 255, 255, 0.32);
+}
+
+.board-empty,
+.board-column-empty {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 18px 6px;
+}
+
+.board-empty { grid-column: 1 / -1; padding: 60px; }
+
+@media (max-width: 900px) {
+    .board-columns { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .modal.board { width: 95vw; }
+    .board-body { padding: 20px 18px 28px; }
+    .board-title { font-size: 1.6rem; }
+    .board-columns { grid-template-columns: 1fr; }
+}

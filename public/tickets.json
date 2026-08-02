@@ -1,0 +1,125 @@
+{
+  "generated": "2026-08-02T21:16:22.901Z",
+  "count": 9,
+  "tickets": [
+    {
+      "id": "NZ-1",
+      "title": "Build script reads vault and emits public.json",
+      "category": "project",
+      "project": "ticket-board",
+      "milestone": "board renders real tickets",
+      "status": "done",
+      "visibility": "public",
+      "done_when": "node script parses every Tickets/*.md, keeps only visibility public, writes public.json with the parsed fields",
+      "created": "2026-08-02",
+      "estimate": 60,
+      "blocks": [
+        "NZ-2"
+      ]
+    },
+    {
+      "id": "NZ-2",
+      "title": "Render four Kanban columns from public.json",
+      "category": "project",
+      "project": "ticket-board",
+      "milestone": "board renders real tickets",
+      "status": "doing",
+      "visibility": "public",
+      "done_when": "backlog/todo/doing/done columns render every public ticket as a card with title, category color, estimate, done_when",
+      "created": "2026-08-02",
+      "estimate": 90,
+      "blocks": []
+    },
+    {
+      "id": "NZ-3",
+      "title": "Clickable iPad opens the board",
+      "category": "project",
+      "project": "ticket-board",
+      "milestone": "it lives in the 3D scene",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "clicking the iPad mesh in the 3D room opens the Kanban modal populated from public.json",
+      "created": "2026-08-02",
+      "estimate": 45,
+      "blocks": []
+    },
+    {
+      "id": "NZ-4",
+      "title": "Global post-commit hook closes tickets",
+      "category": "project",
+      "project": "ticket-board",
+      "milestone": "closing is automatic",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "a commit whose message contains \"closes NZ-x\" flips that ticket's status to done in the vault, idempotently and without blocking the commit",
+      "created": "2026-08-02",
+      "estimate": 60,
+      "blocks": []
+    },
+    {
+      "id": "NZ-5",
+      "title": "Stats panel with throughput, streak, cycle time",
+      "category": "project",
+      "project": "ticket-board",
+      "milestone": "stats",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "panel shows tickets closed per week, current streak of active days, and mean todo-to-done cycle time, all derived from public.json",
+      "created": "2026-08-02",
+      "estimate": 90,
+      "blocks": []
+    },
+    {
+      "id": "NZ-6",
+      "title": "Compute attention weights for a 4-token toy example by hand",
+      "category": "learning",
+      "project": "transformers-from-scratch",
+      "milestone": "attention makes sense",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "attention weights for a 4-token example computed by hand and matching a torch reference to 3 decimals",
+      "created": "2026-08-02",
+      "estimate": 60,
+      "blocks": []
+    },
+    {
+      "id": "NZ-7",
+      "title": "Derive the 3DGS projection Jacobian and check against finite differences",
+      "category": "paper",
+      "project": "splat-rasterizer",
+      "milestone": "one gaussian on screen",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "J written out by hand and matching a numerical finite-difference check",
+      "created": "2026-08-02",
+      "estimate": 60,
+      "blocks": []
+    },
+    {
+      "id": "NZ-8",
+      "title": "One sitting on manifolds, capture the key idea in two lines",
+      "category": "book",
+      "project": "calculus-on-manifolds",
+      "milestone": "through chapter 4",
+      "status": "done",
+      "visibility": "public",
+      "done_when": "two-line capture note written for this sitting's section",
+      "created": "2026-08-02",
+      "estimate": 60,
+      "blocks": []
+    },
+    {
+      "id": "NZ-9",
+      "title": "Outline the \"ticket board on a 3D site\" blog post",
+      "category": "writing",
+      "project": "ticket-board",
+      "milestone": "stats",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "section headings and a one-line thesis per section written",
+      "created": "2026-08-02",
+      "estimate": 45,
+      "blocks": []
+    }
+  ]
+}
