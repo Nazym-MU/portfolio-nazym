@@ -88,10 +88,12 @@ const hideModal = (modal) => {
 // scripts/build-tickets.js, which already filtered out private tickets.
 //
 // Two tabs: Stories (projects → milestones → tickets) and Board (Kanban).
-// Cards expand on click. Drag-and-drop is a READ view for visitors and only
-// unlocks in edit mode (URL ?edit=<key>), where a drop PUTs the new status to a
-// dev-only endpoint that rewrites the ticket .md in the vault. The vault stays
-// the single source of truth; the production build has no write endpoint at all.
+// Cards expand on click. Drag-and-drop is a READ view for visitors; it only
+// unlocks after the owner authenticates (Cmd/Ctrl+Shift+E → password prompt →
+// dev-only /__tickets/login exchanges the password in .env for a session
+// token). The token lives in localStorage, never in the URL, and is sent with
+// every /__tickets/update call, which persists the new status straight to the
+// vault .md. Neither endpoint exists in the production build.
 // ---------------------------------------------------------------------------
 const BOARD_COLUMNS = [
     { key: "backlog", label: "Backlog" },
@@ -100,11 +102,12 @@ const BOARD_COLUMNS = [
     { key: "done", label: "Done" },
 ];
 
-// Edit mode: drag-and-drop is enabled only when the URL carries ?edit=<key>.
-// The dev middleware validates the key server-side; this is a UI gate, not the
-// security boundary. Visitors without the key get a plain read-only board.
-const EDIT_KEY = new URLSearchParams(window.location.search).get("edit");
-const IS_EDIT = Boolean(EDIT_KEY);
+const EDIT_TOKEN_STORAGE_KEY = "tickets-edit-token";
+let editToken = localStorage.getItem(EDIT_TOKEN_STORAGE_KEY);
+
+function isEditMode() {
+    return Boolean(editToken);
+}
 
 let boardData = null;      // cached tickets.json payload
 let boardLoading = null;   // in-flight fetch promise
@@ -125,7 +128,10 @@ function loadBoardData() {
         .then((data) => { boardData = data; return data; })
         .catch((err) => {
             console.error("Failed to load tickets.json:", err);
-            return { tickets: [] };
+            // Do NOT cache the failure: clear boardLoading so the next open retries
+            // instead of being stuck on a permanently-empty board.
+            boardLoading = null;
+            throw err;
         });
     return boardLoading;
 }
@@ -143,7 +149,7 @@ function renderTicketCard(t) {
     return `
         <div class="ticket-card ${t.status === "done" ? "is-done" : ""}"
              data-id="${escapeHtml(t.id)}"
-             ${IS_EDIT ? 'draggable="true"' : ""}>
+             data-status="${escapeHtml(t.status || "")}">
             <div class="ticket-top">
                 <span class="ticket-id">${escapeHtml(t.id)}</span>
                 <span class="ticket-cat">${escapeHtml(t.category || "")}</span>
@@ -210,21 +216,42 @@ function renderStoriesList(tickets) {
 
 function renderStoryDetail(tickets, project) {
     const items = tickets.filter((t) => (t.project || "misc") === project);
-    // Group by milestone, preserving first-seen order.
+
+    // Group this project's tickets by their milestone.
     const byMilestone = new Map();
     for (const t of items) {
         const key = t.milestone || "—";
         if (!byMilestone.has(key)) byMilestone.set(key, []);
         byMilestone.get(key).push(t);
     }
-    const blocks = [...byMilestone.entries()].map(([milestone, mtickets]) => `
-        <div class="milestone-block">
-            <div class="milestone-head">
-                <span class="milestone-name">${escapeHtml(milestone)}</span>
-                <span class="milestone-count">${mtickets.length} ticket${mtickets.length === 1 ? "" : "s"}</span>
-            </div>
-            <div class="milestone-tickets">${mtickets.map(renderTicketCard).join("")}</div>
-        </div>`).join("");
+
+    // The ordered phase roadmap comes from the project note (tickets.json.projects).
+    // Show EVERY phase in order — Phase 1, 2, 3... — including ones with no tickets
+    // yet (rendered as "upcoming"), so the whole sequence is visible. Any milestone
+    // that has tickets but isn't in the roadmap gets appended so nothing is lost.
+    const roadmap = (boardData.projects && boardData.projects[project]?.milestones) || [];
+    const seen = new Set();
+    const phaseOrder = [];
+    for (const name of roadmap) { phaseOrder.push(name); seen.add(name); }
+    for (const name of byMilestone.keys()) { if (!seen.has(name)) phaseOrder.push(name); }
+
+    const blocks = phaseOrder.map((milestone, i) => {
+        const mtickets = byMilestone.get(milestone) || [];
+        const upcoming = mtickets.length === 0;
+        const body = upcoming
+            ? `<div class="phase-upcoming">Not started yet</div>`
+            : `<div class="milestone-tickets">${mtickets.map(renderTicketCard).join("")}</div>`;
+        return `
+            <div class="milestone-block ${upcoming ? "is-upcoming" : ""}">
+                <div class="milestone-head">
+                    <span class="phase-badge">Phase ${i + 1}</span>
+                    <span class="milestone-name">${escapeHtml(milestone)}</span>
+                    ${upcoming ? "" : `<span class="milestone-count">${mtickets.length} ticket${mtickets.length === 1 ? "" : "s"}</span>`}
+                </div>
+                ${body}
+            </div>`;
+    }).join("");
+
     return `
         <div class="story-detail-head">
             <button class="story-back" id="story-back">← Stories</button>
@@ -242,8 +269,8 @@ function renderBoard(data) {
 
     // Edit badge + editable class only in edit mode.
     const badge = document.getElementById("board-edit-badge");
-    if (badge) badge.style.display = IS_EDIT ? "" : "none";
-    modals.board.classList.toggle("editable", IS_EDIT);
+    if (badge) badge.style.display = isEditMode() ? "" : "none";
+    modals.board.classList.toggle("editable", isEditMode());
 
     // Tab active state
     document.querySelectorAll(".board-tab").forEach((b) =>
@@ -252,7 +279,7 @@ function renderBoard(data) {
 
     if (boardView === "board") {
         viewEl.innerHTML = renderBoardView(tickets);
-        if (IS_EDIT) wireDragAndDrop();
+        if (isEditMode()) wireDragAndDrop();
     } else if (activeStory) {
         viewEl.innerHTML = renderStoryDetail(tickets, activeStory);
     } else {
@@ -289,44 +316,128 @@ function wireBoardInteractions() {
             renderBoard(boardData);
             return;
         }
-        // Expand/collapse a ticket card (ignore while dragging)
-        const card = e.target.closest(".ticket-card");
-        if (card && !card.classList.contains("is-dragging")) {
-            card.classList.toggle("expanded");
+        // Expand/collapse a ticket card — but not the click that follows a drag.
+        if (suppressNextCardClick) {
+            suppressNextCardClick = false;
+            return;
         }
+        const card = e.target.closest(".ticket-card");
+        if (card) card.classList.toggle("expanded");
     });
 }
 
-// ---- Drag-and-drop (edit mode only) ---------------------------------------
+// ---- Drag-and-drop (edit mode only) ----------------------------------------
+// Pointer-based, not native HTML5 drag: native drag hands the card's visual
+// off to the browser (an opaque, jittery ghost image with no control over
+// easing), which is what read as "not smooth." Driving position with
+// pointermove instead means the card is a real DOM element we can transform
+// every frame — it tracks the cursor exactly and eases into place on drop.
 
-let draggedId = null;
+let dragState = null; // { id, card, startX, startY, offsetX, offsetY, placeholder }
+let suppressNextCardClick = false; // set when a real drag happens, so the trailing click doesn't also expand the card
 
 function wireDragAndDrop() {
-    const columns = document.querySelectorAll(".board-column");
-    document.querySelectorAll(".ticket-card[draggable=true]").forEach((card) => {
-        card.addEventListener("dragstart", (e) => {
-            draggedId = card.dataset.id;
+    document.querySelectorAll(".ticket-card").forEach((card) => {
+        card.addEventListener("pointerdown", onCardPointerDown);
+    });
+}
+
+function onCardPointerDown(e) {
+    // Only the primary button/touch, and not on an already-expanded card
+    // (expanded cards show detail text that should stay selectable/clickable).
+    if (e.button !== undefined && e.button !== 0) return;
+    const card = e.currentTarget;
+    if (card.classList.contains("expanded")) return;
+
+    const rect = card.getBoundingClientRect();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const offsetX = startX - rect.left;
+    const offsetY = startY - rect.top;
+
+    // Don't start a real drag until the pointer has moved a few pixels —
+    // this preserves plain clicks (which expand the card) from becoming drags.
+    let dragging = false;
+    let placeholder = null;
+
+    function onMove(ev) {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+
+        if (!dragging) {
+            if (Math.hypot(dx, dy) < 6) return;
+            dragging = true;
+
+            // Freeze the card's size, lift it out of layout, and leave a
+            // same-sized placeholder so the column doesn't jump.
+            placeholder = document.createElement("div");
+            placeholder.className = "ticket-placeholder";
+            placeholder.style.height = `${rect.height}px`;
+            card.parentElement.insertBefore(placeholder, card);
+
             card.classList.add("is-dragging");
-            e.dataTransfer.effectAllowed = "move";
+            card.style.width = `${rect.width}px`;
+            card.style.left = `${rect.left}px`;
+            card.style.top = `${rect.top}px`;
+            document.body.appendChild(card);
+
+            dragState = { id: card.dataset.id, card, offsetX, offsetY, placeholder };
+        }
+
+        card.style.left = `${ev.clientX - offsetX}px`;
+        card.style.top = `${ev.clientY - offsetY}px`;
+
+        const col = document.elementFromPoint(ev.clientX, ev.clientY)?.closest(".board-column");
+        document.querySelectorAll(".board-column.drop-target").forEach((c) => {
+            if (c !== col) c.classList.remove("drop-target");
         });
-        card.addEventListener("dragend", () => {
+        if (col) col.classList.add("drop-target");
+    }
+
+    function onUp(ev) {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+
+        if (!dragging) return;
+        suppressNextCardClick = true;
+
+        const originalStatus = card.dataset.status;
+        const col = document.elementFromPoint(ev.clientX, ev.clientY)?.closest(".board-column");
+        document.querySelectorAll(".board-column.drop-target").forEach((c) => c.classList.remove("drop-target"));
+
+        // If dropped on a different column, move the placeholder there first —
+        // that's what makes the column reflow and gives us the real landing spot.
+        if (col) col.appendChild(placeholder);
+        const settleRect = placeholder.getBoundingClientRect();
+
+        // Ease the card from the cursor position into the placeholder's spot,
+        // then swap it back into normal flow and let the real re-render take over.
+        card.style.transition = "left 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.18s ease";
+        card.style.left = `${settleRect.left}px`;
+        card.style.top = `${settleRect.top}px`;
+        card.style.transform = "scale(1) rotate(0deg)";
+
+        const newStatus = col ? col.dataset.status : originalStatus;
+
+        setTimeout(() => {
+            card.style.transition = "";
+            card.style.width = "";
+            card.style.left = "";
+            card.style.top = "";
+            card.style.transform = "";
             card.classList.remove("is-dragging");
-            draggedId = null;
-        });
-    });
-    columns.forEach((col) => {
-        col.addEventListener("dragover", (e) => {
-            e.preventDefault();
-            col.classList.add("drop-target");
-        });
-        col.addEventListener("dragleave", () => col.classList.remove("drop-target"));
-        col.addEventListener("drop", (e) => {
-            e.preventDefault();
-            col.classList.remove("drop-target");
-            const newStatus = col.dataset.status;
-            if (draggedId) moveTicket(draggedId, newStatus);
-        });
-    });
+            placeholder.remove();
+            dragState = null;
+            if (newStatus !== originalStatus) {
+                moveTicket(card.dataset.id, newStatus);
+            } else {
+                renderBoard(boardData); // snap back to its original spot
+            }
+        }, 180);
+    }
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
 }
 
 // Persist a status change to the vault via the dev-only endpoint, then re-render.
@@ -341,7 +452,7 @@ function moveTicket(id, newStatus) {
     fetch("/__tickets/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status: newStatus, key: EDIT_KEY }),
+        body: JSON.stringify({ id, status: newStatus, token: editToken }),
     })
         .then((r) => {
             if (!r.ok) throw new Error(r.status);
@@ -353,14 +464,63 @@ function moveTicket(id, newStatus) {
         });
 }
 
+// ---- Edit-mode authentication -----------------------------------------------
+// No key in the URL. Cmd/Ctrl+Shift+E prompts for the password (kept only in
+// .env, never shipped to the client); a correct password exchanges it for a
+// session token via /__tickets/login. The token — not the password — is what
+// lives in localStorage and travels with each /__tickets/update call.
+
+async function tryEnableEditMode() {
+    const password = window.prompt("Edit password:");
+    if (!password) return;
+    try {
+        const res = await fetch("/__tickets/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password }),
+        });
+        if (!res.ok) {
+            window.alert("Wrong password.");
+            return;
+        }
+        const { token } = await res.json();
+        editToken = token;
+        localStorage.setItem(EDIT_TOKEN_STORAGE_KEY, token);
+        if (boardData) renderBoard(boardData);
+    } catch (err) {
+        console.error("Edit login failed:", err);
+        window.alert("Couldn't reach the edit endpoint (is `npm run dev` running?).");
+    }
+}
+
+window.addEventListener("keydown", (e) => {
+    const isShortcut = (e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "e";
+    if (isShortcut) {
+        e.preventDefault();
+        tryEnableEditMode();
+    }
+});
+
 function openBoard() {
     showModal(modals.board);
     const hydrate = (data) => {
         renderBoard(data);
         wireBoardInteractions();
     };
-    if (boardData) hydrate(boardData);
-    else loadBoardData().then(hydrate);
+    if (boardData) {
+        hydrate(boardData);
+    } else {
+        // Show the loading state that's already in the DOM, then hydrate on arrival.
+        loadBoardData()
+            .then(hydrate)
+            .catch(() => {
+                const viewEl = document.getElementById("board-view");
+                if (viewEl) {
+                    viewEl.innerHTML =
+                        `<div class="board-empty">Couldn't load tickets. If you're running locally, make sure the dev server is up, then reopen.</div>`;
+                }
+            });
+    }
 }
 
 let manchesterObject = null;

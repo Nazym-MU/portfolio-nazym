@@ -758,12 +758,28 @@ canvas {
 
 .ticket-card.is-done { opacity: 0.55; }
 
+/* While being dragged the card is lifted out of normal flow (position: fixed,
+   left/top set from JS on every pointermove) and rendered above everything
+   else, with a stronger shadow + slight scale so it visibly "picks up". */
 .ticket-card.is-dragging {
-    opacity: 0.4;
+    position: fixed;
+    z-index: 10000;
+    margin: 0;
     cursor: grabbing;
+    transform: scale(1.04) rotate(-1deg);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.16);
+    pointer-events: none;
 }
 
 .board.editable .ticket-card { cursor: grab; }
+
+/* Placeholder left behind in the column while its card is being dragged */
+.ticket-placeholder {
+    border: 1.5px dashed rgba(255, 255, 255, 0.22);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.02);
+}
 
 .ticket-top {
     display: flex;
@@ -829,11 +845,16 @@ canvas {
     margin-bottom: 2px;
 }
 
-/* ---- Stories tab ---- */
+/* ---- Stories tab ----
+   Capped and centered so a handful of stories don't stretch into a thin,
+   overly horizontal row across the full board width. */
 .stories-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 260px));
+    justify-content: center;
     gap: 14px;
+    max-width: 780px;
+    margin: 0 auto;
 }
 
 .story-card {
@@ -921,9 +942,22 @@ canvas {
 
 .milestone-head {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 10px;
     margin-bottom: 10px;
+}
+
+/* Phase N pill — shows the sequence order at a glance in a story's detail view */
+.phase-badge {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #1a2233;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 999px;
+    padding: 3px 10px;
+    white-space: nowrap;
 }
 
 .milestone-name {
@@ -936,6 +970,21 @@ canvas {
 .milestone-count {
     font-size: 0.7rem;
     color: rgba(255, 255, 255, 0.45);
+}
+
+/* Upcoming phases (in the roadmap, no tickets yet) read as dimmed and quiet */
+.milestone-block.is-upcoming { opacity: 0.5; }
+
+.milestone-block.is-upcoming .phase-badge {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.phase-upcoming {
+    font-size: 0.76rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+    padding: 2px 2px 4px;
 }
 
 .milestone-tickets {

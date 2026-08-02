@@ -1,87 +1,46 @@
 {
-  "generated": "2026-08-02T21:52:29.792Z",
-  "count": 9,
-  "tickets": [
-    {
-      "id": "NZ-1",
-      "title": "Build script reads vault and emits public.json",
-      "category": "project",
-      "project": "ticket-board",
-      "milestone": "board renders real tickets",
-      "status": "done",
-      "visibility": "public",
-      "done_when": "node script parses every Tickets/*.md, keeps only visibility public, writes public.json with the parsed fields",
-      "created": "2026-08-02",
-      "estimate": 60,
-      "blocks": [
-        "NZ-2"
+  "generated": "2026-08-02T22:52:04.206Z",
+  "count": 15,
+  "projects": {
+    "splat-rasterizer": {
+      "milestones": [
+        "one gaussian on screen",
+        "a real scene renders",
+        "it is fast enough to be interesting",
+        "world models beyond splatting"
       ]
     },
-    {
-      "id": "NZ-2",
-      "title": "Render four Kanban columns from public.json",
-      "category": "project",
-      "project": "ticket-board",
-      "milestone": "board renders real tickets",
-      "status": "doing",
-      "visibility": "public",
-      "done_when": "backlog/todo/doing/done columns render every public ticket as a card with title, category color, estimate, done_when",
-      "created": "2026-08-02",
-      "estimate": 90,
-      "blocks": []
+    "old-trafford": {
+      "milestones": [
+        "the finished scroll-story is live"
+      ]
     },
-    {
-      "id": "NZ-3",
-      "title": "Clickable iPad opens the board",
-      "category": "project",
-      "project": "ticket-board",
-      "milestone": "it lives in the 3D scene",
-      "status": "todo",
-      "visibility": "public",
-      "done_when": "clicking the iPad mesh in the 3D room opens the Kanban modal populated from public.json",
-      "created": "2026-08-02",
-      "estimate": 45,
-      "blocks": []
+    "manchester-united-site": {
+      "milestones": [
+        "the letter opens",
+        "history timeline teaches a newcomer",
+        "the music page",
+        "player stats page",
+        "live match layer",
+        "linked up"
+      ]
     },
-    {
-      "id": "NZ-4",
-      "title": "Global post-commit hook closes tickets",
-      "category": "project",
-      "project": "ticket-board",
-      "milestone": "closing is automatic",
-      "status": "backlog",
-      "visibility": "public",
-      "done_when": "a commit whose message contains \"closes NZ-x\" flips that ticket's status to done in the vault, idempotently and without blocking the commit",
-      "created": "2026-08-02",
-      "estimate": 60,
-      "blocks": []
+    "cuda-from-scratch": {
+      "milestones": [
+        "first kernel runs",
+        "memory model clicks",
+        "something real is GPU-accelerated"
+      ]
     },
-    {
-      "id": "NZ-5",
-      "title": "Stats panel with throughput, streak, cycle time",
-      "category": "project",
-      "project": "ticket-board",
-      "milestone": "stats",
-      "status": "backlog",
-      "visibility": "public",
-      "done_when": "panel shows tickets closed per week, current streak of active days, and mean todo-to-done cycle time, all derived from public.json",
-      "created": "2026-08-02",
-      "estimate": 90,
-      "blocks": []
-    },
-    {
-      "id": "NZ-6",
-      "title": "Compute attention weights for a 4-token toy example by hand",
-      "category": "learning",
-      "project": "transformers-from-scratch",
-      "milestone": "attention makes sense",
-      "status": "todo",
-      "visibility": "public",
-      "done_when": "attention weights for a 4-token example computed by hand and matching a torch reference to 3 decimals",
-      "created": "2026-08-02",
-      "estimate": 60,
-      "blocks": []
-    },
+    "fluid-mechanics-ale": {
+      "milestones": [
+        "ALE weak form derived",
+        "FEM discretization implemented",
+        "mesh motion handled"
+      ]
+    }
+  },
+  "tickets": [
     {
       "id": "NZ-7",
       "title": "Derive the 3DGS projection Jacobian and check against finite differences",
@@ -93,32 +52,204 @@
       "done_when": "J written out by hand and matching a numerical finite-difference check",
       "created": "2026-08-02",
       "estimate": 60,
+      "blocks": [
+        "NZ-20"
+      ]
+    },
+    {
+      "id": "NZ-11",
+      "title": "Bake lighting and materials on the Old Trafford GLB",
+      "category": "project",
+      "project": "old-trafford",
+      "milestone": "the finished scroll-story is live",
+      "status": "doing",
+      "visibility": "public",
+      "done_when": "old-trafford.glb re-exported with baked lighting/materials, dropped into public/models/, and it visibly reads as lit (not flat) in the running site",
+      "created": "2026-08-02",
+      "estimate": 90,
+      "blocks": [
+        "NZ-12"
+      ]
+    },
+    {
+      "id": "NZ-12",
+      "title": "Swap the baked model into the live site",
+      "category": "project",
+      "project": "old-trafford",
+      "milestone": "the finished scroll-story is live",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "deployed site loads the newly baked old-trafford.glb and the stadium looks lit, not the current weak/placeholder version",
+      "created": "2026-08-02",
+      "estimate": 45,
       "blocks": []
     },
     {
-      "id": "NZ-8",
-      "title": "One sitting on manifolds, capture the key idea in two lines",
-      "category": "book",
-      "project": "calculus-on-manifolds",
-      "milestone": "through chapter 4",
-      "status": "done",
+      "id": "NZ-13",
+      "title": "Decide which stands/angles to present and in what order",
+      "category": "project",
+      "project": "old-trafford",
+      "milestone": "the finished scroll-story is live",
+      "status": "todo",
       "visibility": "public",
-      "done_when": "two-line capture note written for this sitting's section",
+      "done_when": "a short ordered list exists (in story.js or a note) naming each camera-preset stop and the one idea each stop should land",
+      "created": "2026-08-02",
+      "estimate": 30,
+      "blocks": [
+        "NZ-14"
+      ]
+    },
+    {
+      "id": "NZ-14",
+      "title": "Write the on-page text for each stand stop",
+      "category": "writing",
+      "project": "old-trafford",
+      "milestone": "the finished scroll-story is live",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "every stop in story.js has finished copy — no placeholder text left anywhere in the scroll-story",
+      "created": "2026-08-02",
+      "estimate": 90,
+      "blocks": []
+    },
+    {
+      "id": "NZ-15",
+      "title": "Scaffold the site with a static placeholder letter on scroll",
+      "category": "project",
+      "project": "manchester-united-site",
+      "milestone": "the letter opens",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "a new repo/site loads and scrolling reveals a static (non-animated) placeholder letter — proves the project shell and scroll wiring work before any animation is built",
+      "created": "2026-08-02",
+      "estimate": 60,
+      "blocks": [
+        "NZ-16"
+      ]
+    },
+    {
+      "id": "NZ-16",
+      "title": "Animate the letter unfolding as you scroll",
+      "category": "project",
+      "project": "manchester-united-site",
+      "milestone": "the letter opens",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "scrolling through the intro shows the letter physically unfolding (not just fading in), tied to scroll position, with placeholder text still fine at this stage",
+      "created": "2026-08-02",
+      "estimate": 90,
+      "blocks": []
+    },
+    {
+      "id": "NZ-17",
+      "title": "Write the \"Dear Manchester United\" letter",
+      "category": "writing",
+      "project": "manchester-united-site",
+      "milestone": "the letter opens",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "full letter text written, starting \"Dear Manchester United,\" finished and dropped into the site in place of placeholder copy",
       "created": "2026-08-02",
       "estimate": 60,
       "blocks": []
     },
     {
-      "id": "NZ-9",
-      "title": "Outline the \"ticket board on a 3D site\" blog post",
-      "category": "writing",
-      "project": "ticket-board",
-      "milestone": "stats",
-      "status": "backlog",
+      "id": "NZ-18",
+      "title": "Render a fixed 2D Gaussian to a bitmap, no camera",
+      "category": "project",
+      "project": "splat-rasterizer",
+      "milestone": "one gaussian on screen",
+      "status": "todo",
       "visibility": "public",
-      "done_when": "section headings and a one-line thesis per section written",
+      "done_when": "a bitmap image file shows a single 2D Gaussian blob rendered from a hardcoded mean/covariance, no camera or projection involved yet",
       "created": "2026-08-02",
       "estimate": 45,
+      "blocks": [
+        "NZ-20"
+      ]
+    },
+    {
+      "id": "NZ-19",
+      "title": "Quaternion + scale to 3x3 covariance, checked against a known rotation",
+      "category": "project",
+      "project": "splat-rasterizer",
+      "milestone": "one gaussian on screen",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "function converting (quaternion, scale) to a 3x3 covariance matrix, output verified against a hand-computed known rotation case",
+      "created": "2026-08-02",
+      "estimate": 60,
+      "blocks": [
+        "NZ-20"
+      ]
+    },
+    {
+      "id": "NZ-20",
+      "title": "Project one 3D Gaussian to a screen-space ellipse and render it",
+      "category": "project",
+      "project": "splat-rasterizer",
+      "milestone": "one gaussian on screen",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "a single 3D Gaussian, given a camera, projects to a screen-space ellipse and renders as a recognizable blob at the right screen position",
+      "created": "2026-08-02",
+      "estimate": 90,
+      "blocks": []
+    },
+    {
+      "id": "NZ-21",
+      "title": "Write and launch a vector-add CUDA kernel, verified against CPU output",
+      "category": "learning",
+      "project": "cuda-from-scratch",
+      "milestone": "first kernel runs",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "a CUDA kernel adds two arrays on the GPU and its output matches a CPU-computed reference exactly, on real hardware (not just compiled)",
+      "created": "2026-08-02",
+      "estimate": 60,
+      "blocks": [
+        "NZ-22"
+      ]
+    },
+    {
+      "id": "NZ-22",
+      "title": "Work out a thread/block/grid indexing scheme by hand for a 2D problem",
+      "category": "learning",
+      "project": "cuda-from-scratch",
+      "milestone": "first kernel runs",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "a 2D kernel (e.g. matrix element-wise op) correctly indexes every element exactly once, with the block/grid math written out by hand and matching the running result",
+      "created": "2026-08-02",
+      "estimate": 45,
+      "blocks": []
+    },
+    {
+      "id": "NZ-23",
+      "title": "Derive the ALE weak form of Navier-Stokes",
+      "category": "paper",
+      "project": "fluid-mechanics-ale",
+      "milestone": "ALE weak form derived",
+      "status": "doing",
+      "visibility": "public",
+      "done_when": "the ALE-reformulated weak form is written out by hand in full, with the mesh-velocity convective term explicit, and checked against the standard Eulerian weak form in the limiting case of zero mesh velocity",
+      "created": "2026-08-02",
+      "estimate": 90,
+      "blocks": [
+        "NZ-24"
+      ]
+    },
+    {
+      "id": "NZ-24",
+      "title": "Write up the ALE weak-form derivation cleanly",
+      "category": "writing",
+      "project": "fluid-mechanics-ale",
+      "milestone": "ALE weak form derived",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "a clean, complete writeup of the ALE weak-form derivation exists as its own note, suitable for handing to a labmate or advisor without more context",
+      "created": "2026-08-02",
+      "estimate": 60,
       "blocks": []
     }
   ]

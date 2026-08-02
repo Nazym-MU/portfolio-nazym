@@ -21,6 +21,7 @@ const VAULT =
   path.join(require('os').homedir(), 'Downloads', '2026');
 
 const TICKETS_DIR = path.join(VAULT, 'Tickets');
+const PROJECTS_DIR = path.join(VAULT, 'Projects');
 const OUT_FILE = path.join(__dirname, '..', 'public', 'tickets.json');
 
 // Fields we serialize. Anything else in the frontmatter stays private by omission.
@@ -59,6 +60,34 @@ function parseFrontmatter(raw) {
     data[key] = value;
   }
   return data;
+}
+
+/**
+ * Read a project note's ordered milestone list from `Projects/<slug>.md`.
+ * The note lists milestones under a "## Milestones" heading as:
+ *     1. **milestone name** — description
+ * We only need the ordered names (they become Phase 1, 2, 3... on the board).
+ * Returns [] if the note or the section is missing.
+ */
+function parseProjectMilestones(slug) {
+  const file = path.join(PROJECTS_DIR, `${slug}.md`);
+  if (!fs.existsSync(file)) return [];
+
+  const raw = fs.readFileSync(file, 'utf8');
+  const lines = raw.split('\n');
+  const milestones = [];
+  let inSection = false;
+
+  for (const line of lines) {
+    if (/^##\s+Milestones/i.test(line)) { inSection = true; continue; }
+    if (inSection && /^##\s+/.test(line)) break; // next heading ends the section
+    if (!inSection) continue;
+
+    // Match `1. **name** ...` and pull the bolded milestone name.
+    const m = line.match(/^\s*\d+\.\s+\*\*(.+?)\*\*/);
+    if (m) milestones.push(m[1].trim());
+  }
+  return milestones;
 }
 
 function build() {
@@ -106,9 +135,20 @@ function build() {
     return na - nb;
   });
 
+  // Full phase (milestone) roadmap per project — but only for projects that have
+  // at least one public ticket, so a fully-private project's roadmap never leaks.
+  // The board shows every phase in order, including ones with no tickets yet.
+  const publicProjects = [...new Set(tickets.map((t) => t.project).filter(Boolean))];
+  const projects = {};
+  for (const slug of publicProjects) {
+    const milestones = parseProjectMilestones(slug);
+    if (milestones.length) projects[slug] = { milestones };
+  }
+
   const payload = {
     generated: new Date().toISOString(),
     count: tickets.length,
+    projects,
     tickets,
   };
 
