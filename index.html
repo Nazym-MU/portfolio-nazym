@@ -381,6 +381,32 @@
         </div>
     </div>
 
+    <!-- Ticket Board Modal (opened by the iPad) -->
+    <div class="board modal" id="board-modal">
+        <div class="modal-header">
+            <div class="window-controls">
+                <button class="window-control close"></button>
+                <button class="window-control minimize"></button>
+                <button class="window-control maximize"></button>
+            </div>
+        </div>
+        <div class="modal-content">
+            <div class="board-body">
+                <div class="board-topbar">
+                    <h1 class="board-title">Ticket Board</h1>
+                    <div class="board-tabs" id="board-tabs">
+                        <button class="board-tab active" data-view="stories">Stories</button>
+                        <button class="board-tab" data-view="board">Board</button>
+                    </div>
+                    <span class="board-edit-badge" id="board-edit-badge" style="display:none">Edit mode</span>
+                </div>
+                <div class="board-view" id="board-view">
+                    <div class="board-empty">Loading tickets…</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="experience">
         <canvas id="experience-canvas" class="experience-canvas"></canvas>
     </div>

@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "tickets": "node scripts/build-tickets.js",
+    "tickets:publish": "node scripts/build-tickets.js && git add public/tickets.json && git commit -m \"chore: update tickets from vault\" && git push",
+    "dev": "npm run tickets && vite",
+    "build": "npm run tickets && vite build",
     "preview": "vite preview"
   },
   "keywords": [],

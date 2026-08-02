@@ -604,3 +604,413 @@ canvas {
     .modal-body { padding: 24px; }
     .social-links { justify-content: center; }
 }
+
+/* ========================================================================
+   Ticket Board (opened by the iPad)
+   Pure frosted-glass UI — no category accents, no neon. Two tabs: Stories
+   (projects) and Board (Kanban). Cards expand on click. Drag is enabled only
+   in edit mode (?edit=<key>) and persists to the vault.
+   ======================================================================== */
+
+/* The board wants more room than a text modal */
+.modal.board {
+    width: 1180px;
+    max-width: 94vw;
+    max-height: 90vh;
+}
+
+.board-body {
+    padding: 28px 32px 36px;
+    color: #eef2f8;
+}
+
+.board-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+}
+
+.board-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: -0.03em;
+}
+
+/* Tabs: Stories | Board */
+.board-tabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+}
+
+.board-tab {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding: 7px 18px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.board-tab:hover { color: rgba(255, 255, 255, 0.9); }
+
+.board-tab.active {
+    color: #1a2233;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+}
+
+/* Edit-mode indicator */
+.board-edit-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    padding: 4px 12px;
+}
+
+/* ---- Kanban columns (Board tab) ---- */
+.board-columns {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+.board-column {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    min-height: 120px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+/* Drag hover target */
+.board-column.drop-target {
+    background: rgba(255, 255, 255, 0.11);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.board-column-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 4px 0;
+}
+
+.board-column-name {
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.board-column-count {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    padding: 2px 9px;
+}
+
+/* ---- Cards: pure glass, no accent bar ---- */
+.ticket-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    padding: 13px 15px;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+}
+
+.ticket-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.13);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+}
+
+.ticket-card.is-done { opacity: 0.55; }
+
+/* While being dragged the card is lifted out of normal flow (position: fixed,
+   left/top set from JS on every pointermove) and rendered above everything
+   else, with a stronger shadow + slight scale so it visibly "picks up". */
+.ticket-card.is-dragging {
+    position: fixed;
+    z-index: 10000;
+    margin: 0;
+    cursor: grabbing;
+    transform: scale(1.04) rotate(-1deg);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.16);
+    pointer-events: none;
+}
+
+.board.editable .ticket-card { cursor: grab; }
+
+/* Placeholder left behind in the column while its card is being dragged */
+.ticket-placeholder {
+    border: 1.5px dashed rgba(255, 255, 255, 0.22);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.ticket-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.ticket-id {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.ticket-cat {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.ticket-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #f4f7fb;
+    line-height: 1.35;
+    margin: 0;
+}
+
+/* Expanded card detail (revealed on click) */
+.ticket-detail {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    display: none;
+}
+
+.ticket-card.expanded .ticket-detail { display: block; }
+.ticket-card.expanded {
+    background: rgba(255, 255, 255, 0.14);
+    cursor: default;
+}
+
+.ticket-detail-row {
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.72);
+    margin: 0 0 8px 0;
+}
+
+.ticket-detail-row:last-child { margin-bottom: 0; }
+
+.ticket-detail-label {
+    display: block;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 2px;
+}
+
+/* ---- Stories tab ----
+   Capped and centered so a handful of stories don't stretch into a thin,
+   overly horizontal row across the full board width. */
+.stories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 260px));
+    justify-content: center;
+    gap: 14px;
+    max-width: 780px;
+    margin: 0 auto;
+}
+
+.story-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    backdrop-filter: blur(6px);
+}
+
+.story-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.13);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+}
+
+.story-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f4f7fb;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.01em;
+}
+
+.story-meta {
+    font-size: 0.74rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 0 14px 0;
+}
+
+.story-progress {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.story-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.75);
+}
+
+.story-progress-label {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+/* Story detail view (after clicking a project) */
+.story-detail-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.story-back {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.85);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.story-back:hover { background: rgba(255, 255, 255, 0.12); }
+
+.story-detail-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.milestone-block { margin-bottom: 22px; }
+
+.milestone-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* Phase N pill — shows the sequence order at a glance in a story's detail view */
+.phase-badge {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #1a2233;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 999px;
+    padding: 3px 10px;
+    white-space: nowrap;
+}
+
+.milestone-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #eef2f8;
+    text-transform: capitalize;
+}
+
+.milestone-count {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Upcoming phases (in the roadmap, no tickets yet) read as dimmed and quiet */
+.milestone-block.is-upcoming { opacity: 0.5; }
+
+.milestone-block.is-upcoming .phase-badge {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.phase-upcoming {
+    font-size: 0.76rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+    padding: 2px 2px 4px;
+}
+
+.milestone-tickets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+/* Empty states */
+.board-empty,
+.board-column-empty {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 18px 6px;
+}
+
+.board-empty { grid-column: 1 / -1; padding: 60px; }
+
+@media (max-width: 900px) {
+    .board-columns { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .modal.board { width: 95vw; }
+    .board-body { padding: 20px 18px 28px; }
+    .board-title { font-size: 1.6rem; }
+    .board-columns { grid-template-columns: 1fr; }
+}
