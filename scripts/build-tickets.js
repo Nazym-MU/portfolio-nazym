@@ -92,9 +92,14 @@ function parseProjectMilestones(slug) {
 
 function build() {
   if (!fs.existsSync(TICKETS_DIR)) {
-    console.error(`No Tickets/ folder at ${TICKETS_DIR}. Set VAULT to your vault root.`);
-    // Write an empty board rather than crashing the site build.
-    fs.writeFileSync(OUT_FILE, JSON.stringify({ tickets: [], generated: new Date().toISOString() }, null, 2));
+    // No vault here — this is normal on a CI/deploy box (e.g. Vercel), which has
+    // the repo but not the Obsidian vault. The committed public/tickets.json is
+    // the source of truth in that case, so LEAVE IT ALONE. Overwriting it with an
+    // empty board is what made the deployed site render nothing. Only warn.
+    console.warn(
+      `No Tickets/ folder at ${TICKETS_DIR}; keeping the committed public/tickets.json as-is. ` +
+      `(This is expected on a deploy box without the vault.)`
+    );
     return;
   }
 
