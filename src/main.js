@@ -85,28 +85,31 @@ const hideModal = (modal) => {
 // ---------------------------------------------------------------------------
 // Ticket board (opened by the iPad)
 // Reads public/tickets.json — produced at build time from the Obsidian vault by
-// scripts/build-tickets.js, which already filtered out private tickets. This is
-// a read view: no drag-and-drop, no editing. State changes happen in the vault.
+// scripts/build-tickets.js, which already filtered out private tickets.
+//
+// Two tabs: Stories (projects → milestones → tickets) and Board (Kanban).
+// Cards expand on click. Drag-and-drop is a READ view for visitors and only
+// unlocks in edit mode (URL ?edit=<key>), where a drop PUTs the new status to a
+// dev-only endpoint that rewrites the ticket .md in the vault. The vault stays
+// the single source of truth; the production build has no write endpoint at all.
 // ---------------------------------------------------------------------------
 const BOARD_COLUMNS = [
     { key: "backlog", label: "Backlog" },
     { key: "todo", label: "To Do" },
-    { key: "doing", label: "Doing" },
+    { key: "doing", label: "In Progress" },
     { key: "done", label: "Done" },
 ];
 
-const CATEGORY_COLORS = {
-    project: "#7dd3fc",
-    learning: "#fcd34d",
-    paper: "#f9a8d4",
-    book: "#6ee7b7",
-    listen: "#c4b5fd",
-    writing: "#fca5a5",
-    admin: "#cbd5e1",
-};
+// Edit mode: drag-and-drop is enabled only when the URL carries ?edit=<key>.
+// The dev middleware validates the key server-side; this is a UI gate, not the
+// security boundary. Visitors without the key get a plain read-only board.
+const EDIT_KEY = new URLSearchParams(window.location.search).get("edit");
+const IS_EDIT = Boolean(EDIT_KEY);
 
 let boardData = null;      // cached tickets.json payload
 let boardLoading = null;   // in-flight fetch promise
+let boardView = "stories"; // "stories" | "board"
+let activeStory = null;    // project slug when drilled into a story
 
 function escapeHtml(str) {
     return String(str ?? "").replace(/[&<>"']/g, (c) => (
@@ -127,74 +130,237 @@ function loadBoardData() {
     return boardLoading;
 }
 
-function renderBoardStats(tickets) {
-    const done = tickets.filter((t) => t.status === "done").length;
-    const active = tickets.filter((t) => t.status === "todo" || t.status === "doing").length;
-    const stats = [
-        { num: tickets.length, label: "Public" },
-        { num: active, label: "Active" },
-        { num: done, label: "Done" },
-    ];
-    return stats
-        .map((s) => `<div class="board-stat"><span class="num">${s.num}</span><span class="label">${s.label}</span></div>`)
-        .join("");
-}
+// ---- Card rendering -------------------------------------------------------
 
 function renderTicketCard(t) {
-    const color = CATEGORY_COLORS[t.category] || "#888";
-    const est = t.estimate ? `<span class="ticket-est">${t.estimate}m</span>` : "";
-    const doneWhen = t.done_when
-        ? `<p class="ticket-done-when">${escapeHtml(t.done_when)}</p>`
-        : "";
+    const detail = `
+        <div class="ticket-detail">
+            ${t.done_when ? `<p class="ticket-detail-row"><span class="ticket-detail-label">Done when</span>${escapeHtml(t.done_when)}</p>` : ""}
+            ${t.project ? `<p class="ticket-detail-row"><span class="ticket-detail-label">Project</span>${escapeHtml(t.project)}</p>` : ""}
+            ${t.milestone ? `<p class="ticket-detail-row"><span class="ticket-detail-label">Milestone</span>${escapeHtml(t.milestone)}</p>` : ""}
+            ${Array.isArray(t.blocks) && t.blocks.length ? `<p class="ticket-detail-row"><span class="ticket-detail-label">Blocks</span>${t.blocks.map(escapeHtml).join(", ")}</p>` : ""}
+        </div>`;
     return `
-        <div class="ticket-card ${t.status === "done" ? "is-done" : ""}" style="--card-accent:${color}">
+        <div class="ticket-card ${t.status === "done" ? "is-done" : ""}"
+             data-id="${escapeHtml(t.id)}"
+             ${IS_EDIT ? 'draggable="true"' : ""}>
             <div class="ticket-top">
                 <span class="ticket-id">${escapeHtml(t.id)}</span>
-                ${est}
+                <span class="ticket-cat">${escapeHtml(t.category || "")}</span>
             </div>
-            <span class="ticket-cat">${escapeHtml(t.category || "")}</span>
             <p class="ticket-title">${escapeHtml(t.title)}</p>
-            ${doneWhen}
+            ${detail}
         </div>`;
 }
 
-function renderBoard(data) {
-    const tickets = (data && data.tickets) || [];
-    const statsEl = document.getElementById("board-stats");
-    const columnsEl = document.getElementById("board-columns");
-    if (!columnsEl) return;
+// ---- Board (Kanban) tab ---------------------------------------------------
 
-    if (statsEl) statsEl.innerHTML = renderBoardStats(tickets);
-
+function renderBoardView(tickets) {
     if (tickets.length === 0) {
-        columnsEl.innerHTML = `<div class="board-empty">No public tickets yet. Add some to the vault's Tickets/ folder and rebuild.</div>`;
-        return;
+        return `<div class="board-empty">No public tickets yet. Add some to the vault's Tickets/ folder and rebuild.</div>`;
     }
+    return `<div class="board-columns" id="board-columns">${
+        BOARD_COLUMNS.map((col) => {
+            const items = tickets.filter((t) => t.status === col.key);
+            const cards = items.length
+                ? items.map(renderTicketCard).join("")
+                : `<div class="board-column-empty">—</div>`;
+            return `
+                <div class="board-column" data-status="${col.key}">
+                    <div class="board-column-head">
+                        <span class="board-column-name">${col.label}</span>
+                        <span class="board-column-count">${items.length}</span>
+                    </div>
+                    ${cards}
+                </div>`;
+        }).join("")
+    }</div>`;
+}
 
-    columnsEl.innerHTML = BOARD_COLUMNS.map((col) => {
-        const items = tickets.filter((t) => t.status === col.key);
-        const cards = items.length
-            ? items.map(renderTicketCard).join("")
-            : `<div class="board-column-empty">—</div>`;
+// ---- Stories tab ----------------------------------------------------------
+
+function groupByProject(tickets) {
+    const map = new Map();
+    for (const t of tickets) {
+        const key = t.project || "misc";
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(t);
+    }
+    return map;
+}
+
+function renderStoriesList(tickets) {
+    const groups = groupByProject(tickets);
+    if (groups.size === 0) {
+        return `<div class="board-empty">No stories yet.</div>`;
+    }
+    const cards = [...groups.entries()].map(([project, items]) => {
+        const done = items.filter((t) => t.status === "done").length;
+        const pct = items.length ? Math.round((done / items.length) * 100) : 0;
         return `
-            <div class="board-column" data-status="${col.key}">
-                <div class="board-column-head">
-                    <span class="board-column-name">${col.label}</span>
-                    <span class="board-column-count">${items.length}</span>
-                </div>
-                ${cards}
+            <div class="story-card" data-project="${escapeHtml(project)}">
+                <p class="story-name">${escapeHtml(project)}</p>
+                <p class="story-meta">${items.length} ticket${items.length === 1 ? "" : "s"}</p>
+                <div class="story-progress"><div class="story-progress-fill" style="width:${pct}%"></div></div>
+                <span class="story-progress-label">${done}/${items.length} done</span>
             </div>`;
     }).join("");
+    return `<div class="stories-grid">${cards}</div>`;
+}
+
+function renderStoryDetail(tickets, project) {
+    const items = tickets.filter((t) => (t.project || "misc") === project);
+    // Group by milestone, preserving first-seen order.
+    const byMilestone = new Map();
+    for (const t of items) {
+        const key = t.milestone || "—";
+        if (!byMilestone.has(key)) byMilestone.set(key, []);
+        byMilestone.get(key).push(t);
+    }
+    const blocks = [...byMilestone.entries()].map(([milestone, mtickets]) => `
+        <div class="milestone-block">
+            <div class="milestone-head">
+                <span class="milestone-name">${escapeHtml(milestone)}</span>
+                <span class="milestone-count">${mtickets.length} ticket${mtickets.length === 1 ? "" : "s"}</span>
+            </div>
+            <div class="milestone-tickets">${mtickets.map(renderTicketCard).join("")}</div>
+        </div>`).join("");
+    return `
+        <div class="story-detail-head">
+            <button class="story-back" id="story-back">← Stories</button>
+            <h2 class="story-detail-name">${escapeHtml(project)}</h2>
+        </div>
+        ${blocks}`;
+}
+
+// ---- Top-level render + wiring --------------------------------------------
+
+function renderBoard(data) {
+    const tickets = (data && data.tickets) || [];
+    const viewEl = document.getElementById("board-view");
+    if (!viewEl) return;
+
+    // Edit badge + editable class only in edit mode.
+    const badge = document.getElementById("board-edit-badge");
+    if (badge) badge.style.display = IS_EDIT ? "" : "none";
+    modals.board.classList.toggle("editable", IS_EDIT);
+
+    // Tab active state
+    document.querySelectorAll(".board-tab").forEach((b) =>
+        b.classList.toggle("active", b.dataset.view === boardView)
+    );
+
+    if (boardView === "board") {
+        viewEl.innerHTML = renderBoardView(tickets);
+        if (IS_EDIT) wireDragAndDrop();
+    } else if (activeStory) {
+        viewEl.innerHTML = renderStoryDetail(tickets, activeStory);
+    } else {
+        viewEl.innerHTML = renderStoriesList(tickets);
+    }
+}
+
+// Card expand (click), story navigation, and tabs — one delegated listener.
+function wireBoardInteractions() {
+    const viewEl = document.getElementById("board-view");
+    const tabsEl = document.getElementById("board-tabs");
+    if (!viewEl || viewEl.dataset.wired) return;
+    viewEl.dataset.wired = "1";
+
+    tabsEl.addEventListener("click", (e) => {
+        const tab = e.target.closest(".board-tab");
+        if (!tab) return;
+        boardView = tab.dataset.view;
+        if (boardView === "stories") activeStory = null;
+        renderBoard(boardData);
+    });
+
+    viewEl.addEventListener("click", (e) => {
+        // Back out of a story
+        if (e.target.closest("#story-back")) {
+            activeStory = null;
+            renderBoard(boardData);
+            return;
+        }
+        // Open a story
+        const story = e.target.closest(".story-card");
+        if (story) {
+            activeStory = story.dataset.project;
+            renderBoard(boardData);
+            return;
+        }
+        // Expand/collapse a ticket card (ignore while dragging)
+        const card = e.target.closest(".ticket-card");
+        if (card && !card.classList.contains("is-dragging")) {
+            card.classList.toggle("expanded");
+        }
+    });
+}
+
+// ---- Drag-and-drop (edit mode only) ---------------------------------------
+
+let draggedId = null;
+
+function wireDragAndDrop() {
+    const columns = document.querySelectorAll(".board-column");
+    document.querySelectorAll(".ticket-card[draggable=true]").forEach((card) => {
+        card.addEventListener("dragstart", (e) => {
+            draggedId = card.dataset.id;
+            card.classList.add("is-dragging");
+            e.dataTransfer.effectAllowed = "move";
+        });
+        card.addEventListener("dragend", () => {
+            card.classList.remove("is-dragging");
+            draggedId = null;
+        });
+    });
+    columns.forEach((col) => {
+        col.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            col.classList.add("drop-target");
+        });
+        col.addEventListener("dragleave", () => col.classList.remove("drop-target"));
+        col.addEventListener("drop", (e) => {
+            e.preventDefault();
+            col.classList.remove("drop-target");
+            const newStatus = col.dataset.status;
+            if (draggedId) moveTicket(draggedId, newStatus);
+        });
+    });
+}
+
+// Persist a status change to the vault via the dev-only endpoint, then re-render.
+function moveTicket(id, newStatus) {
+    const ticket = boardData.tickets.find((t) => t.id === id);
+    if (!ticket || ticket.status === newStatus) return;
+
+    const previous = ticket.status;
+    ticket.status = newStatus; // optimistic
+    renderBoard(boardData);
+
+    fetch("/__tickets/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: newStatus, key: EDIT_KEY }),
+    })
+        .then((r) => {
+            if (!r.ok) throw new Error(r.status);
+        })
+        .catch((err) => {
+            console.error("Failed to persist move, reverting:", err);
+            ticket.status = previous; // roll back on failure
+            renderBoard(boardData);
+        });
 }
 
 function openBoard() {
     showModal(modals.board);
-    // Render whatever we have (or a loading state), then hydrate from the fetch.
-    if (boardData) {
-        renderBoard(boardData);
-    } else {
-        loadBoardData().then(renderBoard);
-    }
+    const hydrate = (data) => {
+        renderBoard(data);
+        wireBoardInteractions();
+    };
+    if (boardData) hydrate(boardData);
+    else loadBoardData().then(hydrate);
 }
 
 let manchesterObject = null;

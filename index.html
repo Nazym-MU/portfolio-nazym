@@ -393,14 +393,14 @@
         <div class="modal-content">
             <div class="board-body">
                 <div class="board-topbar">
-                    <div>
-                        <h1 class="board-title">Ticket Board</h1>
-                        <p class="board-subtitle">What I'm building, learning, and reading — read live from my Obsidian vault.</p>
+                    <h1 class="board-title">Ticket Board</h1>
+                    <div class="board-tabs" id="board-tabs">
+                        <button class="board-tab active" data-view="stories">Stories</button>
+                        <button class="board-tab" data-view="board">Board</button>
                     </div>
-                    <div class="board-stats" id="board-stats"><!-- filled by JS --></div>
+                    <span class="board-edit-badge" id="board-edit-badge" style="display:none">Edit mode</span>
                 </div>
-                <div class="board-columns" id="board-columns">
-                    <!-- columns + cards injected by renderBoard() -->
+                <div class="board-view" id="board-view">
                     <div class="board-empty">Loading tickets…</div>
                 </div>
             </div>

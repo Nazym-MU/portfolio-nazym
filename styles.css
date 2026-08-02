@@ -607,20 +607,10 @@ canvas {
 
 /* ========================================================================
    Ticket Board (opened by the iPad)
-   Dark-glass theme to match the room's other modals; category colors are
-   used as accents only. Renders a read-only Kanban of public tickets.
+   Pure frosted-glass UI — no category accents, no neon. Two tabs: Stories
+   (projects) and Board (Kanban). Cards expand on click. Drag is enabled only
+   in edit mode (?edit=<key>) and persists to the vault.
    ======================================================================== */
-
-/* Category accent colors (from the tickets skill) */
-:root {
-    --cat-project:  #7dd3fc;  /* blue   */
-    --cat-learning: #fcd34d;  /* yellow */
-    --cat-paper:    #f9a8d4;  /* pink   */
-    --cat-book:     #6ee7b7;  /* green  */
-    --cat-listen:   #c4b5fd;  /* lilac  */
-    --cat-writing:  #fca5a5;  /* coral  */
-    --cat-admin:    #cbd5e1;  /* gray   */
-}
 
 /* The board wants more room than a text modal */
 .modal.board {
@@ -630,85 +620,98 @@ canvas {
 }
 
 .board-body {
-    padding: 32px 36px 40px;
-    color: #e6e6e6;
+    padding: 28px 32px 36px;
+    color: #eef2f8;
 }
 
 .board-topbar {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    gap: 24px;
+    gap: 20px;
     flex-wrap: wrap;
-    margin-bottom: 28px;
+    margin-bottom: 22px;
 }
 
 .board-title {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 2rem;
+    font-size: 1.9rem;
     font-weight: 700;
     color: #ffffff;
-    margin: 0 0 6px 0;
+    margin: 0;
     letter-spacing: -0.03em;
 }
 
-.board-subtitle {
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.55);
-    margin: 0;
-    max-width: 460px;
-    line-height: 1.5;
-}
-
-/* Compact stat chips in the top-right */
-.board-stats {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.board-stat {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--glass-border);
+/* Tabs: Stories | Board */
+.board-tabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 12px;
-    padding: 10px 16px;
-    min-width: 78px;
-    text-align: center;
+    backdrop-filter: blur(8px);
 }
 
-.board-stat .num {
-    display: block;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #ffffff;
-    line-height: 1;
+.board-tab {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding: 7px 18px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease;
 }
 
-.board-stat .label {
-    display: block;
-    margin-top: 4px;
+.board-tab:hover { color: rgba(255, 255, 255, 0.9); }
+
+.board-tab.active {
+    color: #1a2233;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+}
+
+/* Edit-mode indicator */
+.board-edit-badge {
     font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    padding: 4px 12px;
 }
 
-/* Four columns */
+/* ---- Kanban columns (Board tab) ---- */
 .board-columns {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: 14px;
 }
 
 .board-column {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--glass-border);
-    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
     padding: 14px 12px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 11px;
     min-height: 120px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+/* Drag hover target */
+.board-column.drop-target {
+    background: rgba(255, 255, 255, 0.11);
+    border-color: rgba(255, 255, 255, 0.35);
 }
 
 .board-column-head {
@@ -719,98 +722,229 @@ canvas {
 }
 
 .board-column-name {
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.09em;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.62);
 }
 
 .board-column-count {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.4);
-    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 999px;
     padding: 2px 9px;
 }
 
-/* Cards */
+/* ---- Cards: pure glass, no accent bar ---- */
 .ticket-card {
     position: relative;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--glass-border);
-    border-left: 3px solid var(--card-accent, #888);
-    border-radius: 10px;
-    padding: 12px 14px 12px 15px;
-    transition: transform 0.2s ease, background 0.2s ease;
-    cursor: default;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    padding: 13px 15px;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
 }
 
 .ticket-card:hover {
     transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.13);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
 }
 
-.ticket-card.is-done { opacity: 0.62; }
+.ticket-card.is-done { opacity: 0.55; }
+
+.ticket-card.is-dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+}
+
+.board.editable .ticket-card { cursor: grab; }
 
 .ticket-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    margin-bottom: 7px;
+    margin-bottom: 6px;
 }
 
 .ticket-id {
     font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 600;
     letter-spacing: 0.03em;
-    color: var(--card-accent, #aaa);
-}
-
-.ticket-est {
-    font-size: 0.68rem;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.55);
 }
 
 .ticket-cat {
-    display: inline-block;
-    font-size: 0.62rem;
+    font-size: 0.6rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--card-accent, #aaa);
-    background: color-mix(in srgb, var(--card-accent, #888) 16%, transparent);
-    border-radius: 6px;
-    padding: 2px 7px;
-    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .ticket-title {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 600;
-    color: #f2f2f2;
+    color: #f4f7fb;
     line-height: 1.35;
-    margin: 0 0 8px 0;
-}
-
-.ticket-done-when {
-    font-size: 0.74rem;
-    line-height: 1.45;
-    color: rgba(255, 255, 255, 0.45);
     margin: 0;
 }
 
-.ticket-done-when::before {
-    content: "done when ";
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-size: 0.62rem;
-    color: rgba(255, 255, 255, 0.32);
+/* Expanded card detail (revealed on click) */
+.ticket-detail {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    display: none;
 }
 
+.ticket-card.expanded .ticket-detail { display: block; }
+.ticket-card.expanded {
+    background: rgba(255, 255, 255, 0.14);
+    cursor: default;
+}
+
+.ticket-detail-row {
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.72);
+    margin: 0 0 8px 0;
+}
+
+.ticket-detail-row:last-child { margin-bottom: 0; }
+
+.ticket-detail-label {
+    display: block;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 2px;
+}
+
+/* ---- Stories tab ---- */
+.stories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+}
+
+.story-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    backdrop-filter: blur(6px);
+}
+
+.story-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.13);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+}
+
+.story-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f4f7fb;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.01em;
+}
+
+.story-meta {
+    font-size: 0.74rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 0 14px 0;
+}
+
+.story-progress {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.story-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.75);
+}
+
+.story-progress-label {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+/* Story detail view (after clicking a project) */
+.story-detail-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.story-back {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.85);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.story-back:hover { background: rgba(255, 255, 255, 0.12); }
+
+.story-detail-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.milestone-block { margin-bottom: 22px; }
+
+.milestone-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.milestone-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #eef2f8;
+    text-transform: capitalize;
+}
+
+.milestone-count {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.milestone-tickets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+/* Empty states */
 .board-empty,
 .board-column-empty {
     color: rgba(255, 255, 255, 0.35);
