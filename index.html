@@ -17,6 +17,11 @@
         gtag('config', 'G-PHKV83PHFT');
     </script>
 
+    <!-- Handwriting webfont for the sketch landing copy (real HTML text over the canvas). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Square+Peg&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="styles.css">
     <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
     <script type="importmap">
@@ -31,10 +36,55 @@
 </head>
 
 <body>
-    <div class="loading-screen">
-        <button class="loading-screen-button">
-            Loading...
-        </button>
+    <!-- Sketch landing page: torn-sketchbook cover that solves a Rubik's cube and
+         transitions into the room scene on the same canvas. Built in src/landing.js. -->
+    <div class="sketch-landing" id="sketch-landing" aria-label="Introduction">
+        <!-- Sketch cube renders here (desktop/tablet). Sits behind the paper overlay. -->
+        <canvas id="sketch-canvas" class="sketch-canvas" aria-hidden="true"></canvas>
+        <div class="sketch-paper" id="sketch-paper" aria-hidden="true"></div>
+        <div class="sketch-copy" id="sketch-copy">
+            <p class="sketch-line">
+                Hi, I am Nazym. Based in SF.<br>
+                CS major on paper, math and physics major at heart.<br>
+                The CS I actually use, I taught myself, and it held up through every internship.<br>
+                If you're short on time, here's my <a class="sketch-resume" href="Nazym Zhiyengaliyeva Resume.pdf" target="_blank" rel="noopener noreferrer">resume</a>.
+            </p>
+            <p class="sketch-line">
+                Thanks for stopping by, but I'm more than what my resume tells you.<br>
+                My world is an unsolved puzzle. There's a lot going on in there. Solve it and step inside.
+            </p>
+        </div>
+        <!-- Handwritten cue to the cube's right: decorative arrow pointing down-left
+             at the cube (solid triangle head so it reads as an arrow). Hidden on mobile. -->
+        <div class="sketch-cue" id="sketch-cue" aria-hidden="true">
+            <svg viewBox="0 0 90 70" width="90" height="70" fill="none" aria-hidden="true">
+                <path d="M78 8 C 62 12, 40 24, 22 44" stroke="#2b2b2b" stroke-width="2.2"
+                      stroke-linecap="round" fill="none" />
+                <path d="M14 54 L 27 48 L 17 40 Z" fill="#2b2b2b" stroke="#2b2b2b"
+                      stroke-width="1" stroke-linejoin="round" />
+            </svg>
+            <span class="sketch-cue-label">click me</span>
+        </div>
+        <!-- Mobile fallback: a static SVG sketch of a solved cube plus an "enter" button.
+             3D + handwriting on a small screen is rough, so below the breakpoint we show
+             this instead. Copy + resume link above stay intact and accessible. -->
+        <div class="sketch-mobile" id="sketch-mobile" aria-hidden="true">
+            <svg class="sketch-mobile-cube" viewBox="0 0 120 130" width="150" height="163" role="img"
+                 aria-label="Hand-drawn Rubik's cube">
+                <g fill="none" stroke="#2b2b2b" stroke-width="2.4" stroke-linejoin="round">
+                    <!-- top face -->
+                    <path d="M60 8 L112 30 L60 52 L8 30 Z" fill="#c94f4a" />
+                    <path d="M42.7 16 L94.7 38 M25.3 24 L77.3 46 M42 44 L94 22 M25 36 L77 14" stroke-width="1.6" />
+                    <!-- left face -->
+                    <path d="M8 30 L60 52 L60 112 L8 90 Z" fill="#3f7a3f" />
+                    <path d="M25.3 38 L25.3 98 M42.7 46 L42.7 106 M8 50 L60 72 M8 70 L60 92" stroke-width="1.6" />
+                    <!-- right face -->
+                    <path d="M112 30 L60 52 L60 112 L112 90 Z" fill="#c9a23a" />
+                    <path d="M94.7 38 L94.7 98 M77.3 46 L77.3 106 M112 50 L60 72 M112 70 L60 92" stroke-width="1.6" />
+                </g>
+            </svg>
+            <button class="sketch-mobile-enter" id="sketch-mobile-enter" type="button">step inside →</button>
+        </div>
     </div>
     <div id="app"></div>
 
@@ -411,6 +461,7 @@
         <canvas id="experience-canvas" class="experience-canvas"></canvas>
     </div>
 
+    <script type="module" src="./src/landing.js"></script>
     <script type="module" src="./src/main.js"></script>
 </body>
 

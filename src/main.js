@@ -713,6 +713,16 @@ const groundMaterial = new THREE.MeshStandardMaterial({
 
 // Event listeners
 
+// While the sketch landing covers the screen, the room must ignore all input:
+// otherwise a click on the cube raycasts into the invisible room behind it and
+// can open a modal (leaving isModalOpen stuck true → room dead after the
+// transition) or pop the resume PDF. Touch preventDefault would also block the
+// landing's own links/buttons.
+const sketchLandingEl = document.getElementById("sketch-landing");
+function isLandingActive() {
+    return !!(sketchLandingEl && sketchLandingEl.style.display !== "none");
+}
+
 window.addEventListener("mousemove", (e) => {
     touchHappened = false;
     pointer.x = (e.clientX / sizes.width) * 2 - 1;
@@ -721,6 +731,7 @@ window.addEventListener("mousemove", (e) => {
 
 window.addEventListener("touchstart", (e) => {
     if (e.target.closest('.modal')) return;
+    if (e.target.closest('.sketch-landing')) return; // landing handles its own touches
     e.preventDefault();
     pointer.x = (e.touches[0].clientX / sizes.width) * 2 - 1;
     pointer.y = - (e.touches[0].clientY / sizes.height) * 2 + 1;
@@ -729,12 +740,14 @@ window.addEventListener("touchstart", (e) => {
 window.addEventListener("touchend", (e) => {
     // Don't intercept touches inside modals
     if (e.target.closest('.modal')) return;
+    if (e.target.closest('.sketch-landing')) return; // landing handles its own touches
     e.preventDefault();
     handleRaycasterInteraction();
 }, { passive: false });
 
 function handleRaycasterInteraction() {
     if (isModalOpen) return;
+    if (isLandingActive()) return; // room is hidden behind the sketch landing
     raycaster.setFromCamera(pointer, camera);
     const currentIntersects = raycaster.intersectObjects(raycasterObjects);
 
@@ -766,75 +779,33 @@ function handleRaycasterInteraction() {
 window.addEventListener("click", handleRaycasterInteraction);
 
 
-const loadingScreen = document.querySelector(".loading-screen");
-const loadingScreenButton = document.querySelector(".loading-screen-button");
-
+// ---- Landing handoff -------------------------------------------------------
+// The old "Enter!" loading card is gone. The sketch landing (src/landing.js) now
+// owns the first-visit experience and decides when to reveal the room. main.js
+// exposes two hooks the landing calls:
+//   window.__roomAssetsReady : a Promise that resolves once the GLB has loaded,
+//                              so the landing knows the room is ready.
+//   window.__revealRoom()    : fades the room canvas in for the final handoff.
+// The room canvas starts hidden (opacity 0, see .experience-canvas in CSS) so the
+// sketch is the only thing visible until the transition runs.
+let _resolveRoomAssets;
+window.__roomAssetsReady = new Promise((res) => { _resolveRoomAssets = res; });
 manager.onLoad = function () {
-    loadingScreenButton.style.border = "8px solid #dfdfdf";
-    loadingScreenButton.style.background = "#303848ff";
-    loadingScreenButton.style.color = "#dfdfdf";
-    loadingScreen.style.background = "#303848ff"
-    loadingScreenButton.style.boxShadow = "rgba(0, 0, 0, 0.24) 0px 3px 8px";
-    loadingScreenButton.textContent = "Enter!";
-    loadingScreenButton.style.cursor = "pointer";
-    loadingScreenButton.style.transition = "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)";
-    let isDisabled = false;
-
-    function handleEnter() {
-        if (isDisabled) return;
-
-        loadingScreenButton.style.border = "8px solid #dfdfdf";
-        loadingScreenButton.style.background = "#303848ff";
-        loadingScreenButton.style.color = "#dfdfdf";
-        loadingScreenButton.style.boxShadow = "none";
-        loadingScreenButton.innerHTML = "Welcome to my 3D virtual room!<br> Interact with elements (play some music,<br> kick the ball, explore) to get to know me!";
-        loadingScreen.style.background = "#303848ff";
-        isDisabled = true;
-
-        playReveal();
-    }
-
-    loadingScreenButton.addEventListener("mouseenter", () => {
-        loadingScreenButton.style.transform = "scale(1.3)";
-    });
-
-    loadingScreenButton.addEventListener("touchend", (e) => {
-        touchHappened = true;
-        e.preventDefault();
-        handleEnter();
-    });
-
-    loadingScreenButton.addEventListener("click", (e) => {
-        if (touchHappened) return;
-        handleEnter();
-    });
-
-    loadingScreenButton.addEventListener("mouseleave", () => {
-        loadingScreenButton.style.transform = "none";
-    });
+    if (_resolveRoomAssets) _resolveRoomAssets();
 };
 
-function playReveal() {
-    const tl = gsap.timeline();
-
-    tl.to(loadingScreen, {
-        scale: 0.5,
-        duration: 2.0,
-        delay: 0.25,
-        ease: "back.in(1.8)",
-    }).to(
-        loadingScreen,
-        {
-            y: "200vh",
-            duration: 1.3,
-            ease: "back.in(1.8)",
-            onComplete: () => {
-                loadingScreen.remove();
-            },
-        },
-        "-=0.1"
-    );
-}
+let roomRevealed = false;
+window.__revealRoom = function ({ duration = 1.6 } = {}) {
+    if (roomRevealed) return;
+    roomRevealed = true;
+    const expCanvas = document.querySelector("#experience-canvas");
+    if (!expCanvas) return;
+    gsap.to(expCanvas, {
+        opacity: 1,
+        duration,
+        ease: "power2.out",
+    });
+};
 
 
 const modelPath = "models/portfolio.glb";
@@ -872,17 +843,9 @@ loader.load(modelPath, (glb) => {
     mesh.position.set(0, 1.05, -1);
     scene.add(mesh);
 },
-    (progress) => {
-        const percentage = (progress.loaded / progress.total * 100).toFixed(2);
-        if (loadingScreenButton) {
-            loadingScreenButton.textContent = `Loading...`;
-        }
-    },
+    undefined,
     (error) => {
         console.error('Failed to load model:', error);
-        if (loadingScreenButton) {
-            loadingScreenButton.textContent = 'Failed to load model';
-        }
     }
 );
 
@@ -1139,7 +1102,7 @@ const animate = () => {
     }
 
     // Raycaster (with grace period to prevent jitter)
-    if (!isModalOpen) {
+    if (!isModalOpen && !isLandingActive()) {
         raycaster.setFromCamera(pointer, camera);
         const currentIntersects = raycaster.intersectObjects(raycasterObjects, true);
 
