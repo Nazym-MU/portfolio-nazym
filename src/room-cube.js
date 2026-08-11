@@ -260,6 +260,13 @@ export function createRoomCube() {
     let solved = false; // starts scrambled, exactly like the old landing page
     let busy = false;   // re-entrancy guard: clicks during the routine do nothing
     let restY = 0;
+    let jumpHeight = JUMP_HEIGHT;
+
+    // Cap the jump so the closer mobile framing never sends the cube out of
+    // frame; Infinity (or anything >= the default) restores the full jump.
+    function limitJumpHeight(maxRise) {
+        jumpHeight = Math.min(JUMP_HEIGHT, Math.max(0.5, maxRise));
+    }
 
     // Place the cube where the baked prop sat: same center, same orientation,
     // scaled so its overall edge length matches the prop's size.
@@ -291,11 +298,11 @@ export function createRoomCube() {
 
         // ...then launch, the scale recovering with a small overshoot mid-air.
         gsap.to(cubeRoot.scale, { x: 1, y: 1, z: 1, duration: 0.45, ease: 'back.out(2.5)' });
-        await gsap.to(group.position, { y: restY + JUMP_HEIGHT, duration: 0.55, ease: 'power2.out' });
+        await gsap.to(group.position, { y: restY + jumpHeight, duration: 0.55, ease: 'power2.out' });
 
         // Airborne: a gentle bob plus a slow spin so the turns read from all sides.
         const bob = gsap.to(group.position, {
-            y: `+=${JUMP_HEIGHT * 0.08}`,
+            y: `+=${jumpHeight * 0.08}`,
             duration: 1.1, ease: 'sine.inOut', yoyo: true, repeat: -1,
         });
         const spin = gsap.to(cubeRoot.rotation, {
@@ -326,5 +333,5 @@ export function createRoomCube() {
         busy = false;
     }
 
-    return { group, placeAt, onClick, setHover };
+    return { group, placeAt, onClick, setHover, limitJumpHeight };
 }

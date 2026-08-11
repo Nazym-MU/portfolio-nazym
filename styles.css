@@ -81,6 +81,21 @@ canvas {
     50%      { opacity: 1;   transform: scale(1); }
 }
 
+/* Quick taps on the floating UI shouldn't arm iOS double-tap zoom. (The canvas
+   is already covered: OrbitControls sets touch-action:none on it inline. Pinch
+   zoom on the page body stays available for accessibility.) */
+.hint-button,
+.welcome-popup,
+.welcome-btn,
+.welcome-close,
+.window-control,
+.notebook-back,
+.notebook-card,
+.board-tab,
+.filter-btn {
+    touch-action: manipulation;
+}
+
 /* Shared glass recipe for the floating cards/button. */
 .welcome-popup,
 .hint-button,
@@ -100,6 +115,8 @@ canvas {
     position: fixed;
     left: 50%;
     bottom: clamp(56px, 14vh, 160px);
+    /* iOS: clear the home-indicator area (needs viewport-fit=cover). */
+    bottom: calc(clamp(56px, 14vh, 160px) + env(safe-area-inset-bottom, 0px));
     z-index: 900;
     display: none;
     width: min(340px, calc(100vw - 48px));
@@ -175,6 +192,9 @@ canvas {
     position: fixed;
     top: 20px;
     right: 20px;
+    /* iOS: keep clear of the notch/status bar (needs viewport-fit=cover). */
+    top: calc(20px + env(safe-area-inset-top, 0px));
+    right: calc(20px + env(safe-area-inset-right, 0px));
     z-index: 900;
     width: 44px;
     height: 44px;
@@ -205,6 +225,8 @@ canvas {
     position: fixed;
     left: 50%;
     bottom: clamp(40px, 10vh, 120px);
+    /* iOS: clear the home-indicator area (needs viewport-fit=cover). */
+    bottom: calc(clamp(40px, 10vh, 120px) + env(safe-area-inset-bottom, 0px));
     z-index: 900;
     display: none;
     width: min(320px, calc(100vw - 48px));
@@ -227,6 +249,58 @@ canvas {
     color: rgba(255, 255, 255, 0.65);
 }
 
+/* Touch-only "tap to continue" teaching line on the first tour stop. */
+.tour-tooltip-hint {
+    margin-top: 7px;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    color: rgba(255, 255, 255, 0.42);
+}
+
+/* ============================================================
+   Touch beacons — coarse-pointer stand-in for desktop hover.
+   AR-anchor-style dots: a small glass-white core with one soft
+   pulse ring, positioned every frame by main.js.
+   ============================================================ */
+
+.beacon-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 850;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.beacon-dot {
+    position: absolute;
+    left: -5px;
+    top: -5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.25),
+        0 2px 8px rgba(0, 0, 0, 0.35);
+    will-change: transform;
+}
+
+.beacon-dot::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    animation: beacon-pulse 2.4s ease-out infinite;
+}
+
+@keyframes beacon-pulse {
+    0%   { transform: scale(0.55); opacity: 0.85; }
+    70%  { transform: scale(1.7);  opacity: 0; }
+    100% { transform: scale(1.7);  opacity: 0; }
+}
+
 /* Modals */
 .modal {
     position: fixed;
@@ -237,7 +311,9 @@ canvas {
     display: none;
     width: 800px;
     max-width: 92vw;
+    /* dvh (with vh fallback) so the iOS URL-bar collapse doesn't jump layout */
     max-height: 88vh;
+    max-height: 88dvh;
     background: var(--glass-bg);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -252,8 +328,10 @@ canvas {
 .modal.maximized {
     width: 92vw;
     height: 92vh;
+    height: 92dvh;
     max-width: 95vw;
     max-height: 95vh;
+    max-height: 95dvh;
 }
 
 .modal.show {
@@ -298,6 +376,7 @@ canvas {
 .modal-content {
     background: transparent;
     max-height: calc(88vh - 48px);
+    max-height: calc(88dvh - 48px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
@@ -305,6 +384,7 @@ canvas {
 
 .modal.maximized .modal-content {
     max-height: calc(92vh - 48px);
+    max-height: calc(92dvh - 48px);
 }
 
 .modal-image-header {
@@ -375,7 +455,6 @@ canvas {
 .about-container {
     display: flex;
     gap: 40px;
-    margin-bottom: 40px;
 }
 
 .about-left { flex: 2; }
@@ -406,6 +485,18 @@ canvas {
     text-align: center;
 }
 
+/* Inline "check out my resume" link in the About intro. */
+.about-resume-link {
+    color: var(--accent-primary);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(167, 243, 208, 0.4);
+    transition: border-color 0.3s ease;
+}
+
+.about-resume-link:hover {
+    border-bottom-color: var(--accent-primary);
+}
+
 .email-link {
     display: inline-block;
     color: rgba(255, 255, 255, 0.4);
@@ -423,6 +514,7 @@ canvas {
 
 .social-links {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     justify-content: center;
 }
@@ -460,93 +552,6 @@ canvas {
 
 .social-btn:hover svg {
     opacity: 1;
-}
-
-/* Timeline */
-.timeline { margin-top: 48px; }
-.timeline h3 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 24px;
-    letter-spacing: -0.02em;
-}
-
-.timeline-vertical {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    position: relative;
-    padding-left: 0;
-}
-
-.timeline-vertical::before {
-    display: none;
-}
-
-.timeline-item {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-left: 2px solid rgba(110, 231, 183, 0.4);
-    padding: 22px 26px;
-    border-radius: 12px;
-    position: relative;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.timeline-item:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.08);
-    border-left-color: var(--accent-emerald);
-    transform: translateX(4px);
-}
-
-.timeline-item::before {
-    display: none;
-}
-
-.timeline-item h4 {
-    color: #ffffff;
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin-bottom: 4px;
-    letter-spacing: -0.01em;
-}
-
-.timeline-item .company {
-    color: var(--accent-emerald);
-    font-weight: 500;
-    font-size: 0.88rem;
-    margin-bottom: 4px;
-}
-
-.timeline-item .date {
-    color: rgba(255, 255, 255, 0.3);
-    font-size: 0.8rem;
-    font-weight: 400;
-    margin-bottom: 14px;
-    letter-spacing: 0.02em;
-}
-
-.timeline-details { list-style: none; }
-.timeline-details li {
-    padding-left: 16px;
-    position: relative;
-    margin-bottom: 6px;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.9rem;
-    line-height: 1.65;
-}
-
-.timeline-details li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 10px;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: rgba(110, 231, 183, 0.5);
 }
 
 /* Projects */
@@ -851,10 +856,12 @@ canvas {
    The reader opens maximized (92vh); this is the fallback if un-maximized. */
 .modal.notebook.reading {
     height: 88vh;
+    height: 88dvh;
 }
 
 .modal.notebook.reading.maximized {
     height: 92vh;
+    height: 92dvh;
 }
 
 .modal.notebook.reading .modal-content {
@@ -933,7 +940,8 @@ canvas {
 }
 
 @media (max-width: 768px) {
-    .modal { width: 95vw; max-height: 90vh; }
+    .modal { width: 95vw; max-height: 90vh; max-height: 90dvh; }
+    .modal-content { max-height: calc(90vh - 48px); max-height: calc(90dvh - 48px); }
     .modal-title { font-size: 1.75rem; }
     .about-container { flex-direction: column; }
     .about-right { align-items: center; }
@@ -943,7 +951,7 @@ canvas {
 
     .notebook-grid { grid-template-columns: 1fr; }
     .notebook-card { padding: 22px 22px 20px; }
-    .modal.notebook.reading { height: 90vh; }
+    .modal.notebook.reading { height: 90vh; height: 90dvh; }
     .notebook-reader-bar { padding: 9px 12px; }
 }
 
@@ -959,6 +967,7 @@ canvas {
     width: 1180px;
     max-width: 94vw;
     max-height: 90vh;
+    max-height: 90dvh;
 }
 
 .board-body {

@@ -39,6 +39,12 @@ const modals = {
 let touchHappened = false;
 let isModalOpen = false;
 
+// One consistent "touch-like" test for the touch-only affordances (beacons,
+// tap forgiveness, the tour's tap hint). Camera/layout keep the existing
+// 768px width breakpoint so desktop framing is untouched.
+const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
+const isTouchLike = () => coarsePointerQuery.matches;
+
 // "Things I read and learn" — card grid + in-modal iframe reader (src/notebook.js)
 initNotebook(modals.notebook);
 
@@ -579,6 +585,11 @@ const raycasterObjects = [];
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
+// Touch tap forgiveness: when the primary raycast misses, retry in a small
+// screen-space cross around the tap (px offsets, converted to NDC) and accept
+// the first hit. Desktop clicks never enter this path and stay exact.
+const TOUCH_RETRY_OFFSETS_PX = [[14, 0], [-14, 0], [0, 14], [0, -14]];
+
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -590,19 +601,75 @@ const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 1, 1000);
 
+// ---- Mobile close-up framing ------------------------------------------------
+// The old mobile default (distance ~30 at fov 60) rendered the room tiny on
+// phones. Once the GLB is in we measure the union box of the interactive
+// desk/shelf region and derive the camera distance that fits its bounding
+// sphere in BOTH the vertical and the horizontal fov at the current aspect
+// (portrait's limiting axis is the horizontal one), approaching along the same
+// view direction as the old default. Recomputed on resize/orientation change.
+const MOBILE_FOV = 60;
+const MOBILE_BASE_POSITION = new THREE.Vector3(-15, 11.5, 30);
+const MOBILE_BASE_TARGET = new THREE.Vector3(0, 2.5, 0);
+const FOCUS_OBJECT_KEYS = ["aboutme", "projects", "resume", "macbook", "notebook_2", "rubik"];
+
+let mobileFocusView = null; // { position, target, distance, headroom }; null on desktop / pre-load
+
+function computeMobileFocusView() {
+    if (sizes.width >= 768 || raycasterObjects.length === 0) {
+        mobileFocusView = null;
+        return;
+    }
+    scene.updateMatrixWorld(true);
+    const box = new THREE.Box3();
+    let found = false;
+    raycasterObjects.forEach((o) => {
+        if (FOCUS_OBJECT_KEYS.some((key) => o.name.includes(key))) {
+            box.expandByObject(o);
+            found = true;
+        }
+    });
+    if (!found) { mobileFocusView = null; return; }
+    box.expandByScalar(0.4); // a little breathing room around the desk/shelf
+
+    const center = box.getCenter(new THREE.Vector3());
+    const radius = box.getBoundingSphere(new THREE.Sphere()).radius;
+    const vFov = THREE.MathUtils.degToRad(MOBILE_FOV);
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * (sizes.width / sizes.height));
+    // The larger of the two required fit distances wins (portrait → horizontal).
+    const distance = Math.max(
+        radius / Math.tan(vFov / 2),
+        radius / Math.tan(hFov / 2)
+    ) * 1.08;
+    const dir = MOBILE_BASE_POSITION.clone().sub(MOBILE_BASE_TARGET).normalize();
+    const position = center.clone().add(dir.multiplyScalar(distance));
+    // Vertical headroom left above the region at this distance — used to cap
+    // the Rubik's cube jump so it can't leave the closer frame.
+    const headroom = distance * Math.tan(vFov / 2) - (box.max.y - center.y);
+    mobileFocusView = { position, target: center, distance, headroom };
+}
+
 // Camera and target y are both raised 1.5 from the original framing (7/10 and 1),
 // which slides the whole room lower on screen without changing the viewing angle
 // (equivalent to shifting the model down).
 function getDefaultView() {
-    return sizes.width < 768
-        ? { fov: 60, position: new THREE.Vector3(-15, 11.5, 30), target: new THREE.Vector3(0, 2.5, 0) }
-        : { fov: 45, position: new THREE.Vector3(-10, 8.5, 20), target: new THREE.Vector3(0, 2.5, 0) };
+    if (sizes.width < 768) {
+        return mobileFocusView
+            ? { fov: MOBILE_FOV, position: mobileFocusView.position.clone(), target: mobileFocusView.target.clone() }
+            : { fov: MOBILE_FOV, position: MOBILE_BASE_POSITION.clone(), target: MOBILE_BASE_TARGET.clone() };
+    }
+    return { fov: 45, position: new THREE.Vector3(-10, 8.5, 20), target: new THREE.Vector3(0, 2.5, 0) };
 }
 
 function updateCameraForScreenSize() {
     const view = getDefaultView();
     camera.fov = view.fov;
     camera.position.copy(view.position);
+    // The measured mobile framing also re-aims the target at the desk region
+    // (never mid-tour — the tour's own tweens own the target then).
+    if (sizes.width < 768 && mobileFocusView && !tourActive) {
+        controls.target.copy(view.target);
+    }
     camera.updateProjectionMatrix();
 }
 
@@ -689,6 +756,15 @@ controls.target = getDefaultView().target.clone();
 controls.update();
 
 // Mobile: enable two-finger pan and wider view range
+// Clamp pan range so user can't drift too far. Named so re-applying on resize
+// never stacks duplicate listeners (EventDispatcher dedupes same references).
+const clampMobilePanTarget = () => {
+    const target = controls.target;
+    target.x = Math.max(-6, Math.min(6, target.x));
+    target.y = Math.max(0, Math.min(6, target.y));
+    target.z = Math.max(-6, Math.min(6, target.z));
+};
+
 function applyMobileControls() {
     if (window.innerWidth < 768) {
         controls.enablePan = true;
@@ -696,20 +772,18 @@ function applyMobileControls() {
             ONE: THREE.TOUCH.ROTATE,
             TWO: THREE.TOUCH.DOLLY_PAN
         };
-        controls.minDistance = 4;
+        // Never let minDistance block the closer measured default framing.
+        controls.minDistance = mobileFocusView
+            ? Math.min(4, mobileFocusView.distance * 0.6)
+            : 4;
         controls.maxDistance = 28;
         controls.minAzimuthAngle = -Math.PI * 0.75;
         controls.maxAzimuthAngle = Math.PI * 0.15;
         controls.panSpeed = 0.8;
 
-        // Clamp pan range so user can't drift too far
-        controls.addEventListener('change', () => {
-            const target = controls.target;
-            target.x = Math.max(-6, Math.min(6, target.x));
-            target.y = Math.max(0, Math.min(6, target.y));
-            target.z = Math.max(-6, Math.min(6, target.z));
-        });
+        controls.addEventListener('change', clampMobilePanTarget);
     } else {
+        controls.removeEventListener('change', clampMobilePanTarget);
         controls.enablePan = false;
         controls.minDistance = 5;
         controls.maxDistance = 20;
@@ -764,9 +838,25 @@ function handleRaycasterInteraction(e) {
     }
     if (isModalOpen) return;
     raycaster.setFromCamera(pointer, camera);
-    const currentIntersects = raycaster.intersectObjects(raycasterObjects);
+    let currentIntersects = raycaster.intersectObjects(raycasterObjects);
+
+    // Touch forgiveness: a fingertip is far wider than a pixel, so when a tap
+    // narrowly misses, retry in a small cross around it and take the first hit.
+    if (currentIntersects.length === 0 && e && e.type === "touchend") {
+        const retryPointer = new THREE.Vector2();
+        for (const [dx, dy] of TOUCH_RETRY_OFFSETS_PX) {
+            retryPointer.set(
+                pointer.x + (dx / sizes.width) * 2,
+                pointer.y - (dy / sizes.height) * 2
+            );
+            raycaster.setFromCamera(retryPointer, camera);
+            currentIntersects = raycaster.intersectObjects(raycasterObjects);
+            if (currentIntersects.length > 0) break;
+        }
+    }
 
     if (currentIntersects.length > 0) {
+        dismissBeacons(); // the visitor found something tappable — job done
         let object = currentIntersects[0].object;
 
         // Resolve sub-meshes (e.g. the live cube's unnamed cubies) to their
@@ -829,6 +919,7 @@ function showWelcome() {
 function hideWelcome() {
     if (!isWelcomeOpen) return;
     isWelcomeOpen = false;
+    showBeacons(); // touch-only "what can I tap?" dots (no-op on fine pointers)
     gsap.to(welcomeEl, {
         y: 10,
         scale: 0.97,
@@ -909,8 +1000,13 @@ function frameForObjects(objects) {
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
-    const fitDist = (maxDim / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const distance = THREE.MathUtils.clamp(fitDist * 2.1, 4, 14);
+    // Fit the object in BOTH fovs: portrait's horizontal fov is narrower than
+    // the vertical one, so the larger of the two required distances wins.
+    // On landscape/desktop min(vFov, hFov) is the vertical fov — unchanged.
+    const vFov = THREE.MathUtils.degToRad(camera.fov);
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
+    const fitDist = (maxDim / 2) / Math.tan(Math.min(vFov, hFov) / 2);
+    const distance = THREE.MathUtils.clamp(fitDist * 2.1, 4, camera.aspect < 1 ? 20 : 14);
     const dir = getDefaultView().position.clone().sub(center).normalize();
     const position = center.clone().add(dir.multiplyScalar(distance));
     // Stay above the target plane so the polar limit is never crossed.
@@ -925,9 +1021,10 @@ function moveCamera(position, target, duration, onComplete) {
     gsap.to(controls.target, { x: target.x, y: target.y, z: target.z, duration, ease: "power2.inOut", onComplete });
 }
 
-function showTooltip(title, line) {
+function showTooltip(title, line, showTapHint = false) {
     tooltipEl.querySelector(".tour-tooltip-title").textContent = title;
     tooltipEl.querySelector(".tour-tooltip-line").textContent = line;
+    tooltipEl.querySelector(".tour-tooltip-hint").hidden = !showTapHint;
     tooltipEl.style.display = "block";
     gsap.killTweensOf(tooltipEl);
     gsap.set(tooltipEl, { xPercent: -50 });
@@ -956,7 +1053,8 @@ function goToStop(index) {
     outlinePass.selectedObjects = objects;
     const view = frameForObjects(objects);
     moveCamera(view.position, view.target, TOUR_FLIGHT_S);
-    showTooltip(stop.title, stop.line);
+    // First stop only, touch devices only: teach that a tap advances.
+    showTooltip(stop.title, stop.line, index === 0 && isTouchLike());
     tourTimer = setTimeout(advanceTour, TOUR_FLIGHT_S * 1000 + TOUR_HOLD_MS);
 }
 
@@ -980,6 +1078,7 @@ function advanceTour() {
 }
 
 function startTour() {
+    dismissBeacons(); // the tour explains the room better than the dots do
     hideWelcome();
     if (tourActive) { // the "?" toggles: a second press cancels
         endTour(true);
@@ -1023,6 +1122,84 @@ window.addEventListener("keydown", (e) => {
     }
 });
 
+
+// ---- Touch beacons ----------------------------------------------------------
+// Coarse-pointer stand-in for desktop hover: small pulsing glass dots anchored
+// to the main tappable objects, projected to screen space every frame from the
+// object's box center (stored in object-local coords so they ride along with
+// the cube's jump / hover motion). They fade in once the welcome card is
+// dismissed, and permanently fade out for the session as soon as the visitor
+// taps any interactive object, starts the tour, or ~12s pass.
+const BEACON_KEYS = ["aboutme", "projects", "resume", "notebook_2", "rubik", "macbook"];
+const BEACON_AUTO_HIDE_MS = 12000;
+
+const beaconLayer = document.getElementById("beacon-layer");
+const beacons = []; // { object, localCenter, el }
+let beaconsShown = false;
+let beaconsDismissed = false;
+let beaconTimer = null;
+const beaconWorld = new THREE.Vector3();
+
+// Called once from the GLB callback, when every anchor object exists.
+function setupBeacons() {
+    if (!isTouchLike() || !beaconLayer) return;
+    scene.updateMatrixWorld(true);
+    BEACON_KEYS.forEach((key) => {
+        const object = raycasterObjects.find((o) => o.name.includes(key));
+        if (!object) return;
+        const box = new THREE.Box3().expandByObject(object);
+        const localCenter = object.worldToLocal(box.getCenter(new THREE.Vector3()));
+        const el = document.createElement("div");
+        el.className = "beacon-dot";
+        beaconLayer.appendChild(el);
+        beacons.push({ object, localCenter, el });
+    });
+}
+
+function showBeacons() {
+    if (beaconsDismissed || beaconsShown || beacons.length === 0) return;
+    beaconsShown = true;
+    gsap.to(beaconLayer, { autoAlpha: 1, duration: 0.8, delay: 0.35, ease: "power2.out" });
+    beaconTimer = setTimeout(dismissBeacons, BEACON_AUTO_HIDE_MS);
+}
+
+// Permanent for the session — the dots only answer "what can I tap?" once.
+function dismissBeacons() {
+    if (beaconsDismissed || beacons.length === 0) return;
+    beaconsDismissed = true;
+    clearTimeout(beaconTimer);
+    gsap.killTweensOf(beaconLayer);
+    gsap.to(beaconLayer, { autoAlpha: 0, duration: 0.5, ease: "power2.in" });
+}
+
+// Runs each frame from the render loop while the dots are up.
+function updateBeacons() {
+    if (!beaconsShown || beaconsDismissed) return;
+    for (const b of beacons) {
+        beaconWorld.copy(b.localCenter);
+        b.object.localToWorld(beaconWorld);
+        beaconWorld.project(camera);
+        const behind = beaconWorld.z > 1;
+        const offscreen = Math.abs(beaconWorld.x) > 1 || Math.abs(beaconWorld.y) > 1;
+        if (behind || offscreen) {
+            b.el.style.visibility = "hidden";
+            continue;
+        }
+        b.el.style.visibility = "visible";
+        const x = (beaconWorld.x * 0.5 + 0.5) * sizes.width;
+        const y = (-beaconWorld.y * 0.5 + 0.5) * sizes.height;
+        b.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+    }
+}
+
+// On the closer mobile framing the cube's 1.7-unit jump could clear the top of
+// the frame (mostly a landscape-phone risk — portrait has generous vertical
+// headroom since its limiting axis is horizontal). Cap it from the measured
+// headroom; Infinity restores the cube's own default.
+function capRubikJumpForFrame() {
+    if (!roomCube) return;
+    roomCube.limitJumpHeight(mobileFocusView ? mobileFocusView.headroom - 0.3 : Infinity);
+}
 
 const modelPath = "models/portfolio.glb";
 
@@ -1082,6 +1259,17 @@ loader.load(modelPath, (glb) => {
         scene.add(roomCube.group);
         raycasterObjects.push(roomCube.group);
     }
+
+    // Mobile: everything measurable is in — compute the close-up desk framing
+    // and snap the (still hidden, pre-reveal) camera to it. No-op on desktop.
+    computeMobileFocusView();
+    if (mobileFocusView) {
+        applyMobileControls();
+        updateCameraForScreenSize();
+        controls.update();
+        capRubikJumpForFrame();
+    }
+    setupBeacons();
 },
     undefined,
     (error) => {
@@ -1151,9 +1339,11 @@ window.addEventListener("resize", () => {
     sizes.width = window.innerWidth;
     sizes.height = window.innerHeight;
 
-    // Update camera
+    // Update camera (mobile framing depends on the aspect — rebuild it first)
     camera.aspect = sizes.width / sizes.height;
+    computeMobileFocusView();
     updateCameraForScreenSize();
+    capRubikJumpForFrame();
 
     // Update renderer + composer (the composer forwards setSize to its passes)
     renderer.setSize(sizes.width, sizes.height);
@@ -1348,6 +1538,9 @@ const HOVER_GRACE_PERIOD = 10;
 
 const animate = () => {
     controls.update();
+
+    // Keep the touch beacons glued to their objects (no-op once dismissed)
+    updateBeacons();
 
     // Animate manchester
     if (manchesterObject) {
