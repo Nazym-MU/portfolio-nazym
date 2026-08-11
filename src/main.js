@@ -2,7 +2,13 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import gsap from "gsap";
+import { createRoomCube } from './room-cube.js';
+import { initNotebook } from './notebook.js';
 
 const canvas = document.querySelector("#experience-canvas");
 const sizes = {
@@ -10,13 +16,13 @@ const sizes = {
     height: window.innerHeight,
 };
 
-const textureLoader = new THREE.TextureLoader();
+// One manager tracks the GLB AND the textures, so onLoad means "everything in".
+const manager = new THREE.LoadingManager();
+
+const textureLoader = new THREE.TextureLoader(manager);
 
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('draco/');
-
-// Loader
-const manager = new THREE.LoadingManager();
 
 const loader = new GLTFLoader(manager);
 loader.setDRACOLoader(dracoLoader);
@@ -24,7 +30,7 @@ loader.setDRACOLoader(dracoLoader);
 const modals = {
     aboutme: document.querySelector(".modal.aboutme"),
     projects: document.querySelector(".modal.projects"),
-    book: document.querySelector(".modal.book"),
+    notebook: document.querySelector(".modal.notebook"),
     map: document.querySelector(".modal.map"),
     jersey: document.querySelector(".modal.jersey"),
     board: document.querySelector(".modal.board")
@@ -32,6 +38,9 @@ const modals = {
 
 let touchHappened = false;
 let isModalOpen = false;
+
+// "Things I read and learn" — card grid + in-modal iframe reader (src/notebook.js)
+initNotebook(modals.notebook);
 
 // Modal interactions
 document.querySelectorAll(".window-control").forEach(button => {
@@ -560,6 +569,7 @@ function openBoard() {
 }
 
 let manchesterObject = null;
+let roomCube = null; // live Rubik's cube replacing the baked prop (see room-cube.js)
 
 const clickableObjects = ["macbook", "notebook_2", "map", "ggb", "jersey", "aboutme", "projects",
     "resume", "almaty", "vynil", "book_pink", "book_brown", "book_black", "ball", "rock", "candle",
@@ -580,14 +590,19 @@ const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 1, 1000);
 
+// Camera and target y are both raised 1.5 from the original framing (7/10 and 1),
+// which slides the whole room lower on screen without changing the viewing angle
+// (equivalent to shifting the model down).
+function getDefaultView() {
+    return sizes.width < 768
+        ? { fov: 60, position: new THREE.Vector3(-15, 11.5, 30), target: new THREE.Vector3(0, 2.5, 0) }
+        : { fov: 45, position: new THREE.Vector3(-10, 8.5, 20), target: new THREE.Vector3(0, 2.5, 0) };
+}
+
 function updateCameraForScreenSize() {
-    if (sizes.width < 768) {
-        camera.fov = 60;
-        camera.position.set(-15, 10, 30);
-    } else {
-        camera.fov = 45;
-        camera.position.set(-10, 7, 20);
-    }
+    const view = getDefaultView();
+    camera.fov = view.fov;
+    camera.position.copy(view.position);
     camera.updateProjectionMatrix();
 }
 
@@ -670,7 +685,7 @@ controls.maxAzimuthAngle = 0;
 controls.minPolarAngle = 0;
 controls.maxPolarAngle = Math.PI / 2;
 controls.autoRotate = false;
-controls.target = new THREE.Vector3(0, 1, 0);
+controls.target = getDefaultView().target.clone();
 controls.update();
 
 // Mobile: enable two-finger pan and wider view range
@@ -691,7 +706,7 @@ function applyMobileControls() {
         controls.addEventListener('change', () => {
             const target = controls.target;
             target.x = Math.max(-6, Math.min(6, target.x));
-            target.y = Math.max(-1, Math.min(5, target.y));
+            target.y = Math.max(0, Math.min(6, target.y));
             target.z = Math.max(-6, Math.min(6, target.z));
         });
     } else {
@@ -713,16 +728,6 @@ const groundMaterial = new THREE.MeshStandardMaterial({
 
 // Event listeners
 
-// While the sketch landing covers the screen, the room must ignore all input:
-// otherwise a click on the cube raycasts into the invisible room behind it and
-// can open a modal (leaving isModalOpen stuck true → room dead after the
-// transition) or pop the resume PDF. Touch preventDefault would also block the
-// landing's own links/buttons.
-const sketchLandingEl = document.getElementById("sketch-landing");
-function isLandingActive() {
-    return !!(sketchLandingEl && sketchLandingEl.style.display !== "none");
-}
-
 window.addEventListener("mousemove", (e) => {
     touchHappened = false;
     pointer.x = (e.clientX / sizes.width) * 2 - 1;
@@ -730,29 +735,51 @@ window.addEventListener("mousemove", (e) => {
 });
 
 window.addEventListener("touchstart", (e) => {
-    if (e.target.closest('.modal')) return;
-    if (e.target.closest('.sketch-landing')) return; // landing handles its own touches
+    // Floating UI (welcome card, hint button) handles its own touches.
+    if (e.target.closest('.modal, .welcome-popup, .hint-button, .tour-tooltip')) return;
     e.preventDefault();
     pointer.x = (e.touches[0].clientX / sizes.width) * 2 - 1;
     pointer.y = - (e.touches[0].clientY / sizes.height) * 2 + 1;
 }, { passive: false });
 
 window.addEventListener("touchend", (e) => {
-    // Don't intercept touches inside modals
-    if (e.target.closest('.modal')) return;
-    if (e.target.closest('.sketch-landing')) return; // landing handles its own touches
+    // Don't intercept touches inside modals or the floating UI
+    if (e.target.closest('.modal, .welcome-popup, .hint-button, .tour-tooltip')) return;
     e.preventDefault();
-    handleRaycasterInteraction();
+    handleRaycasterInteraction(e);
 }, { passive: false });
 
-function handleRaycasterInteraction() {
+function handleRaycasterInteraction(e) {
+    // Clicks that land on the floating UI belong to its own handlers.
+    if (e && e.target && e.target.closest && e.target.closest('.hint-button, .welcome-popup, .tour-tooltip')) return;
+    if (isWelcomeOpen) {
+        // Any click outside the welcome card dismisses it (and does nothing else).
+        hideWelcome();
+        return;
+    }
+    if (tourActive) {
+        // During the tour a click advances to the next stop.
+        advanceTour();
+        return;
+    }
     if (isModalOpen) return;
-    if (isLandingActive()) return; // room is hidden behind the sketch landing
     raycaster.setFromCamera(pointer, camera);
     const currentIntersects = raycaster.intersectObjects(raycasterObjects);
 
     if (currentIntersects.length > 0) {
-        const object = currentIntersects[0].object;
+        let object = currentIntersects[0].object;
+
+        // Resolve sub-meshes (e.g. the live cube's unnamed cubies) to their
+        // named clickable ancestor, mirroring the hover loop. GLB meshes are
+        // named themselves, so the walk stops immediately for them.
+        let temp = object;
+        while (temp) {
+            if (clickableObjects.some(objName => temp.name.includes(objName))) {
+                object = temp;
+                break;
+            }
+            temp = temp.parent;
+        }
 
         playClickAnimation(object);
 
@@ -765,7 +792,7 @@ function handleRaycasterInteraction() {
         } else if (object.name.includes("projects") || object.name.includes("macbook")) {
             showModal(modals.projects);
         } else if (object.name.includes("notebook")) {
-            showModal(modals.book);
+            showModal(modals.notebook);
         } else if (object.name.includes("map")) {
             showModal(modals.map);
         } else if (object.name.includes("jersey")) {
@@ -779,39 +806,229 @@ function handleRaycasterInteraction() {
 window.addEventListener("click", handleRaycasterInteraction);
 
 
-// ---- Landing handoff -------------------------------------------------------
-// The old "Enter!" loading card is gone. The sketch landing (src/landing.js) now
-// owns the first-visit experience and decides when to reveal the room. main.js
-// exposes two hooks the landing calls:
-//   window.__roomAssetsReady : a Promise that resolves once the GLB has loaded,
-//                              so the landing knows the room is ready.
-//   window.__revealRoom()    : fades the room canvas in for the final handoff.
-// The room canvas starts hidden (opacity 0, see .experience-canvas in CSS) so the
-// sketch is the only thing visible until the transition runs.
-let _resolveRoomAssets;
-window.__roomAssetsReady = new Promise((res) => { _resolveRoomAssets = res; });
-manager.onLoad = function () {
-    if (_resolveRoomAssets) _resolveRoomAssets();
-};
+// ---- Loading → reveal → welcome --------------------------------------------
+// The canvas starts hidden (opacity 0, see .experience-canvas in CSS) behind a
+// minimal dot-pulse loader. Once the LoadingManager reports everything in (GLB +
+// textures), the loader fades away, the room fades up, the hint button appears,
+// and the welcome card greets the visitor.
+const loaderEl = document.getElementById("room-loader");
+const welcomeEl = document.getElementById("welcome-popup");
+const hintButton = document.getElementById("hint-button");
+const tooltipEl = document.getElementById("tour-tooltip");
+
+let isWelcomeOpen = false;
+
+function showWelcome() {
+    welcomeEl.style.display = "block";
+    // xPercent keeps the card horizontally centered while gsap owns transform.
+    gsap.set(welcomeEl, { xPercent: -50, y: 16, scale: 0.96, autoAlpha: 0 });
+    gsap.to(welcomeEl, { y: 0, scale: 1, autoAlpha: 1, duration: 0.6, ease: "power3.out" });
+    isWelcomeOpen = true;
+}
+
+function hideWelcome() {
+    if (!isWelcomeOpen) return;
+    isWelcomeOpen = false;
+    gsap.to(welcomeEl, {
+        y: 10,
+        scale: 0.97,
+        autoAlpha: 0,
+        duration: 0.35,
+        ease: "power2.in",
+        onComplete: () => { welcomeEl.style.display = "none"; },
+    });
+}
+
+document.getElementById("welcome-close").addEventListener("click", (e) => {
+    e.stopPropagation();
+    hideWelcome();
+});
+
+document.getElementById("welcome-tour").addEventListener("click", (e) => {
+    e.stopPropagation();
+    hideWelcome();
+    startTour();
+});
 
 let roomRevealed = false;
-window.__revealRoom = function ({ duration = 1.6 } = {}) {
+manager.onLoad = function () {
     if (roomRevealed) return;
     roomRevealed = true;
-    const expCanvas = document.querySelector("#experience-canvas");
-    if (!expCanvas) return;
-    gsap.to(expCanvas, {
-        opacity: 1,
-        duration,
-        ease: "power2.out",
+    gsap.to(loaderEl, {
+        autoAlpha: 0,
+        duration: 0.4,
+        onComplete: () => loaderEl.remove(),
     });
+    gsap.to(canvas, { opacity: 1, duration: 0.8, ease: "power2.out" });
+    gsap.to(hintButton, { autoAlpha: 1, duration: 0.6, delay: 0.5 });
+    gsap.delayedCall(0.9, showWelcome);
 };
+
+// ---- Guided tour ------------------------------------------------------------
+// The "?" button flies the camera to the three main areas (about-me sign,
+// projects sign, resume) in sequence, outlining each with a postprocessing
+// OutlinePass so the focus is unmistakable. Clicking anywhere (or the auto
+// timer) advances; Esc or the "?" again cancels and restores the default view.
+// The composer is only used while the tour runs — the normal render path stays
+// plain renderer.render().
+const composer = new EffectComposer(renderer);
+composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+composer.setSize(sizes.width, sizes.height);
+composer.addPass(new RenderPass(scene, camera));
+const outlinePass = new OutlinePass(new THREE.Vector2(sizes.width, sizes.height), scene, camera);
+outlinePass.edgeStrength = 4;
+outlinePass.edgeGlow = 0.6;
+outlinePass.edgeThickness = 1.5;
+outlinePass.pulsePeriod = 2.5;
+outlinePass.visibleEdgeColor.set("#ffffff");
+outlinePass.hiddenEdgeColor.set("#4b5563");
+composer.addPass(outlinePass);
+composer.addPass(new OutputPass());
+
+const TOUR_STOPS = [
+    { key: "aboutme", title: "About Me", line: "Click the sign to learn who I am." },
+    { key: "projects", title: "Projects", line: "My projects live on the MacBook." },
+    { key: "resume", title: "Résumé", line: "Grab my resume here." },
+];
+const TOUR_FLIGHT_S = 1.2;   // camera flight per stop
+const TOUR_HOLD_MS = 2700;   // dwell time once framed
+
+let tourActive = false;
+let tourIndex = -1;
+let tourTimer = null;
+
+function tourObjectsFor(key) {
+    return raycasterObjects.filter((o) => o.name.includes(key));
+}
+
+// Frame an object from its world bounding box, approaching from the same side
+// as the default view so the flight stays inside the OrbitControls angle window.
+function frameForObjects(objects) {
+    const box = new THREE.Box3();
+    objects.forEach((o) => box.expandByObject(o));
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fitDist = (maxDim / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const distance = THREE.MathUtils.clamp(fitDist * 2.1, 4, 14);
+    const dir = getDefaultView().position.clone().sub(center).normalize();
+    const position = center.clone().add(dir.multiplyScalar(distance));
+    // Stay above the target plane so the polar limit is never crossed.
+    position.y = Math.max(position.y, center.y + 0.4);
+    return { position, target: center };
+}
+
+function moveCamera(position, target, duration, onComplete) {
+    gsap.killTweensOf(camera.position);
+    gsap.killTweensOf(controls.target);
+    gsap.to(camera.position, { x: position.x, y: position.y, z: position.z, duration, ease: "power2.inOut" });
+    gsap.to(controls.target, { x: target.x, y: target.y, z: target.z, duration, ease: "power2.inOut", onComplete });
+}
+
+function showTooltip(title, line) {
+    tooltipEl.querySelector(".tour-tooltip-title").textContent = title;
+    tooltipEl.querySelector(".tour-tooltip-line").textContent = line;
+    tooltipEl.style.display = "block";
+    gsap.killTweensOf(tooltipEl);
+    gsap.set(tooltipEl, { xPercent: -50 });
+    gsap.fromTo(tooltipEl, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.45, ease: "power3.out" });
+}
+
+function hideTooltip(fast = false) {
+    gsap.killTweensOf(tooltipEl);
+    gsap.to(tooltipEl, {
+        autoAlpha: 0,
+        y: 8,
+        duration: fast ? 0.2 : 0.4,
+        ease: "power2.in",
+        onComplete: () => { tooltipEl.style.display = "none"; },
+    });
+}
+
+function goToStop(index) {
+    tourIndex = index;
+    const stop = TOUR_STOPS[index];
+    const objects = tourObjectsFor(stop.key);
+    if (objects.length === 0) { // object missing from the GLB — skip the stop
+        advanceTour();
+        return;
+    }
+    outlinePass.selectedObjects = objects;
+    const view = frameForObjects(objects);
+    moveCamera(view.position, view.target, TOUR_FLIGHT_S);
+    showTooltip(stop.title, stop.line);
+    tourTimer = setTimeout(advanceTour, TOUR_FLIGHT_S * 1000 + TOUR_HOLD_MS);
+}
+
+// Final stop: fly home, clear the outline, leave a parting hint that fades out.
+function finishTour() {
+    tourIndex = TOUR_STOPS.length; // sentinel: past the last object stop
+    outlinePass.selectedObjects = [];
+    const view = getDefaultView();
+    moveCamera(view.position, view.target, 1.4);
+    showTooltip("Explore", "Click on things around the room for more about me.");
+    tourTimer = setTimeout(() => endTour(false), 4200);
+}
+
+function advanceTour() {
+    if (!tourActive) return;
+    clearTimeout(tourTimer);
+    const next = tourIndex + 1;
+    if (next < TOUR_STOPS.length) goToStop(next);
+    else if (tourIndex < TOUR_STOPS.length) finishTour();
+    else endTour(false); // click during the final message dismisses it early
+}
+
+function startTour() {
+    hideWelcome();
+    if (tourActive) { // the "?" toggles: a second press cancels
+        endTour(true);
+        return;
+    }
+    if (raycasterObjects.length === 0) return; // GLB not in yet
+    tourActive = true;
+    tourIndex = -1;
+    controls.enabled = false;
+    goToStop(0);
+}
+
+// restore=true means we were interrupted mid-tour and must fly home ourselves.
+function endTour(restore) {
+    clearTimeout(tourTimer);
+    tourTimer = null;
+    tourIndex = TOUR_STOPS.length; // a click during the flight home won't resume stops
+    outlinePass.selectedObjects = [];
+    hideTooltip(true);
+    const done = () => {
+        tourActive = false;
+        controls.enabled = true;
+    };
+    if (restore) {
+        const view = getDefaultView();
+        moveCamera(view.position, view.target, 0.9, done);
+    } else {
+        done();
+    }
+}
+
+hintButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    startTour();
+});
+
+window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        if (tourActive) endTour(true);
+        else if (isWelcomeOpen) hideWelcome();
+    }
+});
 
 
 const modelPath = "models/portfolio.glb";
 
 loader.load(modelPath, (glb) => {
     const mesh = glb.scene;
+    const rubikPropMeshes = [];
 
     mesh.traverse((child) => {
         if (child.isMesh) {
@@ -832,7 +1049,11 @@ loader.load(modelPath, (glb) => {
             manchesterObject = child;
         }
 
-        if (clickableObjects.some(objName => child.name.includes(objName))) {
+        // The baked rubik prop is replaced by the live procedural cube below:
+        // collect it here (for measuring) and keep it out of raycasting.
+        if (child.name.includes("rubik")) {
+            rubikPropMeshes.push(child);
+        } else if (clickableObjects.some(objName => child.name.includes(objName))) {
             raycasterObjects.push(child);
             child.userData.initialScale = new THREE.Vector3().copy(child.scale);
             child.userData.initialPosition = new THREE.Vector3().copy(child.position);
@@ -842,6 +1063,25 @@ loader.load(modelPath, (glb) => {
 
     mesh.position.set(0, 1.05, -1);
     scene.add(mesh);
+
+    // Swap the baked rubik prop for the live cube: measure where the prop sits
+    // in world space, hide it (the GLB file itself is untouched), and drop the
+    // procedural cube into the same spot at the same size and orientation. It
+    // starts in the exact scramble the old landing-page cube used.
+    if (rubikPropMeshes.length > 0) {
+        mesh.updateMatrixWorld(true);
+        const propBox = new THREE.Box3();
+        rubikPropMeshes.forEach((m) => propBox.expandByObject(m));
+        const propCenter = propBox.getCenter(new THREE.Vector3());
+        const propSize = propBox.getSize(new THREE.Vector3());
+        const propQuat = rubikPropMeshes[0].getWorldQuaternion(new THREE.Quaternion());
+        rubikPropMeshes.forEach((m) => { m.visible = false; });
+
+        roomCube = createRoomCube();
+        roomCube.placeAt(propCenter, propQuat, Math.max(propSize.x, propSize.y, propSize.z));
+        scene.add(roomCube.group);
+        raycasterObjects.push(roomCube.group);
+    }
 },
     undefined,
     (error) => {
@@ -915,9 +1155,11 @@ window.addEventListener("resize", () => {
     camera.aspect = sizes.width / sizes.height;
     updateCameraForScreenSize();
 
-    // Update renderer
+    // Update renderer + composer (the composer forwards setSize to its passes)
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    composer.setSize(sizes.width, sizes.height);
+    composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     // Re-apply mobile/desktop controls
     applyMobileControls();
@@ -961,6 +1203,11 @@ function playClickAnimation(object) {
             });
         }
     }
+    // rubik's cube — jumps off the table and solves/scrambles itself midair.
+    // The routine guards its own re-entrancy, so clicks mid-animation are no-ops.
+    else if (objectName.includes('rubik')) {
+        if (roomCube) roomCube.onClick();
+    }
     // vynil
     else if (objectName.includes('vynil')) {
         if (isVinylPlaying && vynilAudio) {
@@ -980,6 +1227,12 @@ function playClickAnimation(object) {
 function playHoverAnimation(object, isHovering) {
     const objectName = object.name.toLowerCase();
     if (objectName.includes('ball')) {
+        return;
+    }
+    // The cube has its own restrained hover (on its inner root) so the generic
+    // scale — and the killTweensOf below — can never fight its jump animation.
+    if (objectName.includes('rubik')) {
+        if (roomCube) roomCube.setHover(isHovering);
         return;
     }
 
@@ -1101,8 +1354,9 @@ const animate = () => {
         manchesterObject.rotation.y += 0.05
     }
 
-    // Raycaster (with grace period to prevent jitter)
-    if (!isModalOpen && !isLandingActive()) {
+    // Raycaster (with grace period to prevent jitter); paused during the tour
+    // so hover animations don't fight the camera flight/outline.
+    if (!isModalOpen && !tourActive) {
         raycaster.setFromCamera(pointer, camera);
         const currentIntersects = raycaster.intersectObjects(raycasterObjects, true);
 
@@ -1153,7 +1407,12 @@ const animate = () => {
         document.body.style.cursor = "default";
     }
 
-    renderer.render(scene, camera);
+    // The composer (with the OutlinePass) only runs while the tour is active.
+    if (tourActive) {
+        composer.render();
+    } else {
+        renderer.render(scene, camera);
+    }
 
     requestAnimationFrame(animate);
 };

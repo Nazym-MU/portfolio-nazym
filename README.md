@@ -15,7 +15,7 @@ A modern Three.js-powered 3D portfolio with interactive objects, glass morphism 
   - 💻 **Tech Objects**: Project showcase and portfolio
   - 📱 **Contact Items**: Contact information and social links
   - 🌍 **Location Items**: Background and origin story
-  - 📝 **Blog Items**: Link to blog and writings
+  - 📝 **Notebook**: Papers read and things learned, as in-site explainer pages
 
 ## Performance Optimizations
 
