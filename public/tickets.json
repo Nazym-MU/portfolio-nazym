@@ -1,6 +1,6 @@
 {
-  "generated": "2026-08-12T22:12:17.613Z",
-  "count": 31,
+  "generated": "2026-08-12T22:19:34.982Z",
+  "count": 40,
   "projects": {
     "splat-rasterizer": {
       "milestones": [
@@ -138,7 +138,7 @@
       "category": "project",
       "project": "manchester-united-site",
       "milestone": "the letter opens",
-      "status": "todo",
+      "status": "done",
       "visibility": "public",
       "done_when": "a new repo/site loads and scrolling reveals a static (non-animated) placeholder letter — proves the project shell and scroll wiring work before any animation is built",
       "created": "2026-08-02",
@@ -153,7 +153,7 @@
       "category": "project",
       "project": "manchester-united-site",
       "milestone": "the letter opens",
-      "status": "todo",
+      "status": "done",
       "visibility": "public",
       "done_when": "scrolling through the intro shows the letter physically unfolding (not just fading in), tied to scroll position, with placeholder text still fine at this stage",
       "created": "2026-08-02",
@@ -504,6 +504,135 @@
       "done_when": "the same mesh is decimated to the same ratio by both implementations and compared by Hausdorff distance to the original, with any systematic difference traced to a specific choice (boundary handling, collapse validity, or the singular-quadric fallback) rather than left as noise",
       "created": "2026-08-12",
       "estimate": 60,
+      "blocks": []
+    },
+    {
+      "id": "NZ-41",
+      "title": "Write the United history timeline content as structured data",
+      "category": "writing",
+      "project": "manchester-united-site",
+      "milestone": "history timeline teaches a newcomer",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "a JSON or JS module holds every timeline entry with date, title, and a written blurb, covering the eras a newcomer needs (Busby Babes, Munich, 68 European Cup, Ferguson, 99 treble, post-Ferguson), with no placeholder text in any entry",
+      "created": "2026-08-12",
+      "estimate": 90,
+      "blocks": [
+        "NZ-42"
+      ]
+    },
+    {
+      "id": "NZ-42",
+      "title": "Build the scrollable timeline component from the entry data",
+      "category": "project",
+      "project": "manchester-united-site",
+      "milestone": "history timeline teaches a newcomer",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "the timeline renders every entry from NZ-41 in chronological order, is navigable by scroll on both desktop and a phone viewport, and adding a new entry to the data file makes it appear with no component change",
+      "created": "2026-08-12",
+      "estimate": 90,
+      "blocks": [
+        "NZ-43"
+      ]
+    },
+    {
+      "id": "NZ-43",
+      "title": "Test the timeline on someone who knows nothing about United",
+      "category": "writing",
+      "project": "manchester-united-site",
+      "milestone": "history timeline teaches a newcomer",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "someone with no United knowledge scrolls the timeline unaided and can afterwards say who Busby was, what happened at Munich, and why 1999 mattered, with any question they had to ask out loud turned into an edit of the entry that failed them",
+      "created": "2026-08-12",
+      "estimate": 45,
+      "blocks": []
+    },
+    {
+      "id": "NZ-44",
+      "title": "Pick the songs and write the lyric annotations by hand",
+      "category": "writing",
+      "project": "manchester-united-site",
+      "milestone": "the music page",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "a data file lists each song with its Spotify track ID, the specific lyric lines quoted, and a written note on what those lines have to do with United, for every song on the page with none left unannotated",
+      "created": "2026-08-12",
+      "estimate": 75,
+      "blocks": [
+        "NZ-45"
+      ]
+    },
+    {
+      "id": "NZ-45",
+      "title": "Build the music page with Spotify embeds and reveal-on-click annotations",
+      "category": "project",
+      "project": "manchester-united-site",
+      "milestone": "the music page",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "every song from NZ-44 renders as a Spotify embed, clicking one reveals its lyric lines and note, and the page is verified to still render the annotations when embeds are blocked by a tracker blocker or offline",
+      "created": "2026-08-12",
+      "estimate": 90,
+      "blocks": []
+    },
+    {
+      "id": "NZ-46",
+      "title": "Evaluate a free football API for squad stats and fixtures",
+      "category": "project",
+      "project": "manchester-united-site",
+      "milestone": "player stats page",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "one API is chosen with a working key, and a written note records its free-tier request limit, how far behind live its score updates actually run, whether per-player season stats are on the free tier at all, and whether its terms allow displaying the data on a public site",
+      "created": "2026-08-12",
+      "estimate": 60,
+      "blocks": [
+        "NZ-47"
+      ]
+    },
+    {
+      "id": "NZ-47",
+      "title": "Build the squad stats page against the chosen API",
+      "category": "project",
+      "project": "manchester-united-site",
+      "milestone": "player stats page",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "the current squad renders with per-player stats from the NZ-46 API, responses are cached so a page refresh does not spend a fresh request, and the page shows a readable fallback rather than a blank grid when the API errors or the rate limit is hit",
+      "created": "2026-08-12",
+      "estimate": 90,
+      "blocks": [
+        "NZ-48"
+      ]
+    },
+    {
+      "id": "NZ-48",
+      "title": "Add the live match layer for fixtures and in-progress scores",
+      "category": "project",
+      "project": "manchester-united-site",
+      "milestone": "live match layer",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "the next fixture shows when no match is on and the current score shows during one, polling only while a match is actually in progress, with the real update lag measured against a live match and stated on the page rather than implied to be real time",
+      "created": "2026-08-12",
+      "estimate": 90,
+      "blocks": [
+        "NZ-49"
+      ]
+    },
+    {
+      "id": "NZ-49",
+      "title": "Link the United site and Old Trafford to each other",
+      "category": "project",
+      "project": "manchester-united-site",
+      "milestone": "linked up",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "each deployed site carries a visible link to the other, both links are followed on a phone and a laptop without hitting a dead URL, and the two sites read as related rather than as two unrelated projects that happen to share a subject",
+      "created": "2026-08-12",
+      "estimate": 45,
       "blocks": []
     }
   ]
