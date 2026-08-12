@@ -1,6 +1,6 @@
 {
-  "generated": "2026-08-02T22:52:04.206Z",
-  "count": 15,
+  "generated": "2026-08-12T22:12:17.613Z",
+  "count": 31,
   "projects": {
     "splat-rasterizer": {
       "milestones": [
@@ -38,6 +38,26 @@
         "FEM discretization implemented",
         "mesh motion handled"
       ]
+    },
+    "flashattention": {
+      "milestones": [
+        "online softmax is correct",
+        "tiled forward attention matches naive",
+        "backward pass passes gradcheck",
+        "IO cost is measured, not asserted",
+        "FA1/FA2 run as Triton kernels",
+        "FA3/FA4 written up"
+      ]
+    },
+    "geometry-processing": {
+      "milestones": [
+        "a mesh is a sparse matrix to me",
+        "decimation works and matches Blender",
+        "smoothing works and matches Blender",
+        "unwrapping works and matches Blender",
+        "deformation works and matches Blender",
+        "the spectral payoff"
+      ]
     }
   },
   "tickets": [
@@ -62,7 +82,7 @@
       "category": "project",
       "project": "old-trafford",
       "milestone": "the finished scroll-story is live",
-      "status": "doing",
+      "status": "done",
       "visibility": "public",
       "done_when": "old-trafford.glb re-exported with baked lighting/materials, dropped into public/models/, and it visibly reads as lit (not flat) in the running site",
       "created": "2026-08-02",
@@ -77,7 +97,7 @@
       "category": "project",
       "project": "old-trafford",
       "milestone": "the finished scroll-story is live",
-      "status": "todo",
+      "status": "done",
       "visibility": "public",
       "done_when": "deployed site loads the newly baked old-trafford.glb and the stadium looks lit, not the current weak/placeholder version",
       "created": "2026-08-02",
@@ -249,6 +269,240 @@
       "visibility": "public",
       "done_when": "a clean, complete writeup of the ALE weak-form derivation exists as its own note, suitable for handing to a labmate or advisor without more context",
       "created": "2026-08-02",
+      "estimate": 60,
+      "blocks": []
+    },
+    {
+      "id": "NZ-25",
+      "title": "Scaffold the FlashAttention repo with kernels/ and notebooks/",
+      "category": "learning",
+      "project": "flashattention",
+      "milestone": "online softmax is correct",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "a repo exists with kernels/ and notebooks/, a notebook successfully imports a function from kernels/, and a naive attention reference implementation lives in kernels/ for later tests to compare against",
+      "created": "2026-08-12",
+      "estimate": 30,
+      "blocks": [
+        "NZ-26"
+      ]
+    },
+    {
+      "id": "NZ-26",
+      "title": "Derive the online softmax rescale factor by hand",
+      "category": "learning",
+      "project": "flashattention",
+      "milestone": "online softmax is correct",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "the rescale factor exp(m_old - m_new) is written out with the step showing why a running normalizer computed under an old max must be corrected when the max updates, not asserted from the paper",
+      "created": "2026-08-12",
+      "estimate": 45,
+      "blocks": [
+        "NZ-30"
+      ]
+    },
+    {
+      "id": "NZ-27",
+      "title": "Implement tiled forward attention with a running output accumulator",
+      "category": "learning",
+      "project": "flashattention",
+      "milestone": "tiled forward attention matches naive",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "an outer loop over Q blocks and inner loop over K/V blocks maintaining m, l, and a rescaled running output accumulator passes torch.allclose against the naive attention reference, for at least two block sizes that do not evenly divide the sequence length",
+      "created": "2026-08-12",
+      "estimate": 90,
+      "blocks": [
+        "NZ-31"
+      ]
+    },
+    {
+      "id": "NZ-28",
+      "title": "Derive the backward identity dS = P * (dP - D)",
+      "category": "learning",
+      "project": "flashattention",
+      "milestone": "backward pass passes gradcheck",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "dS = P * (dP - D) with D_i = rowsum(dO * O)_i is derived in full from the softmax Jacobian, including the step showing sum_k P_ik dP_ik = sum_k O_ik dO_ik, and checked numerically against a finite-difference dS on a small input",
+      "created": "2026-08-12",
+      "estimate": 90,
+      "blocks": [
+        "NZ-32"
+      ]
+    },
+    {
+      "id": "NZ-29",
+      "title": "Instrument the loops to count HBM reads and writes by block size",
+      "category": "learning",
+      "project": "flashattention",
+      "milestone": "IO cost is measured, not asserted",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "the forward and backward loops report counted HBM reads and writes as a function of block size, with the count derived from the loop structure and cross-checked by hand for one small configuration",
+      "created": "2026-08-12",
+      "estimate": 60,
+      "blocks": [
+        "NZ-33"
+      ]
+    },
+    {
+      "id": "NZ-30",
+      "title": "Implement blockwise online softmax and test against one-pass softmax",
+      "category": "learning",
+      "project": "flashattention",
+      "milestone": "online softmax is correct",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "a blockwise softmax maintaining running max m and running normalizer l matches a one-pass softmax to float64 tolerance on random inputs, including an input with a large positive outlier that would overflow a naive exp",
+      "created": "2026-08-12",
+      "estimate": 75,
+      "blocks": [
+        "NZ-27"
+      ]
+    },
+    {
+      "id": "NZ-31",
+      "title": "Save per-row logsumexp from the forward pass",
+      "category": "learning",
+      "project": "flashattention",
+      "milestone": "tiled forward attention matches naive",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "the tiled forward returns per-row logsumexp alongside the output, matching torch.logsumexp on the naive attention scores to float64 tolerance",
+      "created": "2026-08-12",
+      "estimate": 30,
+      "blocks": [
+        "NZ-28"
+      ]
+    },
+    {
+      "id": "NZ-32",
+      "title": "Implement the tiled backward pass with recomputation, verified by gradcheck",
+      "category": "learning",
+      "project": "flashattention",
+      "milestone": "backward pass passes gradcheck",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "torch.autograd.gradcheck passes on a small float64 input, S and P are recomputed inside the loop from Q, K, V and the saved logsumexp, and a peak-memory check confirms no N x N buffer is ever allocated",
+      "created": "2026-08-12",
+      "estimate": 90,
+      "blocks": [
+        "NZ-29"
+      ]
+    },
+    {
+      "id": "NZ-33",
+      "title": "Plot measured HBM traffic against the O(N^2 d^2 / M) bound",
+      "category": "learning",
+      "project": "flashattention",
+      "milestone": "IO cost is measured, not asserted",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "measured HBM traffic is plotted against the O(N^2 d^2 / M) bound across block sizes, with any departure from the bound's shape explained rather than noted",
+      "created": "2026-08-12",
+      "estimate": 60,
+      "blocks": []
+    },
+    {
+      "id": "NZ-34",
+      "title": "Build the mesh incidence matrices from a loaded triangle mesh",
+      "category": "learning",
+      "project": "geometry-processing",
+      "milestone": "a mesh is a sparse matrix to me",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "vertex-edge and edge-face incidence matrices are built as scipy sparse matrices for a loaded mesh, and d1 @ d0 is verified to be the zero matrix, which is the discrete statement that the boundary of a boundary is empty",
+      "created": "2026-08-12",
+      "estimate": 75,
+      "blocks": [
+        "NZ-35"
+      ]
+    },
+    {
+      "id": "NZ-35",
+      "title": "Derive the cotangent weights from the Dirichlet energy",
+      "category": "learning",
+      "project": "geometry-processing",
+      "milestone": "a mesh is a sparse matrix to me",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "the cotan weight (cot alpha + cot beta)/2 is derived by taking the gradient of a piecewise-linear hat function over a triangle and integrating the Dirichlet energy, with the step showing where the cotangents come from geometrically, not quoted from the paper",
+      "created": "2026-08-12",
+      "estimate": 90,
+      "blocks": [
+        "NZ-36"
+      ]
+    },
+    {
+      "id": "NZ-36",
+      "title": "Assemble the cotan Laplacian and mass matrix, verified against libigl",
+      "category": "learning",
+      "project": "geometry-processing",
+      "milestone": "a mesh is a sparse matrix to me",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "hand-assembled L and M match igl.cotmatrix and igl.massmatrix to numerical tolerance, L is verified symmetric with rows summing to zero, and L applied to a constant function returns zero on interior vertices",
+      "created": "2026-08-12",
+      "estimate": 75,
+      "blocks": [
+        "NZ-37"
+      ]
+    },
+    {
+      "id": "NZ-37",
+      "title": "Find where the cotan Laplacian breaks on obtuse and degenerate triangles",
+      "category": "learning",
+      "project": "geometry-processing",
+      "milestone": "a mesh is a sparse matrix to me",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "a mesh with obtuse triangles is shown to produce negative cotan weights, the consequence for the maximum principle is stated concretely, and the difference between barycentric and Voronoi mass matrices on that mesh is measured rather than described",
+      "created": "2026-08-12",
+      "estimate": 60,
+      "blocks": []
+    },
+    {
+      "id": "NZ-38",
+      "title": "Derive the quadric error metric and the optimal contraction point",
+      "category": "learning",
+      "project": "geometry-processing",
+      "milestone": "decimation works and matches Blender",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "the 4x4 quadric Q is derived as the sum of outer products of plane equations so that v^T Q v is the sum of squared distances to those planes, and the 3x3 system for the optimal contraction position is obtained by setting the gradient to zero, including what to do when that system is singular",
+      "created": "2026-08-12",
+      "estimate": 75,
+      "blocks": [
+        "NZ-39"
+      ]
+    },
+    {
+      "id": "NZ-39",
+      "title": "Implement QEM edge-collapse decimation with a priority queue",
+      "category": "learning",
+      "project": "geometry-processing",
+      "milestone": "decimation works and matches Blender",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "a mesh decimates to a target triangle count with quadrics accumulated on collapse and the queue updated lazily, and the result is a valid manifold with no degenerate or flipped triangles, checked rather than eyeballed",
+      "created": "2026-08-12",
+      "estimate": 90,
+      "blocks": [
+        "NZ-40"
+      ]
+    },
+    {
+      "id": "NZ-40",
+      "title": "Compare QEM output against Blender's Decimate modifier",
+      "category": "learning",
+      "project": "geometry-processing",
+      "milestone": "decimation works and matches Blender",
+      "status": "backlog",
+      "visibility": "public",
+      "done_when": "the same mesh is decimated to the same ratio by both implementations and compared by Hausdorff distance to the original, with any systematic difference traced to a specific choice (boundary handling, collapse validity, or the singular-quadric fallback) rather than left as noise",
+      "created": "2026-08-12",
       "estimate": 60,
       "blocks": []
     }
