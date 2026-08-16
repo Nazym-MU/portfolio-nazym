@@ -577,9 +577,9 @@ function openBoard() {
 let manchesterObject = null;
 let roomCube = null; // live Rubik's cube replacing the baked prop (see room-cube.js)
 
-const clickableObjects = ["macbook", "notebook_2", "map", "ggb", "jersey", "aboutme", "projects",
-    "resume", "almaty", "vynil", "book_pink", "book_brown", "book_black", "ball", "rock", "candle",
-    "ipad", "rubik", "tulips", "ole", "kzchoco", "apple-pencil"];
+const clickableObjects = ["macbook", "notebook_2", "map", "ggb", "jersey", "manchester", "aboutme",
+    "projects", "resume", "almaty", "vynil", "book_pink", "book_brown", "book_black", "ball", "rock",
+    "candle", "ipad", "rubik", "tulips", "ole", "kzchoco", "apple-pencil"];
 const raycasterObjects = [];
 
 const raycaster = new THREE.Raycaster();
@@ -885,7 +885,7 @@ function handleRaycasterInteraction(e) {
             showModal(modals.notebook);
         } else if (object.name.includes("map")) {
             showModal(modals.map);
-        } else if (object.name.includes("jersey")) {
+        } else if (object.name.includes("jersey") || object.name.includes("manchester")) {
             showModal(modals.jersey);
         } else if (object.name.includes("ipad")) {
             openBoard();
@@ -1423,6 +1423,20 @@ function playHoverAnimation(object, isHovering) {
     // scale — and the killTweensOf below — can never fight its jump animation.
     if (objectName.includes('rubik')) {
         if (roomCube) roomCube.setHover(isHovering);
+        return;
+    }
+    // The Bruno frame spins every frame in the render loop, so only its scale
+    // may be tweened here — resetting rotation would fight the spin.
+    if (objectName.includes('manchester')) {
+        gsap.killTweensOf(object.scale);
+        const k = isHovering ? 1.12 : 1;
+        gsap.to(object.scale, {
+            x: object.userData.initialScale.x * k,
+            y: object.userData.initialScale.y * k,
+            z: object.userData.initialScale.z * k,
+            duration: isHovering ? 0.8 : 0.6,
+            ease: isHovering ? "expo.out" : "power3.out",
+        });
         return;
     }
 
