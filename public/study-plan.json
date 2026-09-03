@@ -1,0 +1,1208 @@
+{
+  "generated": "2026-09-03T04:29:52.024Z",
+  "start": "2026-09-04",
+  "end": "2027-01-31",
+  "count": 150,
+  "days": [
+    {
+      "date": "2026-09-04",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 1. Crane 1 (Overview), notes ch.1 Introduction. Environment setup: trimesh, scipy, Polyscope.",
+      "implement": false,
+      "done": true,
+      "note": "Set up the environment: `trimesh`, `scipy`, Polyscope all importing and rendering a test mesh.\n\nFarlow lesson 1 — classification of PDEs. The three canonical second-order forms come from the\nsign of the discriminant $B^2 - AC$: elliptic ($<0$), parabolic ($=0$), hyperbolic ($>0$).\n\nCrane lecture 1 sets up the central theme: pick the discretization that preserves the structure\nyou care about, because no discretization preserves all of them at once.\n\n$$\\Delta u = \\nabla \\cdot \\nabla u$$\n\nRelated: [[fluid-mechanics-ale]]"
+    },
+    {
+      "date": "2026-09-05",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-06",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-07",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 2. Crane 2 (Meshes), notes ch.2 Combinatorial Surfaces. Implement: adjacency matrices for a triangle mesh.",
+      "implement": true,
+      "done": false,
+      "note": "Started on adjacency matrices but did not finish the vertex-face one."
+    },
+    {
+      "date": "2026-09-08",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 3. Crane 3 (Manifolds), notes ch.2. Implement: halfedge data structure.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-09",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 4. Crane 4 (Exterior Algebra), notes ch.4 §4.1–4.2. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-10",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 5. Crane 5 (k-forms), notes ch.4 §4.3–4.4. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-11",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 6. Crane 6 (Differential Forms), notes ch.4 §4.5. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-12",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-13",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-14",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 7. Crane 7 (Exterior Derivative), notes ch.4 §4.6. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-15",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 8. Crane 8 (Integration), notes ch.4 §4.7. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-16",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 9. Crane 9 (Discrete Differential Forms), notes ch.4 §4.8. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-17",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 10. Crane 10 (Discrete Exterior Calculus), notes ch.4 §4.9. Implement: discrete exterior derivative matrices d0, d1; check d1·d0 = 0.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-18",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 11. Crane 11 (Vector Valued Forms), notes ch.4. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-19",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-20",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-21",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 12. Crane 12 (Smooth Curves), notes ch.3 Differential Geometry. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-22",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 13. Crane 13 (Discrete Curves), notes ch.3. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-23",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 14. Crane 14 (Smooth Surfaces I), notes ch.3. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-24",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 15. Crane 15 (Smooth Surfaces II), notes ch.3. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-25",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 16. Crane 16 (Discrete Surfaces), notes ch.5 Curvature of Discrete Surfaces. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-26",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-27",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-28",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 17. Crane 17 (Smooth Curvature), notes ch.5. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-29",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 18. Crane 18 (Discrete Curvature I, integral viewpoint), notes ch.5. Implement: Gaussian curvature by angle defect; verify Gauss-Bonnet.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-09-30",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 19. Crane 19 (Discrete Curvature II, variational viewpoint), notes ch.5. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-01",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 20. Crane 20 (Laplacian), notes ch.6 The Laplacian. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-02",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 21. Crane 21 (Discrete Laplacian), notes ch.6. Implement: cotan Laplacian; check it matches a P1 FEM stiffness assembly.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-03",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-04",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-05",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 22. Crane 22 (Conformal Geometry), notes ch.9 Conformal Geometry. Implement: mean curvature flow.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-06",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 23. Crane 23 (Discrete Conformal Geometry), notes ch.9. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-07",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 24. Crane 24 (Geodesics I), notes ch.7 Surface Parameterization. Summarise.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-08",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 25. Crane 25 (Geodesics II), notes ch.8 Vector Field Design. Implement: heat method for geodesic distance.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-09",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Farlow lesson 26. Review and consolidate Phase 1 implementations.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-10",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-11",
+      "phase": "Phase 1 — Crane & Farlow",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-12",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 27. Botsch ch.1 Surface Representations",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-13",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 28. Continue: Botsch ch.1 Surface Representations — exercises and notes.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-14",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 29. Botsch ch.2 Mesh Data Structures",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 30. Continue: Botsch ch.2 Mesh Data Structures — exercises and notes.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-16",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 31. Botsch ch.3 Differential Geometry",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-17",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-18",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-19",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 32. Continue: Botsch ch.3 Differential Geometry — exercises and notes.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-20",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 33. Build geometry-central from source; get a hello-world mesh loading in C++.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-21",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 34. Botsch ch.4 Smoothing",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-22",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 35. Continue: Botsch ch.4 Smoothing — exercises and notes.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-23",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 36. Botsch ch.5 Parameterization",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-24",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-25",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-26",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 37. Continue: Botsch ch.5 Parameterization — exercises and notes.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-27",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 38. Port the cotan Laplacian to C++ on geometry-central.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-28",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 39. Botsch ch.6 Remeshing",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-29",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Farlow lesson 40. Continue: Botsch ch.6 Remeshing — exercises and notes.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-30",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Botsch ch.7 Simplification & Approximation",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-10-31",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-01",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-02",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Continue: Botsch ch.7 Simplification & Approximation — exercises and notes.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-03",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Port the heat method to C++ on geometry-central.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-04",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Botsch ch.8 Model Repair",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-05",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Continue: Botsch ch.8 Model Repair — exercises and notes.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-06",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Botsch ch.9 Deformation",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-07",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-08",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-09",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Continue: Botsch ch.9 Deformation — exercises and notes.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-10",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Botsch ch.10 Numerics",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-11",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Continue: Botsch ch.10 Numerics — exercises and notes.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-12",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Benchmark the C++ ports against the Python versions; write up the differences.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-13",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Consolidate Phase 2: exercises, notes and C++ cleanup.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-14",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-15",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-16",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Consolidate Phase 2: exercises, notes and C++ cleanup.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-17",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Consolidate Phase 2: exercises, notes and C++ cleanup.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-18",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Consolidate Phase 2: exercises, notes and C++ cleanup.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-19",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Consolidate Phase 2: exercises, notes and C++ cleanup.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-20",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Consolidate Phase 2: exercises, notes and C++ cleanup.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-21",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-22",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-23",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Consolidate Phase 2: exercises, notes and C++ cleanup.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-24",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Consolidate Phase 2: exercises, notes and C++ cleanup.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-25",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Consolidate Phase 2: exercises, notes and C++ cleanup.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-26",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Consolidate Phase 2: exercises, notes and C++ cleanup.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-27",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Consolidate Phase 2: exercises, notes and C++ cleanup.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-28",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-29",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-11-30",
+      "phase": "Phase 2 — Botsch & C++",
+      "task": "Consolidate Phase 2: exercises, notes and C++ cleanup.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-01",
+      "phase": "Phase 3 — Bridson",
+      "task": "Bridson ch.1 The Equations of Fluids",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-02",
+      "phase": "Phase 3 — Bridson",
+      "task": "Bridson ch.2 Overview of Numerical Simulation",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-03",
+      "phase": "Phase 3 — Bridson",
+      "task": "Bridson ch.3 Advection Algorithms",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-04",
+      "phase": "Phase 3 — Bridson",
+      "task": "Implement: semi-Lagrangian advection on a 2D grid.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-05",
+      "phase": "Phase 3 — Bridson",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-06",
+      "phase": "Phase 3 — Bridson",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-07",
+      "phase": "Phase 3 — Bridson",
+      "task": "Bridson ch.4 Level Set Geometry",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-08",
+      "phase": "Phase 3 — Bridson",
+      "task": "Bridson ch.5 Making Fluids Incompressible",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-09",
+      "phase": "Phase 3 — Bridson",
+      "task": "Implement: pressure projection with a sparse Poisson solve.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-10",
+      "phase": "Phase 3 — Bridson",
+      "task": "Bridson ch.6 Smoke",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-11",
+      "phase": "Phase 3 — Bridson",
+      "task": "Bridson ch.7 Particle Methods",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-12",
+      "phase": "Phase 3 — Bridson",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-13",
+      "phase": "Phase 3 — Bridson",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-14",
+      "phase": "Phase 3 — Bridson",
+      "task": "Implement: buoyancy and vorticity confinement for smoke.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-15",
+      "phase": "Phase 3 — Bridson",
+      "task": "Bridson ch.8 Water",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-16",
+      "phase": "Phase 3 — Bridson",
+      "task": "Bridson ch.9 Fire",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-17",
+      "phase": "Phase 3 — Bridson",
+      "task": "Bridson ch.10 Viscous Fluids",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-18",
+      "phase": "Phase 3 — Bridson",
+      "task": "Implement: finish the 2D grid-based fluid solver; render a smoke plume.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-19",
+      "phase": "Phase 3 — Bridson",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-20",
+      "phase": "Phase 3 — Bridson",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-21",
+      "phase": "Phase 3 — Bridson",
+      "task": "Consolidate Phase 3: extend and write up the solver.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-22",
+      "phase": "Phase 3 — Bridson",
+      "task": "Consolidate Phase 3: extend and write up the solver.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-23",
+      "phase": "Phase 3 — Bridson",
+      "task": "Consolidate Phase 3: extend and write up the solver.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-24",
+      "phase": "Phase 3 — Bridson",
+      "task": "Consolidate Phase 3: extend and write up the solver.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-25",
+      "phase": "Phase 3 — Bridson",
+      "task": "Consolidate Phase 3: extend and write up the solver.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-26",
+      "phase": "Phase 3 — Bridson",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-27",
+      "phase": "Phase 3 — Bridson",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-28",
+      "phase": "Phase 3 — Bridson",
+      "task": "Consolidate Phase 3: extend and write up the solver.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-29",
+      "phase": "Phase 3 — Bridson",
+      "task": "Consolidate Phase 3: extend and write up the solver.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-30",
+      "phase": "Phase 3 — Bridson",
+      "task": "Consolidate Phase 3: extend and write up the solver.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2026-12-31",
+      "phase": "Phase 3 — Bridson",
+      "task": "Consolidate Phase 3: extend and write up the solver.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-01",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Read the Blender developer docs: addon architecture and bpy basics.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-02",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-03",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-04",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Build Blender from source.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-05",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Read the Blender Python API: mesh access via bmesh.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-06",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Choose the Phase 1 algorithm to wrap; sketch the addon UI.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-07",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Implement: minimal addon skeleton that registers a panel and operator.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-08",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Wire the algorithm to bmesh mesh data in-place.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-09",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-10",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-11",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Implement: the algorithm running end-to-end on a Blender mesh.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-12",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Handle edge cases: non-manifold input, boundaries, large meshes.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-13",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Write the README, usage GIF, and installation instructions.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-14",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Implement: package the addon and publish the GitHub repo.",
+      "implement": true,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-15",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Polish: error messages, undo support, operator options.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-16",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-17",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-18",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Buffer: fixes from testing the published addon.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-19",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Buffer: polish the addon and write the retrospective.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-20",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Buffer: polish the addon and write the retrospective.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-21",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Buffer: polish the addon and write the retrospective.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-22",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Buffer: polish the addon and write the retrospective.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-23",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-24",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-25",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Buffer: polish the addon and write the retrospective.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-26",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Buffer: polish the addon and write the retrospective.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-27",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Buffer: polish the addon and write the retrospective.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-28",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Buffer: polish the addon and write the retrospective.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-29",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Buffer: polish the addon and write the retrospective.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-30",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Catch-up or longer implementation.",
+      "implement": false,
+      "done": false,
+      "note": null
+    },
+    {
+      "date": "2027-01-31",
+      "phase": "Phase 4 — Blender addon",
+      "task": "Rest.",
+      "implement": false,
+      "done": false,
+      "note": null
+    }
+  ]
+}

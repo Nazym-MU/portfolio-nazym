@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-12T22:19:34.982Z",
+  "generated": "2026-09-03T04:29:51.904Z",
   "count": 40,
   "projects": {
     "splat-rasterizer": {
@@ -110,14 +110,11 @@
       "category": "project",
       "project": "old-trafford",
       "milestone": "the finished scroll-story is live",
-      "status": "todo",
+      "status": "done",
       "visibility": "public",
       "done_when": "a short ordered list exists (in story.js or a note) naming each camera-preset stop and the one idea each stop should land",
       "created": "2026-08-02",
-      "estimate": 30,
-      "blocks": [
-        "NZ-14"
-      ]
+      "estimate": 30
     },
     {
       "id": "NZ-14",
@@ -125,7 +122,7 @@
       "category": "writing",
       "project": "old-trafford",
       "milestone": "the finished scroll-story is live",
-      "status": "todo",
+      "status": "done",
       "visibility": "public",
       "done_when": "every stop in story.js has finished copy — no placeholder text left anywhere in the scroll-story",
       "created": "2026-08-02",
@@ -166,7 +163,7 @@
       "category": "writing",
       "project": "manchester-united-site",
       "milestone": "the letter opens",
-      "status": "todo",
+      "status": "done",
       "visibility": "public",
       "done_when": "full letter text written, starting \"Dear Manchester United,\" finished and dropped into the site in place of placeholder copy",
       "created": "2026-08-02",
@@ -628,7 +625,7 @@
       "category": "project",
       "project": "manchester-united-site",
       "milestone": "linked up",
-      "status": "backlog",
+      "status": "done",
       "visibility": "public",
       "done_when": "each deployed site carries a visible link to the other, both links are followed on a phone and a laptop without hitting a dead URL, and the two sites read as related rather than as two unrelated projects that happen to share a subject",
       "created": "2026-08-12",

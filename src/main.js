@@ -9,6 +9,13 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import gsap from "gsap";
 import { createRoomCube } from './room-cube.js';
 import { initNotebook } from './notebook.js';
+import {
+    loadStudyData,
+    getStudyData,
+    renderStudyView,
+    wireStudyInteractions,
+    closeStudyPopover,
+} from './study.js';
 
 const canvas = document.querySelector("#experience-canvas");
 const sizes = {
@@ -156,7 +163,7 @@ function isEditMode() {
 
 let boardData = null;      // cached tickets.json payload
 let boardLoading = null;   // in-flight fetch promise
-let boardView = "stories"; // "stories" | "board"
+let boardView = "stories"; // "stories" | "board" | "study"
 let activeStory = null;    // project slug when drilled into a story
 
 function escapeHtml(str) {
@@ -328,7 +335,12 @@ function renderBoard(data) {
         b.classList.toggle("active", b.dataset.view === boardView)
     );
 
-    if (boardView === "board") {
+    if (boardView === "study") {
+        // Read-only tab: the study grid is rendered from its own JSON and has
+        // no edit path, so drag-and-drop wiring is deliberately skipped here.
+        viewEl.innerHTML = renderStudyView(getStudyData());
+        wireStudyInteractions(getStudyData);
+    } else if (boardView === "board") {
         viewEl.innerHTML = renderBoardView(tickets);
         if (isEditMode()) wireDragAndDrop();
     } else if (activeStory) {
@@ -350,6 +362,20 @@ function wireBoardInteractions() {
         if (!tab) return;
         boardView = tab.dataset.view;
         if (boardView === "stories") activeStory = null;
+        closeStudyPopover();
+
+        // The study JSON is only fetched the first time the tab is opened, so
+        // visitors who never look at it never pay for the download.
+        if (boardView === "study" && !getStudyData()) {
+            renderBoard(boardData); // paints the tab state immediately
+            loadStudyData()
+                .then(() => renderBoard(boardData))
+                .catch(() => {
+                    const el = document.getElementById("board-view");
+                    if (el) el.innerHTML = `<div class="board-empty">Couldn't load the study plan.</div>`;
+                });
+            return;
+        }
         renderBoard(boardData);
     });
 

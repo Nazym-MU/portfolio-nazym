@@ -16,6 +16,7 @@ A modern Three.js-powered 3D portfolio with interactive objects, glass morphism 
   - 📱 **Contact Items**: Contact information and social links
   - 🌍 **Location Items**: Background and origin story
   - 📝 **Notebook**: Papers read and things learned, as in-site explainer pages
+  - 📋 **Ticket Board** (iPad): Stories, Board, and Study tabs
 
 ## Performance Optimizations
 
@@ -52,6 +53,48 @@ A modern Three.js-powered 3D portfolio with interactive objects, glass morphism 
    npm run preview
    ```
 
+## Vault-backed content
+
+Two tabs on the ticket board are generated from the Obsidian vault at
+`~/Downloads/2026` (override with the `VAULT` env var). In both cases the vault
+is the single source of truth and the site is **read-only** — nothing in the
+browser ever writes back.
+
+| Tab | Script | Output | Vault source |
+| --- | --- | --- | --- |
+| Stories / Board | `npm run tickets` | `public/tickets.json` | `Tickets/`, `Projects/` |
+| Study | `npm run study` | `public/study-plan.json` | `Study plan/` |
+
+Both run automatically as part of `npm run dev` and `npm run build`. On a deploy
+box without the vault, each script leaves the committed JSON untouched rather
+than blanking the view.
+
+### Study plan
+
+The Study tab is a GitHub-contributions-style grid over a daily study schedule.
+
+```
+Study plan/
+  plan.md              # | date | phase | task | implement | table, one row per day
+  notes/
+    2026-09-04.md      # frontmatter `date:` + `done:`, then free-form markdown
+```
+
+A cell is green when a note exists for that date with `done: true`. Past days
+without one render as empty; future days are dashed, so a missed day is visually
+distinguishable from one that has not happened yet. Sundays are muted rest days
+with no popover. Note bodies support LaTeX (rendered with KaTeX) and wikilinks
+(brackets stripped, not resolved).
+
+To publish after writing notes in Obsidian:
+
+```bash
+npm run study:publish   # rebuild the JSON, commit it, and push
+```
+
+Only `Study plan/` is read — no other vault folder is touched, so nothing else
+can leak into the site.
+
 ## Controls
 
 - **Mouse/Touch**: Rotate the camera around the model
@@ -64,5 +107,8 @@ A modern Three.js-powered 3D portfolio with interactive objects, glass morphism 
 - `index.html` - Main HTML file with modern loading screen
 - `style.css` - Modern CSS with glass morphism and animations
 - `src/main.js` - Clean, production-ready JavaScript application
+- `src/study.js` - Study plan grid (read-only, renders `public/study-plan.json`)
+- `scripts/build-tickets.js` - Publishes public tickets from the vault
+- `scripts/build-study-plan.js` - Publishes the study plan from the vault
 - `public/portfolio.glb` - Optimized 3D room model
 - `public/Nazym Zhiyengaliyeva Resume.pdf` - Resume file
