@@ -960,11 +960,19 @@ canvas {
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-    background: var(--accent-emerald);
+    background: rgba(255, 255, 255, 0.18);
     border-radius: 10px;
     border: 2px solid transparent;
     background-clip: padding-box;
 }
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+    background-clip: padding-box;
+}
+
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; }
 
 @media (max-width: 768px) {
     .modal { width: 95vw; max-height: 90vh; max-height: 90dvh; }
@@ -989,17 +997,68 @@ canvas {
    in edit mode (?edit=<key>) and persists to the vault.
    ======================================================================== */
 
-/* The board wants more room than a text modal */
+/* The board wants more room than a text modal.
+   A FIXED height (not just max-height) is deliberate: the three tabs have very
+   different natural heights, and letting the modal shrink-wrap each one made it
+   jump around on every tab switch. Now the frame is constant and the content
+   area scrolls inside it. */
 .modal.board {
-    width: 1180px;
+    width: 1240px;
     max-width: 94vw;
+    height: 78vh;
+    height: 78dvh;
+    min-height: 520px;
     max-height: 90vh;
     max-height: 90dvh;
+    /* The study popover is anchored inside the board and must be able to sit
+       over the modal's edge instead of being clipped by it. */
+    overflow: visible;
+}
+
+/* Header + content stack to fill the fixed height. */
+.modal.board .modal-content {
+    height: calc(100% - 48px);
+    max-height: none;
+    overflow: visible;
 }
 
 .board-body {
-    padding: 28px 32px 36px;
+    padding: 28px 32px 32px;
     color: #eef2f8;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Only the view area scrolls, so the title and tabs stay put. */
+.board-view {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Room for the popover to overhang without triggering a scrollbar. */
+    padding-right: 4px;
+}
+
+/* Maximized keeps the same fill-the-frame behaviour rather than reverting to
+   the shrink-wrap that made the tabs jump. */
+.modal.board.maximized {
+    height: 92vh;
+    height: 92dvh;
+    max-height: 92vh;
+    max-height: 92dvh;
+}
+
+/* The modal no longer clips (overflow is visible so the popover can escape), so
+   the header and body carry the rounding themselves. */
+.modal.board .modal-header {
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+}
+
+.modal.board .board-body {
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
 }
 
 .board-topbar {
@@ -1414,8 +1473,13 @@ canvas {
 }
 
 @media (max-width: 768px) {
-    .modal.board { width: 95vw; }
-    .board-body { padding: 20px 18px 28px; }
+    .modal.board {
+        width: 95vw;
+        height: 82vh;
+        height: 82dvh;
+        min-height: 0;
+    }
+    .board-body { padding: 20px 18px 24px; }
     .board-title { font-size: 1.6rem; }
     .board-columns { grid-template-columns: 1fr; }
 }
@@ -1428,9 +1492,22 @@ canvas {
    ======================================================================== */
 
 .study {
+    /* One place to resize the whole grid: labels, month row, phase band and
+       legend swatches are all derived from these two tokens. */
+    --cell: 22px;
+    --cell-gap: 4px;
+
     position: relative;
     color: #eef2f8;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
+
+/* The grid sits toward the top of the board rather than centred: that leaves
+   the open space BELOW it, which is where popovers prefer to open, so a note
+   drops into empty space instead of covering the grid and the title. */
+.study-scroll { margin-top: 4px; }
 
 /* --- Summary line above the grid --- */
 .study-summary {
@@ -1466,16 +1543,16 @@ canvas {
 /* --- Weekday labels down the left --- */
 .study-side {
     display: grid;
-    grid-template-rows: 22px repeat(7, 15px);
-    gap: 3px;
+    grid-template-rows: 22px repeat(7, var(--cell));
+    gap: var(--cell-gap);
     flex: none;
 }
 
 .study-corner { height: 22px; }
 
 .study-weekday {
-    font-size: 0.6rem;
-    line-height: 15px;
+    font-size: 0.68rem;
+    line-height: var(--cell);
     color: rgba(255, 255, 255, 0.4);
     text-align: right;
     padding-right: 4px;
@@ -1487,13 +1564,13 @@ canvas {
 /* --- Phase band: a colored strip above the columns --- */
 .study-phases {
     display: flex;
-    gap: 3px;
-    margin-bottom: 4px;
+    gap: var(--cell-gap);
+    margin-bottom: 5px;
 }
 
 .study-phase-cell {
-    width: 15px;
-    height: 3px;
+    width: var(--cell);
+    height: 4px;
     border-radius: 2px;
     background: rgba(255, 255, 255, 0.12);
 }
@@ -1507,14 +1584,14 @@ canvas {
 /* --- Month labels --- */
 .study-months {
     display: flex;
-    gap: 3px;
-    height: 15px;
-    margin-bottom: 3px;
+    gap: var(--cell-gap);
+    height: 16px;
+    margin-bottom: 4px;
 }
 
 .study-month {
-    width: 15px;
-    font-size: 0.6rem;
+    width: var(--cell);
+    font-size: 0.68rem;
     color: rgba(255, 255, 255, 0.45);
     white-space: nowrap;
     overflow: visible;
@@ -1523,20 +1600,20 @@ canvas {
 /* --- The cells --- */
 .study-weeks {
     display: flex;
-    gap: 3px;
+    gap: var(--cell-gap);
 }
 
 .study-week {
     display: grid;
-    grid-template-rows: repeat(7, 15px);
-    gap: 3px;
+    grid-template-rows: repeat(7, var(--cell));
+    gap: var(--cell-gap);
 }
 
 .study-cell,
 .study-swatch {
-    width: 15px;
-    height: 15px;
-    border-radius: 3px;
+    width: var(--cell);
+    height: var(--cell);
+    border-radius: 4px;
     border: none;
     padding: 0;
     display: block;
@@ -1604,7 +1681,7 @@ button.study-cell.is-open {
 .study-legend {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
     flex-wrap: wrap;
     margin-top: 20px;
     font-size: 0.68rem;
@@ -1619,8 +1696,8 @@ button.study-cell.is-open {
 }
 
 .study-legend-phase i {
-    width: 16px;
-    height: 3px;
+    width: 18px;
+    height: 4px;
     border-radius: 2px;
     display: block;
 }
@@ -1628,12 +1705,17 @@ button.study-cell.is-open {
 .study-legend-spacer { flex: 1 1 20px; }
 
 /* --- Popover --- */
+/* Fixed, not absolute: the popover must escape the board's scrolling view and
+   the modal's own bounds, otherwise it gets clipped at the panel edge. It is
+   positioned against the viewport in JS. */
 .study-popover {
-    position: absolute;
-    z-index: 40;
-    width: 340px;
-    max-width: min(340px, 82vw);
-    max-height: 380px;
+    position: fixed;
+    z-index: 10050;
+    width: 360px;
+    max-width: min(360px, 86vw);
+    /* No max-height here on purpose: openPopover() sets it inline to the space
+       actually available beside the cell. A competing CSS cap made the panel
+       taller than that space and it ran off the bottom of the screen. */
     overflow-y: auto;
     padding: 16px 18px 18px;
     border-radius: 14px;

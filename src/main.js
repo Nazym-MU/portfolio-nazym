@@ -600,6 +600,9 @@ function openBoard() {
     }
 }
 
+// Exposed so the board can be opened without a 3D raycast (QA/screenshots).
+window.openBoard = openBoard;
+
 let manchesterObject = null;
 let roomCube = null; // live Rubik's cube replacing the baked prop (see room-cube.js)
 

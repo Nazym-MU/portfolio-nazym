@@ -303,11 +303,32 @@ export function renderStudyView(data) {
                 <span class="study-legend-key"><i class="study-swatch is-future"></i>Upcoming</span>
                 <span class="study-legend-key"><i class="study-swatch is-done"></i>Done</span>
             </div>
-            <div class="study-popover" id="study-popover" hidden></div>
         </div>`;
 }
 
 // ---- Popover --------------------------------------------------------------
+
+/**
+ * The popover lives on <body>, NOT inside the board.
+ *
+ * This is load-bearing: `.modal` is centred with `transform: translate(-50%,-50%)`,
+ * and a transformed ancestor makes `position: fixed` resolve against that
+ * ancestor instead of the viewport. Nested inside the modal, the panel was
+ * offset by the transform and hung off the bottom of the screen even with
+ * correct coordinates. On <body> there is no transformed ancestor, so fixed
+ * positioning means what it says.
+ */
+function getPopover() {
+    let pop = document.getElementById("study-popover");
+    if (!pop) {
+        pop = document.createElement("div");
+        pop.id = "study-popover";
+        pop.className = "study-popover";
+        pop.hidden = true;
+        document.body.appendChild(pop);
+    }
+    return pop;
+}
 
 function closePopover() {
     const pop = document.getElementById("study-popover");
@@ -318,8 +339,7 @@ function closePopover() {
 }
 
 function openPopover(cell, day) {
-    const pop = document.getElementById("study-popover");
-    if (!pop) return;
+    const pop = getPopover();
 
     document.querySelectorAll(".study-cell.is-open").forEach((c) => c.classList.remove("is-open"));
     cell.classList.add("is-open");
@@ -337,27 +357,76 @@ function openPopover(cell, day) {
         ${note}`;
 
     // Measure before positioning: the popover must be laid out to have a size.
+    // It is position:fixed, so all coordinates below are viewport coordinates —
+    // that is what lets it sit over the modal edge instead of being clipped by
+    // the board's scrolling view.
     pop.hidden = false;
     pop.style.left = "0px";
     pop.style.top = "0px";
 
-    const wrap = pop.offsetParent || pop.parentElement;
-    const wrapBox = wrap.getBoundingClientRect();
     const cellBox = cell.getBoundingClientRect();
-    const popBox = pop.getBoundingClientRect();
+    const margin = 12;
+    const gap = 10;
 
-    // Anchor to the cell, then nudge back inside the panel if it would overflow.
-    let left = cellBox.left - wrapBox.left + cellBox.width / 2 - popBox.width / 2;
-    left = Math.max(8, Math.min(left, wrapBox.width - popBox.width - 8));
+    // Centre on the cell, then pull back inside the viewport if it would spill.
+    const popWidth = pop.getBoundingClientRect().width;
+    let left = cellBox.left + cellBox.width / 2 - popWidth / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - popWidth - margin));
 
-    // Prefer below the cell; flip above when there is not enough room.
-    let top = cellBox.bottom - wrapBox.top + 10;
-    if (cellBox.bottom + popBox.height + 20 > window.innerHeight) {
-        top = cellBox.top - wrapBox.top - popBox.height - 10;
+    // Choose the side with more room, then cap the height to what that side
+    // actually has. Capping (rather than just clamping the offset) is what
+    // keeps a long note from running off the bottom of the screen: the panel
+    // shrinks and scrolls internally instead of being cut off.
+    const spaceBelow = window.innerHeight - cellBox.bottom - gap - margin;
+    const spaceAbove = cellBox.top - gap - margin;
+    const COMFORTABLE = 340;
+
+    // On a short viewport there is no good vertical placement: opening either
+    // way covers the grid. Sit beside the cell instead, using the full height,
+    // which is what the side-panel fallback is for.
+    const goSideways = Math.max(spaceBelow, spaceAbove) < COMFORTABLE;
+
+    if (goSideways) {
+        const available = window.innerHeight - 2 * margin;
+        pop.style.maxHeight = `${available}px`;
+
+        const height = Math.min(pop.scrollHeight, available);
+        // Whichever side of the cell has more horizontal room.
+        const roomRight = window.innerWidth - cellBox.right - gap - margin;
+        left = roomRight >= popWidth
+            ? cellBox.right + gap
+            : cellBox.left - popWidth - gap;
+        left = Math.max(margin, Math.min(left, window.innerWidth - popWidth - margin));
+
+        // Centre on the cell vertically, then keep it on screen.
+        let top = cellBox.top + cellBox.height / 2 - height / 2;
+        top = Math.max(margin, Math.min(top, window.innerHeight - height - margin));
+
+        pop.style.left = `${left}px`;
+        pop.style.top = `${top}px`;
+        return;
     }
 
+    // Prefer opening downward: the grid sits high in the board, so below it is
+    // open space, while flipping up would cover the grid and the title. Only
+    // flip when below is genuinely cramped AND above has meaningfully more room.
+    const placeBelow = spaceBelow >= COMFORTABLE || spaceBelow >= spaceAbove;
+    const available = Math.max(140, placeBelow ? spaceBelow : spaceAbove);
+
+    pop.style.maxHeight = `${available}px`;
+
+    // Height after the cap. offsetHeight forces a synchronous layout, so this
+    // reads the post-cap box rather than the pre-cap one; Math.min is a belt-
+    // and-braces guard in case the browser has not applied the cap yet.
+    const height = Math.min(pop.offsetHeight, available);
+    let top = placeBelow ? cellBox.bottom + gap : cellBox.top - height - gap;
+
+    // Final guard: never let the panel hang off either edge of the viewport.
+    top = Math.min(top, window.innerHeight - height - margin);
+    top = Math.max(margin, top);
+
     pop.style.left = `${left}px`;
-    pop.style.top = `${Math.max(8, top)}px`;
+    pop.style.top = `${top}px`;
 }
 
 /**
@@ -370,13 +439,6 @@ export function wireStudyInteractions(getData) {
     viewEl.dataset.studyWired = "1";
 
     viewEl.addEventListener("click", (e) => {
-        if (e.target.closest(".study-pop-close")) {
-            closePopover();
-            return;
-        }
-        // A click inside the popover should not close it.
-        if (e.target.closest(".study-popover")) return;
-
         const cell = e.target.closest(".study-cell[data-date]");
         if (!cell) {
             closePopover();
@@ -390,10 +452,28 @@ export function wireStudyInteractions(getData) {
         if (day) openPopover(cell, day);
     });
 
+    // The popover sits on <body>, so outside-clicks and its close button are
+    // handled at the document level rather than inside the board view.
+    document.addEventListener("click", (e) => {
+        if (e.target.closest(".study-pop-close")) {
+            closePopover();
+            return;
+        }
+        if (e.target.closest(".study-popover")) return;   // clicks inside: keep open
+        if (e.target.closest(".study-cell[data-date]")) return; // handled above
+        closePopover();
+    });
+
     // Escape closes; only one popover is ever open, so this is unambiguous.
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") closePopover();
     });
+
+    // The popover is position:fixed, so it would stay put while its cell
+    // scrolls away. Close it on any scroll of the grid or the board view.
+    const closeOnScroll = () => closePopover();
+    viewEl.addEventListener("scroll", closeOnScroll, true);
+    window.addEventListener("resize", closeOnScroll);
 }
 
 export { closePopover as closeStudyPopover };
