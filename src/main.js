@@ -7,6 +7,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import gsap from "gsap";
+import { initGallery } from "./gallery.js";
 import { createRoomCube } from './room-cube.js';
 import { initNotebook } from './notebook.js';
 import {
@@ -45,6 +46,24 @@ const modals = {
 
 let touchHappened = false;
 let isModalOpen = false;
+
+// The travel gallery lives inside the map modal. Built at startup but it loads
+// nothing until open() is called, so a visitor who never clicks the map pays
+// for none of it.
+const gallery = initGallery(document.getElementById("gallery-stage"), {
+    filmstripEl: document.getElementById("gallery-filmstrip"),
+    titleEl: document.getElementById("gallery-title"),
+    backEl: document.getElementById("gallery-back"),
+    onStatus: (msg) => {
+        const el = document.getElementById("gallery-status");
+        if (el) el.textContent = msg || "";
+    },
+});
+document.getElementById("gallery-back")?.addEventListener("click", () => gallery.showWorld());
+
+// Dev only: lets the leak test read renderer.info.memory across city swaps.
+// A staircase there means disposal is wrong; it must come back to baseline.
+if (import.meta.env.DEV) window.__galleryStats = () => gallery.stats();
 // `isModalOpen` gates *interaction* and only clears when the close tween ends.
 // Painting needs a separate flag: the room must start drawing again the moment
 // a modal begins fading out, or the last frame sits frozen under a
@@ -88,6 +107,12 @@ document.querySelectorAll(".window-control").forEach(button => {
 const showModal = (modal) => {
     isModalOpen = true;
     modal.style.display = "block";
+    if (modal === modals.map) {
+        // The side-by-side stage and filmstrip need the width; .gallery also
+        // drops the backdrop-filter, which is expensive over a scrolling list.
+        modal.classList.add("gallery");
+        gallery.open();
+    }
 
     gsap.set(modal, { opacity: 0 });
 
@@ -109,6 +134,11 @@ const hideModal = (modal) => {
             modal.style.display = "none";
             modal.classList.remove('maximized');
             isModalOpen = false;
+            // Give the city's textures back; the modal may not open again.
+            if (modal === modals.map) {
+                modal.classList.remove('gallery');
+                gallery.close();
+            }
         }
     });
 }

@@ -22,16 +22,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link rel="stylesheet" href="styles.css">
-    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@v0.153.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@v0.153.0/examples/jsm/",
-                "gsap": "https://unpkg.com/gsap@3.12.2/index.js"
-        }
-    }
-    </script>
+    <!-- No importmap: Vite resolves "three" and "gsap" from node_modules and
+         bundles them, so the map here never resolved anything. It claimed
+         three r153 while the build shipped the installed 0.177, which is a
+         trap waiting for anyone who writes code against the version they
+         think is running. package.json is the single source of truth. -->
 </head>
 
 <body>
@@ -298,15 +293,14 @@
             </div>
         </div>
         <div class="modal-content">
-            <div class="modal-image-header">
-                <img class="map-image" src="public/images/map.jpeg" alt="Map" />
-            </div>
-            <div class="modal-body">
-                <h1 class="modal-title">Traveling</h1>
-                <p class="modal-paragraph-text">
-                    Through my university, I've studied in 5 countries: USA, Taiwan, South Korea, Argentina, and Japan.
-                    I want to travel as much as I can!
-                </p>
+            <div class="gallery-shell">
+                <div class="gallery-head">
+                    <button class="gallery-back" id="gallery-back" hidden>Back to the map</button>
+                    <h1 class="gallery-title" id="gallery-title">Places I have been</h1>
+                    <span class="gallery-status" id="gallery-status"></span>
+                </div>
+                <div class="gallery-stage" id="gallery-stage"></div>
+                <div class="gallery-filmstrip" id="gallery-filmstrip" hidden></div>
             </div>
         </div>
     </div>
