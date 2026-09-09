@@ -14,6 +14,12 @@ export const NOTEBOOK_ENTRIES = [
         tags: ["deep learning", "history"],
         file: "learning/from-neurons-to-transformers.html",
     },
+    {
+        title: "Combinatorial Surfaces",
+        blurb: "How to say \"surface\" using nothing but sets of vertices. Simplices, links, the manifold condition, and the halfedge mesh that stores it all.",
+        tags: ["geometry", "discrete diff geo"],
+        file: "learning/combinatorial-surfaces.html",
+    },
 ];
 
 function escapeHtml(str) {
