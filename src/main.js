@@ -45,6 +45,11 @@ const modals = {
 
 let touchHappened = false;
 let isModalOpen = false;
+// `isModalOpen` gates *interaction* and only clears when the close tween ends.
+// Painting needs a separate flag: the room must start drawing again the moment
+// a modal begins fading out, or the last frame sits frozen under a
+// half-transparent panel for the whole 0.5s and then snaps.
+let roomPainting = true;
 
 // One consistent "touch-like" test for the touch-only affordances (beacons,
 // tap forgiveness, the tour's tap hint). Camera/layout keep the existing
@@ -89,10 +94,14 @@ const showModal = (modal) => {
     gsap.to(modal, {
         opacity: 1,
         duration: 0.5,
+        // Keep painting through the fade-in — the room is still partly visible.
+        // Only once the glass is fully opaque is the draw genuinely wasted.
+        onComplete: () => { roomPainting = false; },
     });
 }
 
 const hideModal = (modal) => {
+    roomPainting = true;   // resume before the fade, not after it
     gsap.to(modal, {
         opacity: 0,
         duration: 0.5,
@@ -619,12 +628,18 @@ const pointer = new THREE.Vector2();
 // the first hit. Desktop clicks never enter this path and stay exact.
 const TOUCH_RETRY_OFFSETS_PX = [[14, 0], [-14, 0], [0, 14], [0, -14]];
 
+// Touch devices get a lower render resolution — a dpr-3 phone framebuffer plus
+// this room's baked textures is exactly the memory mix that crashes Safari.
+// (Same clamp the Old Trafford stadium uses, for the same reason.) Re-read on
+// every call so it follows a device that changes pointer type or moves screens.
+const renderScale = () => Math.min(window.devicePixelRatio, isTouchLike() ? 1.1 : 1.5);
+
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 renderer.setSize(sizes.width, sizes.height);
 renderer.setClearColor(0x000000);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(renderScale());
 
 const scene = new THREE.Scene();
 
@@ -990,20 +1005,31 @@ manager.onLoad = function () {
 // OutlinePass so the focus is unmistakable. Clicking anywhere (or the auto
 // timer) advances; Esc or the "?" again cancels and restores the default view.
 // The composer is only used while the tour runs — the normal render path stays
-// plain renderer.render().
-const composer = new EffectComposer(renderer);
-composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-composer.setSize(sizes.width, sizes.height);
-composer.addPass(new RenderPass(scene, camera));
-const outlinePass = new OutlinePass(new THREE.Vector2(sizes.width, sizes.height), scene, camera);
-outlinePass.edgeStrength = 4;
-outlinePass.edgeGlow = 0.6;
-outlinePass.edgeThickness = 1.5;
-outlinePass.pulsePeriod = 2.5;
-outlinePass.visibleEdgeColor.set("#ffffff");
-outlinePass.hiddenEdgeColor.set("#4b5563");
-composer.addPass(outlinePass);
-composer.addPass(new OutputPass());
+// plain renderer.render(). It is therefore built ON FIRST TOUR rather than at
+// load: an EffectComposer allocates two full-screen render targets and the
+// OutlinePass several more, which is tens of MB of VRAM that most visitors
+// (who never start the tour) would pay for and never use.
+let composer = null;
+let outlinePass = null;
+
+function ensureComposer() {
+    if (composer) return composer;
+
+    composer = new EffectComposer(renderer);
+    composer.setPixelRatio(renderScale());
+    composer.setSize(sizes.width, sizes.height);
+    composer.addPass(new RenderPass(scene, camera));
+    outlinePass = new OutlinePass(new THREE.Vector2(sizes.width, sizes.height), scene, camera);
+    outlinePass.edgeStrength = 4;
+    outlinePass.edgeGlow = 0.6;
+    outlinePass.edgeThickness = 1.5;
+    outlinePass.pulsePeriod = 2.5;
+    outlinePass.visibleEdgeColor.set("#ffffff");
+    outlinePass.hiddenEdgeColor.set("#4b5563");
+    composer.addPass(outlinePass);
+    composer.addPass(new OutputPass());
+    return composer;
+}
 
 const TOUR_STOPS = [
     { key: "aboutme", title: "About Me", line: "Click the sign to learn who I am." },
@@ -1079,7 +1105,7 @@ function goToStop(index) {
         advanceTour();
         return;
     }
-    outlinePass.selectedObjects = objects;
+    if (outlinePass) outlinePass.selectedObjects = objects;
     const view = frameForObjects(objects);
     moveCamera(view.position, view.target, TOUR_FLIGHT_S);
     // First stop only, touch devices only: teach that a tap advances.
@@ -1090,7 +1116,7 @@ function goToStop(index) {
 // Final stop: fly home, clear the outline, leave a parting hint that fades out.
 function finishTour() {
     tourIndex = TOUR_STOPS.length; // sentinel: past the last object stop
-    outlinePass.selectedObjects = [];
+    if (outlinePass) outlinePass.selectedObjects = [];
     const view = getDefaultView();
     moveCamera(view.position, view.target, 1.4);
     showTooltip("Explore", "Click on things around the room for more about me.");
@@ -1114,6 +1140,7 @@ function startTour() {
         return;
     }
     if (raycasterObjects.length === 0) return; // GLB not in yet
+    ensureComposer();   // first tour of the session pays the render-target cost
     tourActive = true;
     tourIndex = -1;
     controls.enabled = false;
@@ -1125,7 +1152,7 @@ function endTour(restore) {
     clearTimeout(tourTimer);
     tourTimer = null;
     tourIndex = TOUR_STOPS.length; // a click during the flight home won't resume stops
-    outlinePass.selectedObjects = [];
+    if (outlinePass) outlinePass.selectedObjects = [];
     hideTooltip(true);
     const done = () => {
         tourActive = false;
@@ -1376,9 +1403,11 @@ window.addEventListener("resize", () => {
 
     // Update renderer + composer (the composer forwards setSize to its passes)
     renderer.setSize(sizes.width, sizes.height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    composer.setSize(sizes.width, sizes.height);
-    composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(renderScale());
+    if (composer) {
+        composer.setSize(sizes.width, sizes.height);
+        composer.setPixelRatio(renderScale());
+    }
 
     // Re-apply mobile/desktop controls
     applyMobileControls();
@@ -1643,11 +1672,18 @@ const animate = () => {
         document.body.style.cursor = "default";
     }
 
-    // The composer (with the OutlinePass) only runs while the tour is active.
-    if (tourActive) {
-        composer.render();
-    } else {
-        renderer.render(scene, camera);
+    // The room is fully occluded by an open modal, and every modal is a
+    // backdrop-filter panel — so rendering behind one forces the compositor to
+    // re-blur a *changing* source every frame, which is the expensive case on
+    // iOS. Skip the draw entirely; the last frame stays on screen under the
+    // glass. (Raycasting is already skipped above for the same reason.)
+    if (roomPainting) {
+        // The composer (with the OutlinePass) only runs while the tour is active.
+        if (tourActive && composer) {
+            composer.render();
+        } else {
+            renderer.render(scene, camera);
+        }
     }
 
     requestAnimationFrame(animate);
