@@ -1962,9 +1962,9 @@ button.study-cell.is-open {
 }
 
 .gallery-country {
-    fill: var(--accent-emerald);
-    fill-opacity: 0.5;
-    stroke: var(--accent-emerald);
+    fill: var(--tone, var(--accent-emerald));
+    fill-opacity: 0.55;
+    stroke: var(--tone, var(--accent-emerald));
     stroke-width: 1.1;
     vector-effect: non-scaling-stroke;
     cursor: pointer;
@@ -1973,12 +1973,44 @@ button.study-cell.is-open {
 }
 .gallery-country:hover,
 .gallery-country:focus-visible {
-    fill-opacity: 0.92;
+    fill-opacity: 0.95;
 }
 .gallery-country:focus-visible {
     stroke: #fff;
-    stroke-width: 2.2;
+    stroke-width: 2.4;
 }
+
+/* One hue per trip, so the map reads as a set of separate journeys rather than
+   one undifferentiated blob. All chosen to sit at similar lightness on the dark
+   backdrop, so no country shouts louder than another. */
+.gallery-country.tone-mint   { --tone: #6ee7b7; }
+.gallery-country.tone-sky    { --tone: #7dd3fc; }
+.gallery-country.tone-amber  { --tone: #fcd34d; }
+.gallery-country.tone-rose   { --tone: #fda4af; }
+.gallery-country.tone-violet { --tone: #c4b5fd; }
+.gallery-country.tone-sand   { --tone: #fdba74; }
+.gallery-country.tone-red    { --tone: #f87171; }
+
+/* Locator ring for countries too small to see or hit at world scale
+   (Taiwan, South Korea, the UAE). Carries the click as well, so it is a
+   bigger target and not just decoration. */
+.gallery-country-ring {
+    fill: none;
+    stroke: var(--tone, var(--accent-emerald));
+    stroke-width: 1.6;
+    stroke-opacity: 0.75;
+    vector-effect: non-scaling-stroke;
+    cursor: pointer;
+    transition: stroke-opacity 0.18s ease;
+}
+.gallery-country-ring:hover { stroke-opacity: 1; }
+.gallery-country-ring.tone-mint   { --tone: #6ee7b7; }
+.gallery-country-ring.tone-sky    { --tone: #7dd3fc; }
+.gallery-country-ring.tone-amber  { --tone: #fcd34d; }
+.gallery-country-ring.tone-rose   { --tone: #fda4af; }
+.gallery-country-ring.tone-violet { --tone: #c4b5fd; }
+.gallery-country-ring.tone-sand   { --tone: #fdba74; }
+.gallery-country-ring.tone-red    { --tone: #f87171; }
 
 .gallery-filmstrip {
     min-height: 0;

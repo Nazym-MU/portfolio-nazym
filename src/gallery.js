@@ -33,6 +33,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { disposeObject3D } from './gallery/dispose.js';
 import { countries, cities, countryBySlug, cityBySlug, thumbUrl } from './data/places.js';
 import { COUNTRY_PATHS, MAP_WIDTH, MAP_HEIGHT } from './data/world-map.js';
@@ -44,6 +45,26 @@ import { COUNTRY_PATHS, MAP_WIDTH, MAP_HEIGHT } from './data/world-map.js';
 const norm = (name) => (name || '').replace(/_\d+$/, '').replace(/[\s[\].:/]/g, '');
 
 const VIEW = { WORLD: 'world', CITY: 'city' };
+
+// Longest edge, in viewBox units, under which a country gets a locator ring.
+const SMALL_COUNTRY = 26;
+
+// Bounding box read straight out of the "M x y L x y ..." path data the build
+// script emits. Cheaper than getBBox(), and it works before the node is in the
+// document, which getBBox() does not.
+function pathBBox(d) {
+    const nums = d.match(/-?\d+(?:\.\d+)?/g);
+    if (!nums || nums.length < 4) return null;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (let i = 0; i + 1 < nums.length; i += 2) {
+        const x = +nums[i], y = +nums[i + 1];
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+    }
+    return { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2, w: maxX - minX, h: maxY - minY };
+}
 
 // Mint, matching the site's --accent-emerald.
 const HIGHLIGHT_COLOR = 0x6ee7b7;
@@ -63,6 +84,7 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
     let cityGroup = null;
     let cityRoot = null;
     let buildingMeshes = [];
+    let controls = null;
 
     // Made once, reused forever. Cloning a material per hover leaks one material
     // per event, which is thousands over a session; swapping which material a
@@ -112,6 +134,23 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
 
         cityGroup = new THREE.Group();
         scene.add(cityGroup);
+
+        // Drag to spin the city, wheel or pinch to zoom. Damping matches the
+        // room's feel. Panning is off: the disc is the subject and letting it
+        // slide off-screen only strands people.
+        controls = new OrbitControls(camera, canvas);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enablePan = false;
+        controls.rotateSpeed = 0.7;
+        controls.zoomSpeed = 0.8;
+        // Stop the camera going under the ground plane or straight overhead,
+        // where a baked model reads as a flat smear.
+        controls.minPolarAngle = 0.12;
+        controls.maxPolarAngle = Math.PI / 2 - 0.04;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            controls.enableDamping = false;
+        }
 
         highlightMat = new THREE.MeshBasicMaterial({ color: HIGHLIGHT_COLOR });
 
@@ -168,17 +207,35 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
             }
             const path = document.createElementNS(svgNS, 'path');
             path.setAttribute('d', entry.d);
-            path.setAttribute('class', 'gallery-country');
+            path.setAttribute('class', `gallery-country tone-${c.tone || 'mint'}`);
             path.setAttribute('tabindex', '0');
             path.setAttribute('role', 'button');
-            path.setAttribute('aria-label', `${c.name}. ${c.blurb || ''}`.trim());
+            const hasCities = (c.cities || []).some((x) => cityBySlug[x]);
+            path.setAttribute('aria-label',
+                [c.name, c.blurb, hasCities ? null : 'No photos up yet.']
+                    .filter(Boolean).join('. '));
             path.dataset.slug = c.slug;
+            const enter = () => openCountry(c.slug);
 
             const title = document.createElementNS(svgNS, 'title');
             title.textContent = c.name;
             path.appendChild(title);
 
-            const enter = () => openCountry(c.slug);
+            // Small countries are nearly invisible at world scale and, worse,
+            // are almost impossible to hit. Give anything under a threshold a
+            // ring centred on its shape: it draws attention and, because the
+            // ring carries the click too, it doubles as a bigger target.
+            const bbox = pathBBox(entry.d);
+            if (bbox && Math.max(bbox.w, bbox.h) < SMALL_COUNTRY) {
+                const ring = document.createElementNS(svgNS, 'circle');
+                ring.setAttribute('cx', bbox.cx.toFixed(1));
+                ring.setAttribute('cy', bbox.cy.toFixed(1));
+                ring.setAttribute('r', '13');
+                ring.setAttribute('class', `gallery-country-ring tone-${c.tone || 'mint'}`);
+                ring.addEventListener('click', enter);
+                live.appendChild(ring);
+            }
+
             path.addEventListener('click', enter);
             path.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enter(); }
@@ -195,9 +252,20 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
     function openCountry(slug) {
         const country = countryBySlug[slug];
         if (!country) return;
+
+        const list = (country.cities || []).filter((c) => cityBySlug[c]);
+        // Visited, but nothing written up yet. Say so rather than opening an
+        // empty view; the country stays on the map either way.
+        if (!list.length) {
+            if (titleEl) titleEl.textContent = country.name;
+            if (backEl) backEl.hidden = false;
+            onStatus?.('Photos from here are not up yet.');
+            renderFilmstrip(null);
+            return;
+        }
         // One city is the common case, so skip a pointless intermediate view.
-        if (country.cities.length === 1) enterCity(country.cities[0]);
-        else showCityChoices(country);
+        if (list.length === 1) enterCity(list[0]);
+        else showCityChoices({ ...country, cities: list });
     }
 
     function showWorld() {
@@ -328,8 +396,23 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
         const r = Math.max(size.x, size.y, size.z) || 1;
+
+        camera.near = Math.max(r / 1000, 0.001);
+        camera.far = r * 40;
         camera.position.set(center.x + r * 1.1, center.y + r * 0.8, center.z + r * 1.1);
         camera.lookAt(center);
+        camera.updateProjectionMatrix();
+
+        if (controls) {
+            // Orbit around the model's own centre, whatever its authored origin.
+            controls.target.copy(center);
+            // Zoom bounds scale with the model so one setting fits a stadium and
+            // a small disc alike: close enough to read a stand, far enough to
+            // see the whole thing, never so far it becomes a speck.
+            controls.minDistance = r * 0.35;
+            controls.maxDistance = r * 3.2;
+            controls.update();
+        }
     }
 
     function detachCity() {
@@ -435,6 +518,7 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         // hidden, so rendering into it is pure waste.
         if (!open || view !== VIEW.CITY || !renderer) return;
         resize();
+        controls?.update();     // required every frame while damping is on
         renderer.render(scene, camera);
     }
 
@@ -461,6 +545,7 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         stats: () => renderer?.info.memory ?? null,
         dispose() {
             this.close();
+            controls?.dispose();
             highlightMat?.dispose();
             dracoLoader?.dispose();      // only here: doing it after city #1 would
             renderer?.dispose();         // kill the decoder before city #2

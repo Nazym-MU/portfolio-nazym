@@ -17,20 +17,26 @@
 // `iso` keys into COUNTRY_PATHS in world-map.js, which is where the shape comes
 // from. Everything not listed here still draws, just muted and unclickable.
 export const countries = [
-    {
-        slug: 'usa',
-        iso: 'US',
-        name: 'United States',
-        blurb: 'New York, and a great deal of walking.',
-        cities: ['new-york'],
-    },
-    {
-        slug: 'uk',
-        iso: 'GB',
-        name: 'United Kingdom',
-        blurb: 'London, and the one ground I had to see.',
-        cities: ['london', 'manchester'],
-    },
+    // `iso` keys into COUNTRY_PATHS in world-map.js, which is where the shape
+    // comes from. `tone` picks one of the map palette's hues, so the map reads
+    // as a set of trips rather than one undifferentiated blob. Countries not
+    // listed here still draw, just muted and unclickable.
+    { iso: 'US', slug: 'usa', name: 'United States', tone: 'mint',
+      blurb: 'New York, and a great deal of walking.', cities: ['new-york'] },
+    { iso: 'GB', slug: 'uk', name: 'United Kingdom', tone: 'red',
+      blurb: 'London, and the one ground I had to see.', cities: ['london', 'manchester'] },
+    { iso: 'AR', slug: 'argentina', name: 'Argentina', tone: 'sky' },
+    { iso: 'EG', slug: 'egypt', name: 'Egypt', tone: 'sand' },
+    { iso: 'KZ', slug: 'kazakhstan', name: 'Kazakhstan', tone: 'sky' },
+    { iso: 'UZ', slug: 'uzbekistan', name: 'Uzbekistan', tone: 'violet' },
+    { iso: 'DE', slug: 'germany', name: 'Germany', tone: 'amber' },
+    { iso: 'TR', slug: 'turkey', name: 'Turkey', tone: 'red' },
+    { iso: 'AE', slug: 'uae', name: 'United Arab Emirates', tone: 'sand' },
+    { iso: 'JP', slug: 'japan', name: 'Japan', tone: 'rose' },
+    { iso: 'KR', slug: 'south-korea', name: 'South Korea', tone: 'violet' },
+    { iso: 'TW', slug: 'taiwan', name: 'Taiwan', tone: 'mint' },
+    { iso: 'TH', slug: 'thailand', name: 'Thailand', tone: 'amber' },
+    { iso: 'CN', slug: 'china', name: 'China', tone: 'rose' },
 ];
 
 export const cities = [
