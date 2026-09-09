@@ -1937,6 +1937,48 @@ button.study-cell.is-open {
     height: 100%;
     cursor: pointer;
 }
+.gallery-canvas[hidden] { display: none; }
+
+/* The world map. Vector, so it stays sharp at any modal size, and every
+   visited country is a real focusable element. */
+.gallery-map {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+/* `hidden` as a property does not reflect onto an SVG element, so the
+   view swap toggles this class instead. */
+.gallery-map.is-hidden { display: none; }
+
+/* Every country that is not hers: a quiet backdrop so the visited ones read
+   as picked out of a real map rather than floating in the dark. */
+.gallery-map-base path {
+    fill: rgba(255, 255, 255, 0.05);
+    stroke: rgba(255, 255, 255, 0.08);
+    stroke-width: 0.6;
+    vector-effect: non-scaling-stroke;
+}
+
+.gallery-country {
+    fill: var(--accent-emerald);
+    fill-opacity: 0.5;
+    stroke: var(--accent-emerald);
+    stroke-width: 1.1;
+    vector-effect: non-scaling-stroke;
+    cursor: pointer;
+    transition: fill-opacity 0.18s ease;
+    outline: none;
+}
+.gallery-country:hover,
+.gallery-country:focus-visible {
+    fill-opacity: 0.92;
+}
+.gallery-country:focus-visible {
+    stroke: #fff;
+    stroke-width: 2.2;
+}
 
 .gallery-filmstrip {
     min-height: 0;

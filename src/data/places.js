@@ -14,18 +14,20 @@
 // to no building.
 // ============================================================================
 
+// `iso` keys into COUNTRY_PATHS in world-map.js, which is where the shape comes
+// from. Everything not listed here still draws, just muted and unclickable.
 export const countries = [
     {
         slug: 'usa',
+        iso: 'US',
         name: 'United States',
-        mesh: 'CTRY-usa',
         blurb: 'New York, and a great deal of walking.',
         cities: ['new-york'],
     },
     {
-        slug: 'england',
-        name: 'England',
-        mesh: 'CTRY-england',
+        slug: 'uk',
+        iso: 'GB',
+        name: 'United Kingdom',
         blurb: 'London, and the one ground I had to see.',
         cities: ['london', 'manchester'],
     },
@@ -41,13 +43,13 @@ export const cities = [
     },
     {
         slug: 'london',
-        country: 'england',
+        country: 'uk',
         name: 'London',
         photos: [],
     },
     {
         slug: 'manchester',
-        country: 'england',
+        country: 'uk',
         name: 'Manchester',
         // The stadium stands in for the city: it is the part actually explored.
         // Textures halved to 1024 (69MB -> 37MB of GPU memory); geometry left

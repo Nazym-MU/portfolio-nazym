@@ -3,8 +3,10 @@
 // ----------------------------------------------------------------------------
 // Lives inside the existing "Traveling" modal. Three layers:
 //
-//   WORLD  a low-poly globe/plate, one named mesh per visited country
-//     |    click a country
+//   WORLD  an SVG world map. Real country outlines, visited ones lit up and
+//     |    clickable. SVG rather than 3D: a map is flat, vectors stay crisp at
+//     |    any size, hit-testing is the browser's job, and every country is a
+//     |    real focusable element so the keyboard works for free.
 //   CITY   that city's disc, loaded on demand and disposed on the way out
 //     |    click a photo
 //   PHOTO  a lightbox holding exactly one full-size image
@@ -20,7 +22,8 @@
 //      already makes revisits fast, so an in-memory cache would buy ~50ms and
 //      cost ~10MB per city held.
 //
-// The renderer here is a SECOND WebGL context, separate from the room's. The
+// Only the city layer is 3D. The renderer there is a SECOND WebGL context,
+// separate from the room's. The
 // modal sits above the room canvas in z-order and its backdrop-filter blurs
 // whatever is behind it, so painting the gallery into a region of the room's
 // canvas would show a blurred room, not the gallery. The room stops rendering
@@ -32,6 +35,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { disposeObject3D } from './gallery/dispose.js';
 import { countries, cities, countryBySlug, cityBySlug, thumbUrl } from './data/places.js';
+import { COUNTRY_PATHS, MAP_WIDTH, MAP_HEIGHT } from './data/world-map.js';
 
 // GLTFLoader runs names through PropertyBinding.sanitizeNodeName, which DELETES
 // '.', '[', ']', ':' and '/'. Multi-primitive meshes also gain '_1' suffixes.
@@ -54,19 +58,16 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
     let view = VIEW.WORLD;
     let activeCity = null;
 
-    let worldGroup = null;
+    let mapEl = null;        // the SVG world map (world view)
+    let canvasEl = null;     // the WebGL canvas (city view)
     let cityGroup = null;
     let cityRoot = null;
-    let countryMeshes = [];
     let buildingMeshes = [];
 
     // Made once, reused forever. Cloning a material per hover leaks one material
     // per event, which is thousands over a session; swapping which material a
     // mesh points at allocates nothing.
     let highlightMat = null;
-
-    const raycaster = new THREE.Raycaster();
-    const pointer = new THREE.Vector2();
 
     // Rising counter so a slow load that lands after a newer click is dropped
     // instead of adding a second disc to the scene.
@@ -83,7 +84,9 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
 
         const canvas = document.createElement('canvas');
         canvas.className = 'gallery-canvas';
+        canvas.hidden = true;          // the map owns the stage until a city opens
         stageEl.appendChild(canvas);
+        canvasEl = canvas;
 
         renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
         renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -107,9 +110,8 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         key.position.set(3, 6, 2);
         scene.add(key);
 
-        worldGroup = new THREE.Group();
         cityGroup = new THREE.Group();
-        scene.add(worldGroup, cityGroup);
+        scene.add(cityGroup);
 
         highlightMat = new THREE.MeshBasicMaterial({ color: HIGHLIGHT_COLOR });
 
@@ -118,8 +120,6 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         gltfLoader = new GLTFLoader();
         gltfLoader.setDRACOLoader(dracoLoader);
 
-        stageEl.addEventListener('pointerdown', onPointerDown);
-        buildWorld();
     }
 
     // Touch devices get a lower render resolution for the same reason the room
@@ -131,36 +131,81 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
 
     // ---- world layer ------------------------------------------------------
 
-    // Placeholder geometry, deliberately. The whole flow is proved against boxes
-    // before any Blender work exists, so a later problem with a real model is
-    // unambiguously a model problem. Swapping in world.glb should need no code
-    // change here beyond loading it: the names are the contract.
+    // The map is drawn once as SVG and then just shown or hidden. Every country
+    // in the world is drawn, so the visited ones read as picked out of a real
+    // map rather than floating alone; only the visited ones are interactive.
     function buildWorld() {
-        countryMeshes = [];
-        const spacing = 1.5;
-        const startX = -((countries.length - 1) * spacing) / 2;
+        if (mapEl) return mapEl;
 
-        countries.forEach((c, i) => {
-            const mesh = new THREE.Mesh(
-                new THREE.BoxGeometry(1, 0.25, 1),
-                new THREE.MeshBasicMaterial({ color: 0x9aa3ad })
-            );
-            mesh.name = c.mesh;              // CTRY-<slug>
-            mesh.position.set(startX + i * spacing, 0, 0);
-            worldGroup.add(mesh);
-            countryMeshes.push(mesh);
-        });
+        const visited = new Map(countries.map((c) => [c.iso, c]));
+        const svgNS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(svgNS, 'svg');
+        svg.setAttribute('viewBox', `0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`);
+        svg.setAttribute('class', 'gallery-map');
+        svg.setAttribute('role', 'group');
+        svg.setAttribute('aria-label', 'World map. Countries visited are highlighted and can be opened.');
 
-        camera.position.set(0, 2.4, 4.2);
-        camera.lookAt(0, 0, 0);
+        // Everything unvisited first, as one flat backdrop layer.
+        const base = document.createElementNS(svgNS, 'g');
+        base.setAttribute('class', 'gallery-map-base');
+        for (const [iso, entry] of Object.entries(COUNTRY_PATHS)) {
+            if (visited.has(iso)) continue;
+            const path = document.createElementNS(svgNS, 'path');
+            path.setAttribute('d', entry.d);
+            base.appendChild(path);
+        }
+        svg.appendChild(base);
+
+        // Visited countries on top, each a real button so the keyboard reaches
+        // it and hit-testing is the browser's problem rather than a raycast.
+        const live = document.createElementNS(svgNS, 'g');
+        live.setAttribute('class', 'gallery-map-live');
+        for (const c of countries) {
+            const entry = COUNTRY_PATHS[c.iso];
+            if (!entry) {
+                console.warn(`[gallery] no map shape for ${c.name} (iso ${c.iso})`);
+                continue;
+            }
+            const path = document.createElementNS(svgNS, 'path');
+            path.setAttribute('d', entry.d);
+            path.setAttribute('class', 'gallery-country');
+            path.setAttribute('tabindex', '0');
+            path.setAttribute('role', 'button');
+            path.setAttribute('aria-label', `${c.name}. ${c.blurb || ''}`.trim());
+            path.dataset.slug = c.slug;
+
+            const title = document.createElementNS(svgNS, 'title');
+            title.textContent = c.name;
+            path.appendChild(title);
+
+            const enter = () => openCountry(c.slug);
+            path.addEventListener('click', enter);
+            path.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enter(); }
+            });
+            live.appendChild(path);
+        }
+        svg.appendChild(live);
+
+        mapEl = svg;
+        stageEl.appendChild(svg);
+        return svg;
+    }
+
+    function openCountry(slug) {
+        const country = countryBySlug[slug];
+        if (!country) return;
+        // One city is the common case, so skip a pointless intermediate view.
+        if (country.cities.length === 1) enterCity(country.cities[0]);
+        else showCityChoices(country);
     }
 
     function showWorld() {
         view = VIEW.WORLD;
         detachCity();
-        worldGroup.visible = true;
-        camera.position.set(0, 2.4, 4.2);
-        camera.lookAt(0, 0, 0);
+        buildWorld();
+        if (mapEl) mapEl.classList.remove('is-hidden');
+        if (canvasEl) canvasEl.hidden = true;
         renderFilmstrip(null);
         if (titleEl) titleEl.textContent = 'Places I have been';
         if (backEl) backEl.hidden = true;
@@ -235,6 +280,7 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
     async function enterCity(slug) {
         const city = cityBySlug[slug];
         if (!city) return;
+        ensureRenderer();   // first city of the session pays for the context
 
         const token = ++loadToken;
         if (titleEl) titleEl.textContent = city.name;
@@ -260,12 +306,17 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         if (token !== loadToken) return;
 
         detachCity();
-        worldGroup.visible = false;
+        // Hand the stage over to the 3D canvas for the city view. `view` has to
+        // flip before resize(), which no-ops while the canvas is hidden, and
+        // the canvas has to be sized before the first render or it stays 0x0.
+        if (mapEl) mapEl.classList.add('is-hidden');
+        if (canvasEl) canvasEl.hidden = false;
         cityGroup.add(root);
         cityRoot = root;
         buildingMeshes = prepareCity(root, city);
         activeCity = slug;
         view = VIEW.CITY;
+        resize();
 
         frameCity(root);
         renderFilmstrip(city);
@@ -347,33 +398,6 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
 
     // ---- interaction ------------------------------------------------------
 
-    function onPointerDown(e) {
-        if (view !== VIEW.WORLD) return;
-
-        const r = stageEl.getBoundingClientRect();
-        pointer.x = ((e.clientX - r.left) / r.width) * 2 - 1;
-        pointer.y = -((e.clientY - r.top) / r.height) * 2 + 1;
-
-        raycaster.setFromCamera(pointer, camera);
-        const hits = raycaster.intersectObjects(countryMeshes, true);
-        if (!hits.length) return;
-
-        // Resolve a sub-mesh to its named ancestor, the same walk the room does.
-        let obj = hits[0].object;
-        while (obj && !norm(obj.name).startsWith('CTRY-')) obj = obj.parent;
-        if (!obj) return;
-
-        const slug = norm(obj.name).slice(5);
-        const country = countryBySlug[slug];
-        if (!country) {
-            console.warn('[gallery] clicked a country mesh with no data:', obj.name);
-            return;
-        }
-        // One city is the common case, so skip a pointless intermediate view.
-        if (country.cities.length === 1) enterCity(country.cities[0]);
-        else showCityChoices(country);
-    }
-
     function showCityChoices(country) {
         if (!filmstripEl) return;
         if (titleEl) titleEl.textContent = country.name;
@@ -396,7 +420,7 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
     // ---- loop -------------------------------------------------------------
 
     function resize() {
-        if (!renderer) return;
+        if (!renderer || !canvasEl || canvasEl.hidden) return;
         const r = stageEl.getBoundingClientRect();
         if (r.width < 2 || r.height < 2) return;
         renderer.setPixelRatio(renderScale());
@@ -407,7 +431,9 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
 
     function tick() {
         raf = requestAnimationFrame(tick);
-        if (!open) return;
+        // Nothing to draw while the SVG map owns the stage: the canvas is
+        // hidden, so rendering into it is pure waste.
+        if (!open || view !== VIEW.CITY || !renderer) return;
         resize();
         renderer.render(scene, camera);
     }
@@ -416,10 +442,10 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
 
     return {
         open() {
-            ensureRenderer();
+            // No renderer yet: the world view is SVG, so a visitor who only
+            // looks at the map never creates a WebGL context at all.
             open = true;
             showWorld();
-            resize();
             if (!raf) tick();
         },
         close() {
@@ -435,7 +461,6 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         stats: () => renderer?.info.memory ?? null,
         dispose() {
             this.close();
-            if (worldGroup) disposeObject3D(worldGroup);
             highlightMat?.dispose();
             dracoLoader?.dispose();      // only here: doing it after city #1 would
             renderer?.dispose();         // kill the decoder before city #2
