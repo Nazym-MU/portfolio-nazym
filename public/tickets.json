@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-12T20:50:59.450Z",
+  "generated": "2026-09-12T21:14:44.032Z",
   "count": 50,
   "projects": {
     "splat-rasterizer": {
@@ -35,7 +35,7 @@
     "fluid-mechanics-ale": {
       "milestones": [
         "variational formulation written up",
-        "Wonyoung's results reproduced",
+        "reference results reproduced",
         "2D FE library scaffolded",
         "moving-mesh + free-surface waves",
         "extension"
@@ -763,26 +763,26 @@
     },
     {
       "id": "NZ-58",
-      "title": "Read Wonyoung's axisymmetric writeup and note the delta",
+      "title": "Read the axisymmetric reference writeup and note the delta",
       "category": "paper",
       "project": "fluid-mechanics-ale",
       "milestone": "variational formulation written up",
       "status": "todo",
       "visibility": "public",
-      "done_when": "a one-page note in the vault lists every place Wonyoung's axisymmetric formulation diverges from the 2D pool formulation (coordinate system, geometry-specific terms, boundary conditions that don't map, mesh handling), and flags which of those deltas affect the code I'll need to run for the reproduction milestone",
+      "done_when": "a one-page note in the vault lists every place the axisymmetric reference formulation diverges from the 2D pool formulation (coordinate system, geometry-specific terms, boundary conditions that don't map, mesh handling), and flags which of those deltas affect the code that'll need to run for the reproduction milestone",
       "created": "2026-09-12",
       "estimate": 90,
       "blocks": []
     },
     {
       "id": "NZ-59",
-      "title": "Adopt Katie's section-3 construction of the ALE-hat basis",
+      "title": "Adopt the reference section-3 construction of the ALE-hat basis",
       "category": "writing",
       "project": "fluid-mechanics-ale",
       "milestone": "variational formulation written up",
       "status": "todo",
       "visibility": "public",
-      "done_when": "§3 (Approximation) of the writeup defines $\\hat\\phi_j(\\hat{\\bm x})$ on the reference coords first and derives $\\phi_j(x,z,t) = \\hat\\phi_j(\\chi^{-1}(x,z,t))$ from it (matching Katie's order, not Carlos's write-up which does it backwards), and states in one sentence why this ordering makes $\\partial_t$ act only on the coefficients",
+      "done_when": "§3 (Approximation) of the writeup defines $\\hat\\phi_j(\\hat{\\bm x})$ on the reference coords first and derives $\\phi_j(x,z,t) = \\hat\\phi_j(\\chi^{-1}(x,z,t))$ from it (matching the reference note's order, not the advisor's write-up which does it backwards), and states in one sentence why this ordering makes $\\partial_t$ act only on the coefficients",
       "created": "2026-09-12",
       "estimate": 60,
       "blocks": []
