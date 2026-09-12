@@ -1,6 +1,6 @@
 {
-  "generated": "2026-09-03T19:46:22.466Z",
-  "count": 40,
+  "generated": "2026-09-12T20:50:59.450Z",
+  "count": 50,
   "projects": {
     "splat-rasterizer": {
       "milestones": [
@@ -34,9 +34,11 @@
     },
     "fluid-mechanics-ale": {
       "milestones": [
-        "ALE weak form derived",
-        "FEM discretization implemented",
-        "mesh motion handled"
+        "variational formulation written up",
+        "Wonyoung's results reproduced",
+        "2D FE library scaffolded",
+        "moving-mesh + free-surface waves",
+        "extension"
       ]
     },
     "flashattention": {
@@ -57,6 +59,14 @@
         "unwrapping works and matches Blender",
         "deformation works and matches Blender",
         "the spectral payoff"
+      ]
+    },
+    "travel-gallery": {
+      "milestones": [
+        "the room survives its own memory budget",
+        "the gallery engine works on placeholder boxes",
+        "real photos flow through a real pipeline",
+        "the world and the first city are mine"
       ]
     }
   },
@@ -246,8 +256,8 @@
       "title": "Derive the ALE weak form of Navier-Stokes",
       "category": "paper",
       "project": "fluid-mechanics-ale",
-      "milestone": "ALE weak form derived",
-      "status": "doing",
+      "milestone": "variational formulation written up",
+      "status": "done",
       "visibility": "public",
       "done_when": "the ALE-reformulated weak form is written out by hand in full, with the mesh-velocity convective term explicit, and checked against the standard Eulerian weak form in the limiting case of zero mesh velocity",
       "created": "2026-08-02",
@@ -261,13 +271,16 @@
       "title": "Write up the ALE weak-form derivation cleanly",
       "category": "writing",
       "project": "fluid-mechanics-ale",
-      "milestone": "ALE weak form derived",
-      "status": "todo",
+      "milestone": "variational formulation written up",
+      "status": "doing",
       "visibility": "public",
-      "done_when": "a clean, complete writeup of the ALE weak-form derivation exists as its own note, suitable for handing to a labmate or advisor without more context",
+      "done_when": "the LaTeX draft ships with correct boundary-contribution signs on all eight walls, the KBC in level-set form in both dimensional and nondimensional sections, hats consistent on convective terms, the free-surface residual integrand wrapped in brackets, DOF counts fixed on the ansatz ($n_v$ for velocity/mesh, $n_p$ for pressure), and no `\\bm{n^1}` brace bugs or `\\bm{n}^1\\bm{n}^1` juxtapositions remaining",
       "created": "2026-08-02",
       "estimate": 60,
-      "blocks": []
+      "blocks": [
+        "NZ-56",
+        "NZ-57"
+      ]
     },
     {
       "id": "NZ-25",
@@ -630,6 +643,148 @@
       "done_when": "each deployed site carries a visible link to the other, both links are followed on a phone and a laptop without hitting a dead URL, and the two sites read as related rather than as two unrelated projects that happen to share a subject",
       "created": "2026-08-12",
       "estimate": 45,
+      "blocks": []
+    },
+    {
+      "id": "NZ-50",
+      "title": "Mount a second canvas and renderer inside the Traveling modal",
+      "category": "project",
+      "project": "travel-gallery",
+      "milestone": "the gallery engine works on placeholder boxes",
+      "status": "done",
+      "visibility": "public",
+      "done_when": "opening the Traveling modal shows a spinning cube rendering inside the modal frame, the room's draw calls drop to zero while it is open and resume when it closes, and closing then reopening the modal five times does not increase the WebGL context count or blank the room canvas",
+      "created": "2026-09-08",
+      "estimate": 75,
+      "blocks": [
+        "NZ-51"
+      ]
+    },
+    {
+      "id": "NZ-51",
+      "title": "Write disposeObject3D and prove it frees everything it allocated",
+      "category": "project",
+      "project": "travel-gallery",
+      "milestone": "the gallery engine works on placeholder boxes",
+      "status": "done",
+      "visibility": "public",
+      "done_when": "adding and disposing a textured multi-material mesh 200 times leaves renderer.info.memory.geometries and .textures back within two of their starting values rather than climbing, and the utility handles meshes whose material is an array without throwing",
+      "created": "2026-09-08",
+      "estimate": 60,
+      "blocks": [
+        "NZ-52"
+      ]
+    },
+    {
+      "id": "NZ-52",
+      "title": "Write places.js with New York, London and Manchester",
+      "category": "project",
+      "project": "travel-gallery",
+      "milestone": "the gallery engine works on placeholder boxes",
+      "status": "done",
+      "visibility": "public",
+      "done_when": "a plain ES module exports countries and cities with slug-keyed lookups, at least one city omits the model key entirely and one includes it, photo paths are derived from the slug rather than stored, and importing it in the browser console returns the expected objects",
+      "created": "2026-09-08",
+      "estimate": 45,
+      "blocks": [
+        "NZ-53"
+      ]
+    },
+    {
+      "id": "NZ-53",
+      "title": "Build the world and city views from code-generated placeholder boxes",
+      "category": "project",
+      "project": "travel-gallery",
+      "milestone": "the gallery engine works on placeholder boxes",
+      "status": "done",
+      "visibility": "public",
+      "done_when": "clicking a box named CTRY-usa opens a disc of boxes named BLD-*, the back control returns to the world view, and the name matching runs through the same sanitizing helper the stadium uses so that a name containing a dot or a trailing underscore-digit still resolves",
+      "created": "2026-09-08",
+      "estimate": 90,
+      "blocks": [
+        "NZ-54"
+      ]
+    },
+    {
+      "id": "NZ-54",
+      "title": "Render the photo filmstrip and highlight the building a photo belongs to",
+      "category": "project",
+      "project": "travel-gallery",
+      "milestone": "the gallery engine works on placeholder boxes",
+      "status": "done",
+      "visibility": "public",
+      "done_when": "a city's photos render as lazy-loaded img elements beside the 3D view, hovering one turns its matching BLD- box the accent colour and unhovering restores the original material, a photo whose building is null highlights nothing without erroring, and no material is constructed during hover",
+      "created": "2026-09-08",
+      "estimate": 75,
+      "blocks": [
+        "NZ-55"
+      ]
+    },
+    {
+      "id": "NZ-55",
+      "title": "Hold memory flat across repeated city swaps",
+      "category": "project",
+      "project": "travel-gallery",
+      "milestone": "the gallery engine works on placeholder boxes",
+      "status": "done",
+      "visibility": "public",
+      "done_when": "clicking through every city twenty times and returning to the world view leaves renderer.info.memory.textures within two of its post-world value rather than climbing, and clicking two cities in quick succession on a throttled connection leaves exactly one disc in the scene",
+      "created": "2026-09-08",
+      "estimate": 60,
+      "blocks": []
+    },
+    {
+      "id": "NZ-56",
+      "title": "Add missing content to the ALE writeup",
+      "category": "writing",
+      "project": "fluid-mechanics-ale",
+      "milestone": "variational formulation written up",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "the LaTeX draft contains a notation table at the start of §2, the boundary-restricted basis $\\phi_i^k$ defined once and cited from each wall paragraph, an LBB one-liner on why pressure basis is one degree lower than velocity, the KBC residual compressed to a single-integral form, the free-surface endpoint term written explicitly as $[\\phi_i t_x^1/\\text{Ca}]_{s_a}^{s_b}$, $\\bm m^1$ defined for the 1D case, the pinning BC $\\eta(0,t) = \\eta(L,t) = 0$, the initial condition $\\bm u(x,z,0) = 0$ and $\\eta(x,0) = \\eta_0(x)$, and one sentence stating that $\\lambda^k, \\gamma^k$ close via Lagrange multipliers on the no-slip constraint",
+      "created": "2026-09-12",
+      "estimate": 90,
+      "blocks": [
+        "NZ-57"
+      ]
+    },
+    {
+      "id": "NZ-57",
+      "title": "Draft the Discretization section of the ALE writeup",
+      "category": "writing",
+      "project": "fluid-mechanics-ale",
+      "milestone": "variational formulation written up",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "§4 (Discretization) contains the master-element setup with the Jacobian change of variables $\\int_K f\\,dA = \\int_{\\hat K} f|J|\\,d\\hat A$ written out, the implicit-Euler time step on the ALE-hat coefficients ($\\dot{\\hat u}_j \\to (\\hat u_j^{k+1} - \\hat u_j^k)/\\delta t$), a stated block structure for the per-step nonlinear system (velocity / pressure / mesh / boundary-stress blocks), one line saying Newton iteration handles the convective nonlinearity, and pseudocode-style assembly loop over triangles with local matrix scatter into a global sparse matrix",
+      "created": "2026-09-12",
+      "estimate": 90,
+      "blocks": []
+    },
+    {
+      "id": "NZ-58",
+      "title": "Read Wonyoung's axisymmetric writeup and note the delta",
+      "category": "paper",
+      "project": "fluid-mechanics-ale",
+      "milestone": "variational formulation written up",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "a one-page note in the vault lists every place Wonyoung's axisymmetric formulation diverges from the 2D pool formulation (coordinate system, geometry-specific terms, boundary conditions that don't map, mesh handling), and flags which of those deltas affect the code I'll need to run for the reproduction milestone",
+      "created": "2026-09-12",
+      "estimate": 90,
+      "blocks": []
+    },
+    {
+      "id": "NZ-59",
+      "title": "Adopt Katie's section-3 construction of the ALE-hat basis",
+      "category": "writing",
+      "project": "fluid-mechanics-ale",
+      "milestone": "variational formulation written up",
+      "status": "todo",
+      "visibility": "public",
+      "done_when": "§3 (Approximation) of the writeup defines $\\hat\\phi_j(\\hat{\\bm x})$ on the reference coords first and derives $\\phi_j(x,z,t) = \\hat\\phi_j(\\chi^{-1}(x,z,t))$ from it (matching Katie's order, not Carlos's write-up which does it backwards), and states in one sentence why this ordering makes $\\partial_t$ act only on the coefficients",
+      "created": "2026-09-12",
+      "estimate": 60,
       "blocks": []
     }
   ]
