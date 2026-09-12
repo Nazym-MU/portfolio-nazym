@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-12T21:14:44.032Z",
+  "generated": "2026-09-12T22:33:56.058Z",
   "count": 50,
   "projects": {
     "splat-rasterizer": {
@@ -741,7 +741,7 @@
       "milestone": "variational formulation written up",
       "status": "todo",
       "visibility": "public",
-      "done_when": "the LaTeX draft contains a notation table at the start of §2, the boundary-restricted basis $\\phi_i^k$ defined once and cited from each wall paragraph, an LBB one-liner on why pressure basis is one degree lower than velocity, the KBC residual compressed to a single-integral form, the free-surface endpoint term written explicitly as $[\\phi_i t_x^1/\\text{Ca}]_{s_a}^{s_b}$, $\\bm m^1$ defined for the 1D case, the pinning BC $\\eta(0,t) = \\eta(L,t) = 0$, the initial condition $\\bm u(x,z,0) = 0$ and $\\eta(x,0) = \\eta_0(x)$, and one sentence stating that $\\lambda^k, \\gamma^k$ close via Lagrange multipliers on the no-slip constraint",
+      "done_when": "the LaTeX draft contains a notation table at the start of §2, the boundary-restricted basis $\\phi_i^k$ defined once and cited from each wall paragraph, an LBB one-liner on why pressure basis is one degree lower than velocity, the KBC residual compressed to a single-integral form, the free-surface endpoint term written explicitly as $[\\phi_i t_x^1/\\text{Ca}]_{s_a}^{s_b}$, $\\mathbf{m}^1$ defined for the 1D case, the pinning BC $\\eta(0,t) = \\eta(L,t) = 0$, the initial condition $\\mathbf{u}(x,z,0) = 0$ and $\\eta(x,0) = \\eta_0(x)$, and one sentence stating that $\\lambda^k, \\gamma^k$ close via Lagrange multipliers on the no-slip constraint",
       "created": "2026-09-12",
       "estimate": 90,
       "blocks": [
@@ -782,7 +782,7 @@
       "milestone": "variational formulation written up",
       "status": "todo",
       "visibility": "public",
-      "done_when": "§3 (Approximation) of the writeup defines $\\hat\\phi_j(\\hat{\\bm x})$ on the reference coords first and derives $\\phi_j(x,z,t) = \\hat\\phi_j(\\chi^{-1}(x,z,t))$ from it (matching the reference note's order, not the advisor's write-up which does it backwards), and states in one sentence why this ordering makes $\\partial_t$ act only on the coefficients",
+      "done_when": "§3 (Approximation) of the writeup defines $\\hat\\phi_j(\\hat{\\mathbf{x}})$ on the reference coords first and derives $\\phi_j(x,z,t) = \\hat\\phi_j(\\chi^{-1}(x,z,t))$ from it (matching the reference note's order, not the advisor's write-up which does it backwards), and states in one sentence why this ordering makes $\\partial_t$ act only on the coefficients",
       "created": "2026-09-12",
       "estimate": 60,
       "blocks": []
