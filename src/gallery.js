@@ -1,33 +1,25 @@
 // ============================================================================
 // The travel gallery
 // ----------------------------------------------------------------------------
-// Lives inside the existing "Traveling" modal. Three layers:
+// Lives inside the existing "Traveling" modal, drawn in the Dear United ink
+// style (toon bands, ink outlines, paper grain under a night sky). Three steps:
 //
-//   WORLD  an SVG world map. Real country outlines, visited ones lit up and
-//     |    clickable. SVG rather than 3D: a map is flat, vectors stay crisp at
-//     |    any size, hit-testing is the browser's job, and every country is a
-//     |    real focusable element so the keyboard works for free.
-//   CITY   that city's disc, loaded on demand and disposed on the way out
-//     |    click a photo
-//   PHOTO  a lightbox holding exactly one full-size image
+//   WORLD    a globe modelled in Blender (scripts/blender/build-globe.py).
+//     |      Visited countries are raised and coloured; drag to spin it.
+//     |      click a country
+//   COUNTRY  the globe turns to face it and its cities stand up as pins.
+//     |      click a pin (or its label)
+//   CITY     that city's toy diorama under a glass dome, loaded on demand and
+//            disposed on the way out. Every OBJ-<id> in it is clickable and
+//            opens its photos in the panel beside the stage.
 //
-// Two rules the whole design rests on:
-//
+// Rules carried over from the first version:
 //   1. Photos are DOM <img>, never three.js textures. A 1600x1200 photo costs
-//      about 10MB of GPU memory as a texture and stays pinned until disposed,
-//      while the browser evicts and re-decodes an <img> by itself. 300 photos
-//      as textures would be ~3GB; as <img> it is a normal web page.
-//
-//   2. Exactly one city is resident. Leaving disposes it. The HTTP cache
-//      already makes revisits fast, so an in-memory cache would buy ~50ms and
-//      cost ~10MB per city held.
-//
-// Only the city layer is 3D. The renderer there is a SECOND WebGL context,
-// separate from the room's. The
-// modal sits above the room canvas in z-order and its backdrop-filter blurs
-// whatever is behind it, so painting the gallery into a region of the room's
-// canvas would show a blurred room, not the gallery. The room stops rendering
-// while a modal is open, so only one context ever draws at a time.
+//      about 10MB of GPU memory as a texture; as an <img> the browser evicts
+//      and re-decodes it by itself.
+//   2. Exactly one city is resident. Leaving disposes it.
+//   3. Its own WebGL context, separate from the room's; the room stops drawing
+//      while a modal is open, so only one context ever draws at a time.
 // ============================================================================
 
 import * as THREE from 'three';
@@ -35,520 +27,817 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { disposeObject3D } from './gallery/dispose.js';
-import { countries, cities, countryBySlug, cityBySlug, thumbUrl } from './data/places.js';
-import { COUNTRY_PATHS, MAP_WIDTH, MAP_HEIGHT } from './data/world-map.js';
+import { InkPipeline } from './gallery/ink/pipeline.js';
+import { createSky, createLights } from './gallery/ink/sky.js';
+import { inkify, inkSolid, highlightTwin, forgetMaterials } from './gallery/ink/materials.js';
+import { countries, countryBySlug, countryByIso, cityBySlug, thumbUrl } from './data/places.js';
 
 // GLTFLoader runs names through PropertyBinding.sanitizeNodeName, which DELETES
 // '.', '[', ']', ':' and '/'. Multi-primitive meshes also gain '_1' suffixes.
-// Blender's ".001" duplicate suffix therefore arrives as "001" glued on, which
-// matches nothing and reports no error. Same helper as the stadium's.
 const norm = (name) => (name || '').replace(/_\d+$/, '').replace(/[\s[\].:/]/g, '');
 
-const VIEW = { WORLD: 'world', CITY: 'city' };
+const VIEW = { WORLD: 'world', COUNTRY: 'country', CITY: 'city' };
+const GLOBE_URL = 'models/gallery/globe.glb';
 
-// Longest edge, in viewBox units, under which a country gets a locator ring.
-const SMALL_COUNTRY = 26;
+// Globe palette (sRGB). Muted to sit inside the ink look rather than shout.
+const OCEAN = '#2f4468';
+const LAND = '#b9b4a6';
+const TONES = {
+    mint: '#86c9a8', sky: '#8cb4dc', amber: '#e3bd62', rose: '#e09aa2',
+    violet: '#ad9bd8', sand: '#dcae84', red: '#d46e66',
+};
+const PIN = '#ffd27a';
+const LIFT = 1.012;          // visited countries stand proud of the rest
 
-// Bounding box read straight out of the "M x y L x y ..." path data the build
-// script emits. Cheaper than getBBox(), and it works before the node is in the
-// document, which getBBox() does not.
-function pathBBox(d) {
-    const nums = d.match(/-?\d+(?:\.\d+)?/g);
-    if (!nums || nums.length < 4) return null;
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (let i = 0; i + 1 < nums.length; i += 2) {
-        const x = +nums[i], y = +nums[i + 1];
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-    }
-    return { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2, w: maxX - minX, h: maxY - minY };
+// Same mapping as build-globe.py, after glTF's Z-up -> Y-up conversion.
+function latLon(lat, lon, r = 1) {
+    const la = THREE.MathUtils.degToRad(lat), lo = THREE.MathUtils.degToRad(lon);
+    return new THREE.Vector3(Math.cos(la) * Math.cos(lo), Math.sin(la), -Math.cos(la) * Math.sin(lo)).multiplyScalar(r);
 }
 
-// Mint, matching the site's --accent-emerald.
-const HIGHLIGHT_COLOR = 0x6ee7b7;
+const prettify = (id) => id.replace(/-/g, ' ').replace(/^./, (c) => c.toUpperCase());
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } = {}) {
-    let renderer = null;
-    let scene = null;
-    let camera = null;
-    let raf = null;
-    let open = false;
-
+    let renderer = null, pipeline = null, camera = null, controls = null, sky = null;
+    let canvasEl = null, labelsEl = null, tipEl = null;
+    let raf = null, open = false, lastT = 0;
     let view = VIEW.WORLD;
-    let activeCity = null;
 
-    let mapEl = null;        // the SVG world map (world view)
-    let canvasEl = null;     // the WebGL canvas (city view)
-    let cityGroup = null;
-    let cityRoot = null;
-    let buildingMeshes = [];
-    let controls = null;
+    // world
+    let worldScene = null, globe = null, globeLoading = null;
+    const countryMeshes = new Map();       // iso -> mesh (visited only)
+    let pins = null, pinLabels = [];
+    let activeCountry = null;
 
-    // Made once, reused forever. Cloning a material per hover leaks one material
-    // per event, which is thousands over a session; swapping which material a
-    // mesh points at allocates nothing.
-    let highlightMat = null;
-
-    // Rising counter so a slow load that lands after a newer click is dropped
-    // instead of adding a second disc to the scene.
+    // city
+    let cityScene = null, cityRoot = null, cityMaterials = null, dome = null;
+    let activeCity = null, orbiters = [];
+    let objectIndex = new Map();           // id -> { meshes: [], instances: [{ mesh, idx: [] }] }
+    let hovered = null, selected = null;
     let loadToken = 0;
-    const inFlight = new Map();
 
-    let gltfLoader = null;
-    let dracoLoader = null;
+    let flight = null;                     // camera tween
+    let gltfLoader = null, dracoLoader = null;
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let pointerIn = false, downAt = null;
 
     // ---- setup ------------------------------------------------------------
 
     function ensureRenderer() {
-        if (renderer) return;
-
+        if (renderer) return true;
         const canvas = document.createElement('canvas');
         canvas.className = 'gallery-canvas';
-        canvas.hidden = true;          // the map owns the stage until a city opens
         stageEl.appendChild(canvas);
         canvasEl = canvas;
-
-        renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        try {
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
+        } catch {
+            onStatus?.('This browser cannot draw the 3D globe.');
+            return false;
+        }
         renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.autoClear = false;
         renderer.setPixelRatio(renderScale());
-        renderer.setClearColor(0x000000, 0);
 
-        // A reaped context is otherwise a permanently black rectangle with no
-        // explanation. Recovery needs a reload; at least say so.
+        // A reaped context is otherwise a permanently black rectangle.
         canvas.addEventListener('webglcontextlost', (e) => {
             e.preventDefault();
             onStatus?.('The 3D view ran out of memory. Reload the page to bring it back.');
         });
 
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
+        labelsEl = document.createElement('div');
+        labelsEl.className = 'gallery-labels';
+        tipEl = document.createElement('div');
+        tipEl.className = 'gallery-tip';
+        tipEl.hidden = true;
+        stageEl.append(labelsEl, tipEl);
 
-        // Unlit baked textures, same as the room, so a city disc costs no
-        // lighting work. Ambient only, for the placeholder boxes' sake.
-        scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-        const key = new THREE.DirectionalLight(0xffffff, 0.9);
-        key.position.set(3, 6, 2);
-        scene.add(key);
+        camera = new THREE.PerspectiveCamera(40, 1, 0.01, 60);
+        camera.position.set(0, 0.6, 3.2);
+        sky = createSky(30);
 
-        cityGroup = new THREE.Group();
-        scene.add(cityGroup);
+        worldScene = new THREE.Scene();
+        worldScene.add(createLights(new THREE.Vector3(), 1.6));
+        cityScene = new THREE.Scene();
+        cityScene.add(createLights(new THREE.Vector3(0, 0.3, 0), 1.6));
 
-        // Drag to spin the city, wheel or pinch to zoom. Damping matches the
-        // room's feel. Panning is off: the disc is the subject and letting it
-        // slide off-screen only strands people.
+        pipeline = new InkPipeline(renderer, { scene: worldScene, sky, camera, unit: 0.05 });
+
         controls = new OrbitControls(camera, canvas);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
+        controls.enableDamping = !reducedMotion();
+        controls.dampingFactor = 0.06;
         controls.enablePan = false;
-        controls.rotateSpeed = 0.7;
-        controls.zoomSpeed = 0.8;
-        // Stop the camera going under the ground plane or straight overhead,
-        // where a baked model reads as a flat smear.
-        controls.minPolarAngle = 0.12;
-        controls.maxPolarAngle = Math.PI / 2 - 0.04;
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            controls.enableDamping = false;
-        }
-
-        highlightMat = new THREE.MeshBasicMaterial({ color: HIGHLIGHT_COLOR });
+        controls.rotateSpeed = 0.6;
+        controls.zoomSpeed = 0.7;
+        controls.addEventListener('start', () => { controls.autoRotate = false; flight = null; });
 
         dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('draco/');
         gltfLoader = new GLTFLoader();
         gltfLoader.setDRACOLoader(dracoLoader);
 
+        canvas.addEventListener('pointermove', onPointerMove);
+        canvas.addEventListener('pointerleave', () => { pointerIn = false; setHover(null); });
+        canvas.addEventListener('pointerdown', (e) => { downAt = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+        canvas.addEventListener('pointerup', onPointerUp);
+        return true;
     }
 
-    // Touch devices get a lower render resolution for the same reason the room
-    // does: a dpr-3 framebuffer plus textures is what crashes mobile Safari.
+    // Touch devices get a lower render resolution, as in the room: a dpr-3
+    // framebuffer is what crashes mobile Safari. The ink pass also renders the
+    // scene twice, which is the other reason to keep this clamped.
     function renderScale() {
         const coarse = window.matchMedia('(pointer: coarse)').matches;
         return Math.min(window.devicePixelRatio, coarse ? 1.1 : 1.5);
     }
 
-    // ---- world layer ------------------------------------------------------
+    // ---- world: the globe -------------------------------------------------
 
-    // The map is drawn once as SVG and then just shown or hidden. Every country
-    // in the world is drawn, so the visited ones read as picked out of a real
-    // map rather than floating alone; only the visited ones are interactive.
-    function buildWorld() {
-        if (mapEl) return mapEl;
-
-        const visited = new Map(countries.map((c) => [c.iso, c]));
-        const svgNS = 'http://www.w3.org/2000/svg';
-        const svg = document.createElementNS(svgNS, 'svg');
-        svg.setAttribute('viewBox', `0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`);
-        svg.setAttribute('class', 'gallery-map');
-        svg.setAttribute('role', 'group');
-        svg.setAttribute('aria-label', 'World map. Countries visited are highlighted and can be opened.');
-
-        // Everything unvisited first, as one flat backdrop layer.
-        const base = document.createElementNS(svgNS, 'g');
-        base.setAttribute('class', 'gallery-map-base');
-        for (const [iso, entry] of Object.entries(COUNTRY_PATHS)) {
-            if (visited.has(iso)) continue;
-            const path = document.createElementNS(svgNS, 'path');
-            path.setAttribute('d', entry.d);
-            base.appendChild(path);
-        }
-        svg.appendChild(base);
-
-        // Visited countries on top, each a real button so the keyboard reaches
-        // it and hit-testing is the browser's problem rather than a raycast.
-        const live = document.createElementNS(svgNS, 'g');
-        live.setAttribute('class', 'gallery-map-live');
-        for (const c of countries) {
-            const entry = COUNTRY_PATHS[c.iso];
-            if (!entry) {
-                console.warn(`[gallery] no map shape for ${c.name} (iso ${c.iso})`);
-                continue;
-            }
-            const path = document.createElementNS(svgNS, 'path');
-            path.setAttribute('d', entry.d);
-            path.setAttribute('class', `gallery-country tone-${c.tone || 'mint'}`);
-            path.setAttribute('tabindex', '0');
-            path.setAttribute('role', 'button');
-            const hasCities = (c.cities || []).some((x) => cityBySlug[x]);
-            path.setAttribute('aria-label',
-                [c.name, c.blurb, hasCities ? null : 'No photos up yet.']
-                    .filter(Boolean).join('. '));
-            path.dataset.slug = c.slug;
-            const enter = () => openCountry(c.slug);
-
-            const title = document.createElementNS(svgNS, 'title');
-            title.textContent = c.name;
-            path.appendChild(title);
-
-            // Small countries are nearly invisible at world scale and, worse,
-            // are almost impossible to hit. Give anything under a threshold a
-            // ring centred on its shape: it draws attention and, because the
-            // ring carries the click too, it doubles as a bigger target.
-            const bbox = pathBBox(entry.d);
-            if (bbox && Math.max(bbox.w, bbox.h) < SMALL_COUNTRY) {
-                const ring = document.createElementNS(svgNS, 'circle');
-                ring.setAttribute('cx', bbox.cx.toFixed(1));
-                ring.setAttribute('cy', bbox.cy.toFixed(1));
-                ring.setAttribute('r', '13');
-                ring.setAttribute('class', `gallery-country-ring tone-${c.tone || 'mint'}`);
-                ring.addEventListener('click', enter);
-                live.appendChild(ring);
-            }
-
-            path.addEventListener('click', enter);
-            path.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enter(); }
+    function loadGlobe() {
+        if (globe) return Promise.resolve(globe);
+        if (globeLoading) return globeLoading;
+        onStatus?.('Loading the globe…');
+        globeLoading = new Promise((res, rej) => gltfLoader.load(GLOBE_URL, (g) => res(g.scene), undefined, rej))
+            .then((root) => {
+                const land = inkSolid(LAND);
+                const toneMats = {};
+                root.traverse((o) => {
+                    if (!o.isMesh) return;
+                    const n = norm(o.name) || norm(o.parent?.name);
+                    if (n === 'OCEAN') {
+                        o.material = inkSolid(OCEAN);
+                        return;
+                    }
+                    const iso = n.startsWith('CTRY-') ? n.slice(5) : null;
+                    const c = iso && countryByIso[iso];
+                    if (c) {
+                        const hex = TONES[c.tone] || TONES.mint;
+                        o.material = toneMats[hex] ||= inkSolid(hex, { emissive: 0.08 });
+                        o.scale.setScalar(LIFT);
+                        o.userData.country = c;
+                        o.userData.baseMaterial = o.material;
+                        countryMeshes.set(iso, o);
+                    } else {
+                        o.material = land;
+                    }
+                });
+                for (const c of countries) {
+                    if (!countryMeshes.has(c.iso)) console.warn(`[gallery] globe has no CTRY-${c.iso} (${c.name})`);
+                }
+                globe = root;
+                worldScene.add(globe);
+                onStatus?.('');
+                return globe;
+            })
+            .catch((err) => {
+                globeLoading = null;
+                onStatus?.('The globe could not load.');
+                throw err;
             });
-            live.appendChild(path);
-        }
-        svg.appendChild(live);
+        return globeLoading;
+    }
 
-        mapEl = svg;
-        stageEl.appendChild(svg);
-        return svg;
+    function useWorldScene() {
+        pipeline.scene = worldScene;
+        pipeline.hideInNormalPass = [];
+        pipeline.uniforms.uDepthK.value = 0.004;
+        pipeline.uniforms.uUnit.value = 0.05;
+        camera.near = 0.05; camera.far = 60; camera.updateProjectionMatrix();
+        controls.target.set(0, 0, 0);
+        controls.minDistance = 1.55;
+        controls.maxDistance = 4.2;
+        controls.minPolarAngle = 0.15;
+        controls.maxPolarAngle = Math.PI - 0.15;
+    }
+
+    async function showWorld() {
+        if (!ensureRenderer()) return;
+        leaveCity();
+        clearPins();
+        view = VIEW.WORLD;
+        activeCountry = null;
+        useWorldScene();
+        if (titleEl) titleEl.textContent = 'Places I have been';
+        setBack(null);
+        renderPanel(null);
+        try { await loadGlobe(); } catch { return; }
+        if (view !== VIEW.WORLD) return;
+        const dir = camera.position.clone().normalize();
+        flyTo(dir, 3.2);
+        controls.autoRotate = !reducedMotion();
+        controls.autoRotateSpeed = 0.35;
+    }
+
+    function countryDirection(c) {
+        const list = (c.cities || []).map((s) => cityBySlug[s]).filter((x) => x && x.lat != null);
+        if (list.length) {
+            const v = new THREE.Vector3();
+            for (const x of list) v.add(latLon(x.lat, x.lon));
+            return v.normalize();
+        }
+        const mesh = countryMeshes.get(c.iso);
+        if (!mesh) return new THREE.Vector3(0, 0, 1);
+        mesh.geometry.computeBoundingBox();
+        return mesh.geometry.boundingBox.getCenter(new THREE.Vector3()).normalize();
     }
 
     function openCountry(slug) {
-        const country = countryBySlug[slug];
-        if (!country) return;
+        const c = countryBySlug[slug];
+        if (!c) return;
+        leaveCity();
+        useWorldScene();
+        view = VIEW.COUNTRY;
+        activeCountry = c;
+        controls.autoRotate = false;
+        setHover(null);
+        if (titleEl) titleEl.textContent = c.name;
+        setBack('Back to the globe', showWorld);
 
-        const list = (country.cities || []).filter((c) => cityBySlug[c]);
-        // Visited, but nothing written up yet. Say so rather than opening an
-        // empty view; the country stays on the map either way.
+        const list = (c.cities || []).map((s) => cityBySlug[s]).filter(Boolean);
+        // Small countries need a closer look to tell the pins apart.
+        flyTo(countryDirection(c), list.length > 1 ? 1.75 : 2.1);
+        clearPins();
         if (!list.length) {
-            if (titleEl) titleEl.textContent = country.name;
-            if (backEl) backEl.hidden = false;
-            onStatus?.('Photos from here are not up yet.');
-            renderFilmstrip(null);
+            onStatus?.('Nothing from here is up yet.');
+            renderPanel(null);
             return;
         }
-        // One city is the common case, so skip a pointless intermediate view.
-        if (list.length === 1) enterCity(list[0]);
-        else showCityChoices({ ...country, cities: list });
-    }
-
-    function showWorld() {
-        view = VIEW.WORLD;
-        detachCity();
-        buildWorld();
-        if (mapEl) mapEl.classList.remove('is-hidden');
-        if (canvasEl) canvasEl.hidden = true;
-        renderFilmstrip(null);
-        if (titleEl) titleEl.textContent = 'Places I have been';
-        if (backEl) backEl.hidden = true;
         onStatus?.('');
+        buildPins(list);
+        renderPanel({ kind: 'country', country: c, cities: list });
     }
 
-    // ---- city layer -------------------------------------------------------
+    // Pins are 3D (so the ink draws them and the globe hides the far ones),
+    // with a DOM label each so they are real buttons for keyboard and screen
+    // readers, positioned every frame by projection.
+    function buildPins(list) {
+        pins = new THREE.Group();
+        const stemMat = inkSolid('#efe9dc');
+        const headMat = inkSolid(PIN, { emissive: 0.35 });
+        for (const city of list) {
+            if (city.lat == null) continue;
+            const up = latLon(city.lat, city.lon).normalize();
+            const pin = new THREE.Group();
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.0035, 0.0035, 0.07, 6), stemMat);
+            stem.position.y = 0.035;
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.014, 16, 12), headMat);
+            head.position.y = 0.075;
+            pin.add(stem, head);
+            pin.position.copy(up).multiplyScalar(1.01);
+            pin.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), up);
+            pin.userData.city = city;
+            stem.userData.city = city; head.userData.city = city;
+            pins.add(pin);
 
-    function placeholderCity(city) {
-        const root = new THREE.Group();
-        root.name = `CITY-${city.slug}`;
+            const btn = document.createElement('button');
+            btn.className = 'gallery-pin-label';
+            btn.textContent = city.name;
+            btn.addEventListener('click', () => enterCity(city.slug));
+            labelsEl.appendChild(btn);
+            pinLabels.push({ el: btn, pin });
+        }
+        worldScene.add(pins);
+    }
 
-        const disc = new THREE.Mesh(
-            new THREE.CylinderGeometry(1, 1, 0.08, 48),
-            new THREE.MeshBasicMaterial({ color: 0x2f3540 })
+    function clearPins() {
+        if (pins) {
+            worldScene.remove(pins);
+            disposeObject3D(pins);
+            pins = null;
+        }
+        for (const { el } of pinLabels) el.remove();
+        pinLabels = [];
+    }
+
+    const _v = new THREE.Vector3(), _cam = new THREE.Vector3();
+    function placeLabels() {
+        if (!pinLabels.length) return;
+        const r = stageEl.getBoundingClientRect();
+        _cam.copy(camera.position).normalize();
+        for (const { el, pin } of pinLabels) {
+            _v.set(0, 0.1, 0).applyQuaternion(pin.quaternion).add(pin.position);
+            const facing = pin.position.clone().normalize().dot(_cam);
+            _v.project(camera);
+            const vis = facing > 0.15 && _v.z < 1;
+            el.style.opacity = vis ? '1' : '0';
+            el.style.pointerEvents = vis ? 'auto' : 'none';
+            el.tabIndex = vis ? 0 : -1;
+            el.style.transform = `translate(${((_v.x + 1) / 2) * r.width}px, ${((1 - _v.y) / 2) * r.height}px) translate(-50%, -100%)`;
+        }
+    }
+
+    // ---- camera flights ---------------------------------------------------
+
+    function flyTo(dir, dist, target = new THREE.Vector3()) {
+        const from = camera.position.clone().sub(controls.target);
+        const to = dir.clone().normalize().multiplyScalar(dist);
+        if (reducedMotion()) {
+            controls.target.copy(target);
+            camera.position.copy(target).add(to);
+            controls.update();
+            return;
+        }
+        flight = {
+            start: performance.now(), dur: 1100,
+            fromDir: from.clone().normalize(), fromLen: from.length(), fromTarget: controls.target.clone(),
+            toDir: to.clone().normalize(), toLen: dist, toTarget: target.clone(),
+        };
+    }
+
+    // Wall-clock, not per-frame: a slow device should arrive on time, not
+    // crawl there.
+    function stepFlight() {
+        if (!flight) return;
+        flight.t = Math.min(1, (performance.now() - flight.start) / flight.dur);
+        const k = easeInOut(flight.t);
+        const q = new THREE.Quaternion().setFromUnitVectors(flight.fromDir, flight.toDir);
+        const dir = flight.fromDir.clone().applyQuaternion(new THREE.Quaternion().slerp(q, k));
+        const len = THREE.MathUtils.lerp(flight.fromLen, flight.toLen, k);
+        controls.target.lerpVectors(flight.fromTarget, flight.toTarget, k);
+        camera.position.copy(controls.target).addScaledVector(dir, len);
+        if (flight.t >= 1) flight = null;
+    }
+
+    // ---- city: the diorama ------------------------------------------------
+
+    function buildDome() {
+        const g = new THREE.Group();
+        g.name = 'dome';
+        const R = 1.14, Y = -0.14;
+        // A dark turned-wood stand the base sits on, wider than the dome.
+        const stand = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.04, R + 0.08, 0.1, 96), inkSolid('#3a3346'));
+        stand.position.y = Y - 0.05;
+        g.add(stand);
+        // Glass: a fresnel rim, nearly clear face-on. Kept out of the normal
+        // pass, or its depth would hide every ink line inside it.
+        const glass = new THREE.Mesh(
+            new THREE.SphereGeometry(R, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2),
+            new THREE.ShaderMaterial({
+                transparent: true, depthWrite: false, side: THREE.DoubleSide,
+                uniforms: { uTint: { value: new THREE.Color('#cfe0ff') } },
+                vertexShader: /* glsl */`
+                    varying vec3 vN; varying vec3 vV;
+                    void main() {
+                        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+                        vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz);
+                        gl_Position = projectionMatrix * mv;
+                    }`,
+                fragmentShader: /* glsl */`
+                    uniform vec3 uTint; varying vec3 vN; varying vec3 vV;
+                    void main() {
+                        float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.6);
+                        gl_FragColor = vec4(uTint, 0.04 + 0.42 * f);
+                    }`,
+            })
         );
-        disc.name = 'DECO-disc';
-        root.add(disc);
-
-        // One box per distinct building named in this city's photos, so hover
-        // highlighting has something real to resolve against.
-        const ids = [...new Set(city.photos.map((p) => p.building).filter(Boolean))];
-        const n = Math.max(ids.length, 3);
-        ids.forEach((id, i) => {
-            const a = (i / n) * Math.PI * 2;
-            const h = 0.3 + (i % 3) * 0.18;
-            const b = new THREE.Mesh(
-                new THREE.BoxGeometry(0.18, h, 0.18),
-                new THREE.MeshBasicMaterial({ color: 0xd8dde3 })
-            );
-            b.name = `BLD-${id}`;
-            b.position.set(Math.cos(a) * 0.55, h / 2 + 0.04, Math.sin(a) * 0.55);
-            root.add(b);
-        });
-
-        return root;
+        glass.position.y = Y;
+        glass.renderOrder = 5;
+        g.add(glass);
+        // A few stars caught in the glass, as in the Astana original.
+        const n = 140, pos = new Float32Array(n * 3);
+        let seed = 3;
+        const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+        for (let i = 0; i < n; i++) {
+            const u = rnd() * Math.PI * 2, v = 0.12 + 0.88 * rnd();
+            const s = Math.sqrt(1 - v * v);
+            pos.set([Math.cos(u) * s * R * 0.995, Y + v * R * 0.995, Math.sin(u) * s * R * 0.995], i * 3);
+        }
+        const sg = new THREE.BufferGeometry();
+        sg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        const stars = new THREE.Points(sg, new THREE.PointsMaterial({
+            size: 1.6, sizeAttenuation: false, color: 0xf2efe6, transparent: true, opacity: 0.7, depthWrite: false,
+        }));
+        stars.renderOrder = 6;
+        g.add(stars);
+        g.userData.noInk = [glass, stars];
+        return g;
     }
 
-    function prepareCity(root, city) {
-        const buildings = [];
-        root.traverse((obj) => {
-            const n = norm(obj.name);
-            if (obj.isMesh && n.startsWith('BLD-')) {
-                obj.userData.buildingId = n.slice(4);
-                // Keep the original so highlighting can put it back. Never mutate
-                // the baked material in place.
-                obj.userData.baseMaterial = obj.material;
-                buildings.push(obj);
+    function indexObjects(root) {
+        const index = new Map();
+        const entry = (id) => {
+            if (!index.has(id)) index.set(id, { meshes: [], instances: [] });
+            return index.get(id);
+        };
+        orbiters = [];
+        root.traverse((o) => {
+            if (o.userData.orbit) orbiters.push(o);
+            if (!o.isMesh) return;
+            // Instanced bricks carry their stand per instance (build-manchester.mjs).
+            let src = o;
+            while (src && !src.userData.objectIds && src !== root) src = src.parent;
+            if (o.isInstancedMesh && src?.userData.objectIds) {
+                const { objectIds, instanceObject } = src.userData;
+                const by = new Map();
+                instanceObject.forEach((k, i) => {
+                    if (!by.has(k)) by.set(k, []);
+                    by.get(k).push(i);
+                });
+                for (const [k, idx] of by) entry(objectIds[k]).instances.push({ mesh: o, idx });
+                o.userData.objectIds = objectIds;
+                o.userData.instanceObject = instanceObject;
+                return;
             }
-        });
-
-        if (import.meta.env?.DEV) {
-            const have = new Set(buildings.map((b) => b.userData.buildingId));
-            for (const p of city.photos) {
-                if (p.building && !have.has(p.building)) {
-                    console.warn(`[gallery] ${city.slug}: photo "${p.slug}" wants building "${p.building}", which is not in the model`);
+            for (let p = o; p && p !== root.parent; p = p.parent) {
+                const n = norm(p.name);
+                if (n.startsWith('OBJ-')) {
+                    const id = n.slice(4);
+                    o.userData.objectId = id;
+                    o.userData.baseMaterial = o.material;
+                    entry(id).meshes.push(o);
+                    break;
                 }
             }
-        }
-        return buildings;
+        });
+        return index;
     }
 
-    function loadCityModel(city) {
-        if (inFlight.has(city.slug)) return inFlight.get(city.slug);
-        const p = new Promise((res, rej) => {
-            gltfLoader.load(city.model, (gltf) => res(gltf.scene), undefined, rej);
-        }).finally(() => inFlight.delete(city.slug));
-        inFlight.set(city.slug, p);
-        return p;
+    function objectIdOf(hit) {
+        const o = hit.object;
+        if (o.isInstancedMesh && o.userData.objectIds && hit.instanceId != null) {
+            return o.userData.objectIds[o.userData.instanceObject[hit.instanceId]];
+        }
+        return o.userData.objectId || null;
+    }
+
+    function paintObject(id, on) {
+        const e = objectIndex.get(id);
+        if (!e) return;
+        for (const m of e.meshes) {
+            const base = m.userData.baseMaterial;
+            m.material = on ? (Array.isArray(base) ? base.map(highlightTwin) : highlightTwin(base)) : base;
+        }
+        for (const { mesh, idx } of e.instances) {
+            const a = mesh.instanceColor.array;
+            for (const i of idx) a[i * 3] = on ? 1 : 0;
+            mesh.instanceColor.needsUpdate = true;
+        }
+    }
+
+    function refreshHighlight(prev) {
+        for (const id of prev) if (id && id !== hovered && id !== selected) paintObject(id, false);
+        if (hovered) paintObject(hovered, true);
+        if (selected) paintObject(selected, true);
+    }
+
+    function setHover(id) {
+        if (id === hovered) return;
+        const prev = [hovered];
+        hovered = id;
+        refreshHighlight(prev);
+    }
+
+    function select(id) {
+        const prev = [selected];
+        selected = id;
+        refreshHighlight(prev);
+        renderPanel({ kind: 'city', city: cityBySlug[activeCity], object: id });
     }
 
     async function enterCity(slug) {
         const city = cityBySlug[slug];
-        if (!city) return;
-        ensureRenderer();   // first city of the session pays for the context
-
+        if (!city || !ensureRenderer()) return;
         const token = ++loadToken;
         if (titleEl) titleEl.textContent = city.name;
-        if (backEl) backEl.hidden = false;
+        const country = countryBySlug[city.country];
+        setBack(country ? `Back to ${country.name}` : 'Back to the globe',
+            () => (country ? openCountry(country.slug) : showWorld()));
 
-        let root;
-        if (city.model) {
-            onStatus?.('Loading…');
-            try {
-                const loaded = await loadCityModel(city);
-                if (token !== loadToken) return;   // a newer click won
-                root = loaded.clone(true);
-            } catch {
-                if (token !== loadToken) return;
-                // A city whose model fails still shows its photos rather than
-                // presenting a dead empty disc.
-                onStatus?.('');
-                root = placeholderCity(city);
-            }
-        } else {
-            root = placeholderCity(city);
+        if (!city.model) {
+            // A city without a diorama yet: photos only.
+            clearPins();
+            renderPanel({ kind: 'city', city, object: null });
+            return;
         }
-        if (token !== loadToken) return;
+        onStatus?.('Loading…');
+        let root;
+        try {
+            root = await new Promise((res, rej) => gltfLoader.load(city.model, (g) => res(g.scene), undefined, rej));
+        } catch {
+            if (token === loadToken) onStatus?.(`${city.name} could not load.`);
+            return;
+        }
+        if (token !== loadToken) { disposeObject3D(root); return; }
 
-        detachCity();
-        // Hand the stage over to the 3D canvas for the city view. `view` has to
-        // flip before resize(), which no-ops while the canvas is hidden, and
-        // the canvas has to be sized before the first render or it stays 0x0.
-        if (mapEl) mapEl.classList.add('is-hidden');
-        if (canvasEl) canvasEl.hidden = false;
-        cityGroup.add(root);
+        leaveCity();
+        clearPins();
+        setHover(null);
+        setCountryHover(null);
+        cityMaterials = inkify(root);
         cityRoot = root;
-        buildingMeshes = prepareCity(root, city);
-        activeCity = slug;
-        view = VIEW.CITY;
-        resize();
+        objectIndex = indexObjects(root);
+        if (import.meta.env?.DEV) {
+            for (const id of Object.keys(city.objects || {})) {
+                if (!objectIndex.has(id)) console.warn(`[gallery] ${city.slug}: no OBJ-${id} in the model`);
+            }
+            for (const id of objectIndex.keys()) {
+                if (!city.objects?.[id]) console.warn(`[gallery] ${city.slug}: OBJ-${id} has no entry in places.js`);
+            }
+        }
+        dome = buildDome();
+        cityScene.add(dome, root);
 
-        frameCity(root);
-        renderFilmstrip(city);
+        activeCity = slug;
+        selected = null;
+        view = VIEW.CITY;
+        pipeline.scene = cityScene;
+        pipeline.hideInNormalPass = dome.userData.noInk;
+        // Line thresholds scale with the scene: dioramas are ~2 units across,
+        // their smallest parts (rails, bricks) a few hundredths.
+        pipeline.uniforms.uDepthK.value = 0.006;
+        pipeline.uniforms.uUnit.value = 0.03;
+        camera.near = 0.02; camera.far = 40; camera.updateProjectionMatrix();
+        controls.autoRotate = false;
+        controls.minDistance = 1.2;
+        controls.maxDistance = 5;
+        controls.minPolarAngle = 0.2;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05;
+        controls.target.set(0, 0.25, 0);
+        flight = null;
+        camera.position.set(0, 1.45, 3.1);
+        controls.update();
+        renderPanel({ kind: 'city', city, object: null });
         onStatus?.('');
     }
 
-    function frameCity(root) {
-        const box = new THREE.Box3().setFromObject(root);
-        const size = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
-        const r = Math.max(size.x, size.y, size.z) || 1;
-
-        camera.near = Math.max(r / 1000, 0.001);
-        camera.far = r * 40;
-        camera.position.set(center.x + r * 1.1, center.y + r * 0.8, center.z + r * 1.1);
-        camera.lookAt(center);
-        camera.updateProjectionMatrix();
-
-        if (controls) {
-            // Orbit around the model's own centre, whatever its authored origin.
-            controls.target.copy(center);
-            // Zoom bounds scale with the model so one setting fits a stadium and
-            // a small disc alike: close enough to read a stand, far enough to
-            // see the whole thing, never so far it becomes a speck.
-            controls.minDistance = r * 0.35;
-            controls.maxDistance = r * 3.2;
-            controls.update();
-        }
-    }
-
-    function detachCity() {
+    function leaveCity() {
+        if (tipEl) tipEl.hidden = true;
         if (!cityRoot) return;
-        // Clear any highlight first: disposing a mesh while it points at the
-        // shared highlight material would take that material with it, and every
-        // later city would highlight to black.
-        setHighlight(null);
+        hovered = null; selected = null;
+        cityScene.remove(cityRoot, dome);
+        // Ink materials first (they are cached by source material), then the
+        // geometry and whatever textures the model brought.
+        forgetMaterials(cityMaterials || []);
         disposeObject3D(cityRoot);
-        cityRoot = null;
-        buildingMeshes = [];
+        disposeObject3D(dome);
+        cityRoot = null; dome = null; cityMaterials = null;
+        objectIndex = new Map();
+        orbiters = [];
         activeCity = null;
     }
 
-    // ---- highlighting -----------------------------------------------------
+    // ---- panel (DOM, beside the stage) ------------------------------------
 
-    function setHighlight(buildingId) {
-        for (const b of buildingMeshes) {
-            b.material = (buildingId && b.userData.buildingId === buildingId)
-                ? highlightMat
-                : b.userData.baseMaterial;
-        }
+    function setBack(label, fn) {
+        if (!backEl) return;
+        backEl.hidden = !label;
+        if (label) backEl.textContent = label;
+        backEl.onclick = fn || null;
     }
 
-    // ---- filmstrip (DOM) --------------------------------------------------
-
-    function renderFilmstrip(city) {
+    function renderPanel(state) {
         if (!filmstripEl) return;
-
-        if (!city || !city.photos.length) {
+        if (!state) {
             filmstripEl.replaceChildren();
             filmstripEl.hidden = true;
             return;
         }
         filmstripEl.hidden = false;
-
         const frag = document.createDocumentFragment();
-        for (const photo of city.photos) {
-            const fig = document.createElement('figure');
-            fig.className = 'gallery-thumb';
+        const p = (cls, text) => {
+            const el = document.createElement('p');
+            el.className = cls;
+            el.textContent = text;
+            return el;
+        };
 
-            const img = document.createElement('img');
-            img.src = thumbUrl(photo.slug);
-            img.alt = photo.caption || '';
-            img.loading = 'lazy';       // only decode what is near the viewport
-            img.decoding = 'async';
-            if (photo.w && photo.h) { img.width = photo.w; img.height = photo.h; }
-
-            const cap = document.createElement('figcaption');
-            cap.textContent = photo.caption || '';
-
-            fig.append(img, cap);
-
-            // A photo with no building highlights nothing, which is a normal
-            // case rather than an error.
-            if (photo.building) {
-                fig.addEventListener('pointerenter', () => setHighlight(photo.building));
-                fig.addEventListener('pointerleave', () => setHighlight(null));
-                fig.addEventListener('focusin', () => setHighlight(photo.building));
-                fig.addEventListener('focusout', () => setHighlight(null));
+        if (state.kind === 'country') {
+            frag.appendChild(p('gallery-panel-hint', 'Pick a city on the globe, or here.'));
+            const row = document.createElement('div');
+            row.className = 'gallery-chips';
+            for (const city of state.cities) {
+                const btn = document.createElement('button');
+                btn.className = 'gallery-city-chip';
+                btn.textContent = city.name;
+                btn.addEventListener('click', () => enterCity(city.slug));
+                row.appendChild(btn);
             }
-            frag.appendChild(fig);
+            frag.appendChild(row);
+            filmstripEl.replaceChildren(frag);
+            return;
+        }
+
+        const { city, object } = state;
+        const objects = city.objects || {};
+        if (city.tagline) frag.appendChild(p('gallery-tagline', city.tagline));
+
+        // Every clickable thing in the model, as chips: the keyboard way in,
+        // and a legend for what can be clicked.
+        const row = document.createElement('div');
+        row.className = 'gallery-chips';
+        for (const id of Object.keys(objects)) {
+            const btn = document.createElement('button');
+            btn.className = 'gallery-object-chip';
+            btn.textContent = objects[id].name || prettify(id);
+            btn.setAttribute('aria-pressed', String(id === object));
+            btn.addEventListener('click', () => select(id === object ? null : id));
+            btn.addEventListener('pointerenter', () => setHover(id));
+            btn.addEventListener('pointerleave', () => setHover(null));
+            row.appendChild(btn);
+        }
+        frag.appendChild(row);
+
+        if (!object) {
+            frag.appendChild(p('gallery-panel-hint', city.model
+                ? 'Click anything in the dome to see my photos of it.'
+                : 'No model of this city yet.'));
+            filmstripEl.replaceChildren(frag);
+            return;
+        }
+
+        const info = objects[object] || { name: prettify(object), photos: [] };
+        const h = document.createElement('h2');
+        h.className = 'gallery-object-title';
+        h.textContent = info.name || prettify(object);
+        frag.appendChild(h);
+        if (info.note) frag.appendChild(p('gallery-panel-hint', info.note));
+
+        const photos = info.photos || [];
+        if (!photos.length) {
+            frag.appendChild(p('gallery-panel-hint', 'No photos of this one up yet.'));
+        } else {
+            const grid = document.createElement('div');
+            grid.className = 'gallery-photo-grid';
+            for (const photo of photos) {
+                const fig = document.createElement('figure');
+                fig.className = 'gallery-thumb';
+                const img = document.createElement('img');
+                img.src = thumbUrl(photo.slug);
+                img.alt = photo.caption || '';
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                if (photo.w && photo.h) { img.width = photo.w; img.height = photo.h; }
+                fig.appendChild(img);
+                if (photo.caption) {
+                    const cap = document.createElement('figcaption');
+                    cap.textContent = photo.caption;
+                    fig.appendChild(cap);
+                }
+                grid.appendChild(fig);
+            }
+            frag.appendChild(grid);
         }
         filmstripEl.replaceChildren(frag);
     }
 
-    // ---- interaction ------------------------------------------------------
+    // ---- picking ----------------------------------------------------------
 
-    function showCityChoices(country) {
-        if (!filmstripEl) return;
-        if (titleEl) titleEl.textContent = country.name;
-        if (backEl) backEl.hidden = false;
-        filmstripEl.hidden = false;
-
-        const frag = document.createDocumentFragment();
-        for (const slug of country.cities) {
-            const city = cityBySlug[slug];
-            if (!city) continue;
-            const btn = document.createElement('button');
-            btn.className = 'gallery-city-chip';
-            btn.textContent = city.name;
-            btn.addEventListener('click', () => enterCity(slug));
-            frag.appendChild(btn);
+    function pick(e) {
+        const r = canvasEl.getBoundingClientRect();
+        pointer.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+        raycaster.setFromCamera(pointer, camera);
+        if (view === VIEW.CITY) {
+            if (!cityRoot) return null;
+            for (const hit of raycaster.intersectObject(cityRoot, true)) {
+                if (hit.object.userData.glass) continue;
+                return { object: objectIdOf(hit) };
+            }
+            return null;
         }
-        filmstripEl.replaceChildren(frag);
+        if (!globe) return null;
+        const targets = [...countryMeshes.values()];
+        if (pins) targets.push(...pins.children.flatMap((g) => g.children));
+        const ocean = globe.getObjectByName('OCEAN');
+        if (ocean) targets.push(ocean);
+        const hit = raycaster.intersectObjects(targets, false)[0];
+        if (!hit) return null;
+        if (hit.object.userData.city) return { city: hit.object.userData.city };
+        if (hit.object.userData.country) return { country: hit.object.userData.country };
+        return null;
+    }
+
+    let hoverCountry = null;
+    function setCountryHover(c) {
+        if (c === hoverCountry) return;
+        if (hoverCountry) {
+            const m = countryMeshes.get(hoverCountry.iso);
+            if (m) m.material = m.userData.baseMaterial;
+        }
+        hoverCountry = c;
+        if (c) {
+            const m = countryMeshes.get(c.iso);
+            if (m) m.material = highlightTwin(m.userData.baseMaterial);
+        }
+    }
+
+    let lastMove = null;
+    function onPointerMove(e) {
+        pointerIn = true;
+        lastMove = e;
+    }
+
+    function hoverFromPointer() {
+        if (!lastMove || !pointerIn) return;
+        const e = lastMove;
+        lastMove = null;
+        const hit = pick(e);
+        let label = null;
+        if (view === VIEW.CITY) {
+            setHover(hit?.object || null);
+            const city = cityBySlug[activeCity];
+            if (hit?.object) label = city?.objects?.[hit.object]?.name || prettify(hit.object);
+        } else {
+            setCountryHover(hit?.country || null);
+            if (hit?.country) label = hit.country.name;
+            if (hit?.city) label = hit.city.name;
+        }
+        canvasEl.style.cursor = label ? 'pointer' : 'grab';
+        if (label) {
+            const r = stageEl.getBoundingClientRect();
+            tipEl.textContent = label;
+            tipEl.style.transform = `translate(${e.clientX - r.left + 14}px, ${e.clientY - r.top + 12}px)`;
+            tipEl.hidden = false;
+        } else {
+            tipEl.hidden = true;
+        }
+    }
+
+    function onPointerUp(e) {
+        if (!downAt) return;
+        const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
+        const quick = performance.now() - downAt.t < 600;
+        downAt = null;
+        if (moved > 6 || !quick) return;      // that was a drag, not a click
+        const hit = pick(e);
+        if (view === VIEW.CITY) {
+            if (hit?.object) select(hit.object === selected ? null : hit.object);
+            return;
+        }
+        if (hit?.city) return enterCity(hit.city.slug);
+        if (hit?.country) {
+            tipEl.hidden = true;
+            setCountryHover(null);
+            return openCountry(hit.country.slug);
+        }
     }
 
     // ---- loop -------------------------------------------------------------
 
     function resize() {
-        if (!renderer || !canvasEl || canvasEl.hidden) return;
         const r = stageEl.getBoundingClientRect();
-        if (r.width < 2 || r.height < 2) return;
-        renderer.setPixelRatio(renderScale());
-        renderer.setSize(r.width, r.height, false);
-        camera.aspect = r.width / r.height;
-        camera.updateProjectionMatrix();
+        if (r.width < 2 || r.height < 2) return false;
+        const pr = renderScale();
+        const w = Math.round(r.width), h = Math.round(r.height);
+        if (canvasEl.width !== Math.floor(w * pr) || canvasEl.height !== Math.floor(h * pr)) {
+            renderer.setPixelRatio(pr);
+            renderer.setSize(w, h, false);
+            pipeline.setSize(w, h, pr);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        }
+        return true;
     }
 
-    function tick() {
+    function tick(t) {
         raf = requestAnimationFrame(tick);
-        // Nothing to draw while the SVG map owns the stage: the canvas is
-        // hidden, so rendering into it is pure waste.
-        if (!open || view !== VIEW.CITY || !renderer) return;
-        resize();
-        controls?.update();     // required every frame while damping is on
-        renderer.render(scene, camera);
+        if (!open || !renderer) return;
+        const dt = Math.min(0.05, (t - (lastT || t)) / 1000);
+        lastT = t;
+        if (!resize()) return;
+        stepFlight();
+        if (!flight) controls.update();
+        else camera.lookAt(controls.target);
+        if (!reducedMotion()) {
+            for (const o of orbiters) o.rotation.y += (dt * Math.PI * 2) / o.userData.orbit;
+        }
+        hoverFromPointer();
+        sky.follow(camera);
+        pipeline.render();
+        if (view === VIEW.COUNTRY) placeLabels();
     }
 
     // ---- public surface ---------------------------------------------------
 
     return {
         open() {
-            // No renderer yet: the world view is SVG, so a visitor who only
-            // looks at the map never creates a WebGL context at all.
             open = true;
+            if (!ensureRenderer()) return;
             showWorld();
-            if (!raf) tick();
+            if (!raf) { lastT = 0; raf = requestAnimationFrame(tick); }
         },
         close() {
             open = false;
             if (raf) { cancelAnimationFrame(raf); raf = null; }
-            // Give the city's textures back on close: the modal may sit unopened
-            // for the rest of the session.
-            detachCity();
+            // Give the city back on close: the modal may sit unopened for the
+            // rest of the session. The globe is small and stays.
+            leaveCity();
+            clearPins();
         },
         showWorld,
+        goCountry: openCountry,
         goCity: enterCity,
         isOpen: () => open,
         stats: () => renderer?.info.memory ?? null,
+        debug: () => ({ cam: camera?.position.toArray(), target: controls?.target.toArray(), flight: !!flight, view }),
         dispose() {
             this.close();
             controls?.dispose();
-            highlightMat?.dispose();
-            dracoLoader?.dispose();      // only here: doing it after city #1 would
-            renderer?.dispose();         // kill the decoder before city #2
+            dracoLoader?.dispose();
+            if (globe) disposeObject3D(globe);
+            renderer?.dispose();
             renderer = null;
         },
     };

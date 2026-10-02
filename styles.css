@@ -1926,7 +1926,8 @@ button.study-cell.is-open {
     position: relative;
     min-height: 0;
     border-radius: 14px;
-    background: radial-gradient(120% 120% at 50% 20%, #1e2229 0%, #121418 100%);
+    /* The ink night sky, so the frame before the first render matches it. */
+    background: #161c2e;
     border: 1px solid var(--glass-border);
     overflow: hidden;
 }
@@ -1935,92 +1936,104 @@ button.study-cell.is-open {
     display: block;
     width: 100%;
     height: 100%;
-    cursor: pointer;
+    cursor: grab;
+    touch-action: none;
 }
 .gallery-canvas[hidden] { display: none; }
 
-/* The world map. Vector, so it stays sharp at any modal size, and every
-   visited country is a real focusable element. */
-.gallery-map {
-    display: block;
-    width: 100%;
-    height: 100%;
-    padding: 8px;
-    box-sizing: border-box;
+/* Labels over the globe and the hover tip. Positioned by the gallery every
+   frame; the layer itself never takes clicks, only the labels do. */
+.gallery-labels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
 }
-/* `hidden` as a property does not reflect onto an SVG element, so the
-   view swap toggles this class instead. */
-.gallery-map.is-hidden { display: none; }
-
-/* Every country that is not hers: a quiet backdrop so the visited ones read
-   as picked out of a real map rather than floating in the dark. */
-.gallery-map-base path {
-    fill: rgba(255, 255, 255, 0.05);
-    stroke: rgba(255, 255, 255, 0.08);
-    stroke-width: 0.6;
-    vector-effect: non-scaling-stroke;
-}
-
-.gallery-country {
-    fill: var(--tone, var(--accent-emerald));
-    fill-opacity: 0.55;
-    stroke: var(--tone, var(--accent-emerald));
-    stroke-width: 1.1;
-    vector-effect: non-scaling-stroke;
+.gallery-pin-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    border: 1.5px solid #1f2437;
+    background: #efe9dc;
+    color: #1f2437;
+    border-radius: 100px;
+    padding: 4px 12px;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: fill-opacity 0.18s ease;
-    outline: none;
+    white-space: nowrap;
+    transition: opacity 0.2s ease, background 0.15s ease;
 }
-.gallery-country:hover,
-.gallery-country:focus-visible {
-    fill-opacity: 0.95;
-}
-.gallery-country:focus-visible {
-    stroke: #fff;
-    stroke-width: 2.4;
-}
+.gallery-pin-label:hover,
+.gallery-pin-label:focus-visible { background: #ffd27a; outline: none; }
 
-/* One hue per trip, so the map reads as a set of separate journeys rather than
-   one undifferentiated blob. All chosen to sit at similar lightness on the dark
-   backdrop, so no country shouts louder than another. */
-.gallery-country.tone-mint   { --tone: #6ee7b7; }
-.gallery-country.tone-sky    { --tone: #7dd3fc; }
-.gallery-country.tone-amber  { --tone: #fcd34d; }
-.gallery-country.tone-rose   { --tone: #fda4af; }
-.gallery-country.tone-violet { --tone: #c4b5fd; }
-.gallery-country.tone-sand   { --tone: #fdba74; }
-.gallery-country.tone-red    { --tone: #f87171; }
-
-/* Locator ring for countries too small to see or hit at world scale
-   (Taiwan, South Korea, the UAE). Carries the click as well, so it is a
-   bigger target and not just decoration. */
-.gallery-country-ring {
-    fill: none;
-    stroke: var(--tone, var(--accent-emerald));
-    stroke-width: 1.6;
-    stroke-opacity: 0.75;
-    vector-effect: non-scaling-stroke;
-    cursor: pointer;
-    transition: stroke-opacity 0.18s ease;
+.gallery-tip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    background: rgba(22, 28, 46, 0.92);
+    color: #efe9dc;
+    border: 1px solid rgba(239, 233, 220, 0.25);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    white-space: nowrap;
 }
-.gallery-country-ring:hover { stroke-opacity: 1; }
-.gallery-country-ring.tone-mint   { --tone: #6ee7b7; }
-.gallery-country-ring.tone-sky    { --tone: #7dd3fc; }
-.gallery-country-ring.tone-amber  { --tone: #fcd34d; }
-.gallery-country-ring.tone-rose   { --tone: #fda4af; }
-.gallery-country-ring.tone-violet { --tone: #c4b5fd; }
-.gallery-country-ring.tone-sand   { --tone: #fdba74; }
-.gallery-country-ring.tone-red    { --tone: #f87171; }
+.gallery-tip[hidden] { display: none; }
 
 .gallery-filmstrip {
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-right: 4px;
+}
+.gallery-photo-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 12px;
-    align-content: start;
-    padding-right: 4px;
+}
+.gallery-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.gallery-tagline {
+    margin: 0;
+    font-size: 1rem;
+    font-style: italic;
+    color: #ffd27a;
+}
+.gallery-panel-hint {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.6);
+}
+.gallery-object-title {
+    margin: 4px 0 0;
+    font-size: 1.1rem;
+    color: #fff;
+}
+.gallery-object-chip {
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.05);
+    color: #e6e6e6;
+    border-radius: 100px;
+    padding: 6px 14px;
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.gallery-object-chip:hover { border-color: #ffd27a; color: #fff; }
+.gallery-object-chip[aria-pressed="true"] {
+    background: #ffd27a;
+    border-color: #ffd27a;
+    color: #1f2437;
 }
 .gallery-filmstrip[hidden] { display: none; }
 

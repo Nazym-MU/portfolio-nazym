@@ -4,35 +4,33 @@
 // Hand-tagged: no EXIF parsing, no dates scraped from filenames. Adding a photo
 // is one line here plus a file in the source folder.
 //
-// `model` is OPTIONAL and that is the point. A city with one gets a 3D disc; a
-// city without one shows its photos and nothing else changes. Adding a model
-// later is dropping in a .glb and adding one key, never a code change, so the
-// Blender work never blocks shipping a city.
+// The globe (public/models/gallery/globe.glb) holds every country as a mesh
+// named CTRY-<iso>; the countries listed here are the ones lit up and
+// clickable. A city appears as a pin at its lat/lon once its country is open.
 //
-// `building` on a photo is the mesh name baked into the city's .glb WITHOUT the
-// "BLD-" prefix, and may be null. Photos of food and trains legitimately belong
-// to no building.
+// `model` is OPTIONAL and that is the point. A city with one opens as a toy
+// diorama under a glass dome; a city without one just shows its photos.
+// Adding a model later is dropping in a .glb (scripts/blender/<city>.py) and
+// adding one key, never a code change.
+//
+// `objects` are the clickable things in a model: each key is a mesh named
+// OBJ-<key> in the .glb. Clicking one shows its `photos`. An object with no
+// photos yet still highlights and says so.
 // ============================================================================
 
-// `iso` keys into COUNTRY_PATHS in world-map.js, which is where the shape comes
-// from. Everything not listed here still draws, just muted and unclickable.
 export const countries = [
-    // `iso` keys into COUNTRY_PATHS in world-map.js, which is where the shape
-    // comes from. `tone` picks one of the map palette's hues, so the map reads
-    // as a set of trips rather than one undifferentiated blob. Countries not
-    // listed here still draw, just muted and unclickable.
-    { iso: 'US', slug: 'usa', name: 'United States', tone: 'mint',
-      blurb: 'New York, and a great deal of walking.', cities: ['new-york'] },
-    { iso: 'GB', slug: 'uk', name: 'United Kingdom', tone: 'red',
-      blurb: 'London, and the one ground I had to see.', cities: ['london', 'manchester'] },
-    { iso: 'AR', slug: 'argentina', name: 'Argentina', tone: 'sky' },
+    // `tone` picks one of the globe palette's hues, so the visited countries
+    // read as a set of separate trips rather than one blob.
+    { iso: 'US', slug: 'usa', name: 'United States', tone: 'mint', cities: ['new-york'] },
+    { iso: 'GB', slug: 'uk', name: 'United Kingdom', tone: 'red', cities: ['london', 'manchester'] },
+    { iso: 'AR', slug: 'argentina', name: 'Argentina', tone: 'sky', cities: ['buenos-aires'] },
     { iso: 'EG', slug: 'egypt', name: 'Egypt', tone: 'sand' },
-    { iso: 'KZ', slug: 'kazakhstan', name: 'Kazakhstan', tone: 'sky' },
+    { iso: 'KZ', slug: 'kazakhstan', name: 'Kazakhstan', tone: 'sky', cities: ['astana'] },
     { iso: 'UZ', slug: 'uzbekistan', name: 'Uzbekistan', tone: 'violet' },
     { iso: 'DE', slug: 'germany', name: 'Germany', tone: 'amber' },
     { iso: 'TR', slug: 'turkey', name: 'Turkey', tone: 'red' },
     { iso: 'AE', slug: 'uae', name: 'United Arab Emirates', tone: 'sand' },
-    { iso: 'JP', slug: 'japan', name: 'Japan', tone: 'rose' },
+    { iso: 'JP', slug: 'japan', name: 'Japan', tone: 'rose', cities: ['tokyo'] },
     { iso: 'KR', slug: 'south-korea', name: 'South Korea', tone: 'violet' },
     { iso: 'TW', slug: 'taiwan', name: 'Taiwan', tone: 'mint' },
     { iso: 'TH', slug: 'thailand', name: 'Thailand', tone: 'amber' },
@@ -44,29 +42,105 @@ export const cities = [
         slug: 'new-york',
         country: 'usa',
         name: 'New York',
-        // model: added once the Blender file exists — photo-only until then.
-        photos: [],
+        lat: 40.71, lon: -74.01,
+        model: 'models/gallery/cities/new-york.glb',
+        objects: {
+            'times-square': { name: 'Times Square', photos: [] },
+            'empire-state': { name: 'Empire State Building', photos: [] },
+            'statue-of-liberty': { name: 'Statue of Liberty', photos: [] },
+            'strawberry-fields': { name: 'Strawberry Fields', photos: [] },
+            'the-pond': { name: 'Central Park', photos: [] },
+            'subway': { name: 'The subway', photos: [] },
+            'hop-on-hop-off': { name: 'Hop-on hop-off bus', photos: [] },
+            'yellow-cab': { name: 'Yellow cab', photos: [] },
+        },
     },
     {
         slug: 'london',
         country: 'uk',
         name: 'London',
-        photos: [],
+        lat: 51.51, lon: -0.13,
+        tagline: 'May London always keep its ✶ spark ✶',
+        model: 'models/gallery/cities/london.glb',
+        objects: {
+            'big-ben': { name: 'Big Ben', photos: [] },
+            'shard': { name: 'The Shard', photos: [] },
+            'london-eye': { name: 'London Eye', photos: [] },
+            'phone-box': { name: 'Phone box', photos: [] },
+            'lamp': { name: 'Фонарь', photos: [] },
+            'underground': { name: 'The Underground', photos: [] },
+            'bookshop': { name: 'A bookshop', photos: [] },
+            'bus': { name: 'Double-decker', photos: [] },
+        },
     },
     {
         slug: 'manchester',
         country: 'uk',
         name: 'Manchester',
+        lat: 53.46, lon: -2.29,
         // The stadium stands in for the city: it is the part actually explored.
-        // Textures halved to 1024 (69MB -> 37MB of GPU memory); geometry left
-        // alone, because joining its 3,643 placed bricks destroys the seating.
+        // Built from the Dear United LEGO model by scripts/build-manchester.mjs.
         model: 'models/gallery/cities/manchester.glb',
-        photos: [],
+        objects: {
+            'stretford-end': { name: 'Stretford End', photos: [] },
+            'sir-alex-ferguson-stand': { name: 'Sir Alex Ferguson Stand', photos: [] },
+            'east-stand': { name: 'East Stand', photos: [] },
+            'sir-bobby-charlton-stand': { name: 'Sir Bobby Charlton Stand', photos: [] },
+            'pitch': { name: 'The pitch', photos: [] },
+        },
+    },
+    {
+        slug: 'buenos-aires',
+        country: 'argentina',
+        name: 'Buenos Aires',
+        lat: -34.60, lon: -58.38,
+        model: 'models/gallery/cities/buenos-aires.glb',
+        objects: {
+            'obelisco': { name: 'Obelisco', photos: [] },
+            'caminito': { name: 'El Caminito', photos: [] },
+            'la-bombonera': { name: 'La Bombonera', photos: [] },
+            'teatro-colon': { name: 'Teatro Colón', photos: [] },
+            'empanadas': { name: 'Empanadas', photos: [] },
+            'puente-de-la-mujer': { name: 'Puente de la Mujer', photos: [] },
+        },
+    },
+    {
+        slug: 'astana',
+        country: 'kazakhstan',
+        name: 'Astana',
+        lat: 51.17, lon: 71.45,
+        model: 'models/gallery/cities/astana.glb',
+        objects: {
+            'baiterek': { name: 'Baiterek', photos: [] },
+            'khan-shatyr': { name: 'Khan Shatyr', photos: [] },
+            'pyramid': { name: 'Palace of Peace and Reconciliation', photos: [] },
+            'abu-dhabi-plaza': { name: 'Abu Dhabi Plaza', photos: [] },
+            'nur-alem': { name: 'Nur Alem', photos: [] },
+            'expo': { name: 'EXPO pavilions', photos: [] },
+            'atyrau-bridge': { name: 'Atyrau bridge', photos: [] },
+        },
+    },
+    {
+        slug: 'tokyo',
+        country: 'japan',
+        name: 'Tokyo',
+        lat: 35.68, lon: 139.69,
+        model: 'models/gallery/cities/tokyo.glb',
+        objects: {
+            'mt-fuji': { name: 'Mt. Fuji', photos: [] },
+            'tokyo-tower': { name: 'Tokyo Tower', photos: [] },
+            'shibuya-crossing': { name: 'Shibuya crossing', photos: [] },
+            '7-eleven': { name: '7-Eleven', photos: [] },
+            'familymart': { name: 'FamilyMart', photos: [] },
+            'seventeen-ice': { name: 'Seventeen Ice', photos: [] },
+            'torii': { name: 'Torii and sakura', photos: [] },
+        },
     },
 ];
 
 // ---- Derived lookups. The arrays above stay authoritative for ordering. ----
 export const countryBySlug = Object.fromEntries(countries.map((c) => [c.slug, c]));
+export const countryByIso = Object.fromEntries(countries.map((c) => [c.iso, c]));
 export const cityBySlug = Object.fromEntries(cities.map((c) => [c.slug, c]));
 
 // Paths are derived from the slug so there is no src field to drift out of sync

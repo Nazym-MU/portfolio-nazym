@@ -59,11 +59,15 @@ const gallery = initGallery(document.getElementById("gallery-stage"), {
         if (el) el.textContent = msg || "";
     },
 });
-document.getElementById("gallery-back")?.addEventListener("click", () => gallery.showWorld());
+// The back button's target changes with depth (city -> country -> globe), so
+// the gallery wires it itself.
 
 // Dev only: lets the leak test read renderer.info.memory across city swaps.
 // A staircase there means disposal is wrong; it must come back to baseline.
-if (import.meta.env.DEV) window.__galleryStats = () => gallery.stats();
+if (import.meta.env.DEV) {
+    window.__galleryStats = () => gallery.stats();
+    window.__gallery = gallery;
+}
 // `isModalOpen` gates *interaction* and only clears when the close tween ends.
 // Painting needs a separate flag: the room must start drawing again the moment
 // a modal begins fading out, or the last frame sits frozen under a
