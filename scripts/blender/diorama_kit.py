@@ -14,7 +14,8 @@ Naming contract with the viewer (src/gallery.js):
   DECO-...   scenery: drawn, never clickable.
 Materials are plain colours; the viewer re-maps every colour into the ink
 palette, so author them as you would see them in daylight. A material whose
-name contains "glass" is drawn see-through.
+name contains "glass" is drawn see-through; lamp-*/glow-* glow warm yellow;
+neon-* glow in their own colour (billboards, screens).
 
 Units: base radius 1.0, ground top at z = 0, Blender Z-up. Keep everything
 under the dome: inside a hemisphere of radius 1.0 centred on the origin.

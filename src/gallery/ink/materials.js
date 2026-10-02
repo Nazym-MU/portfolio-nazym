@@ -86,6 +86,12 @@ export function inkMaterial(src) {
     m.color.copy(GLOW)
     m.emissive = GLOW.clone().multiplyScalar(0.55)
   }
+  // Screens and billboards (neon-*) glow in their OWN colour, un-muted: Times
+  // Square and Shibuya are supposed to be the loudest things in the dome.
+  if (!glass && /^neon-/i.test(src.name)) {
+    m.color.setRGB(c.r, c.g, c.b)
+    m.emissive = new THREE.Color(c.r, c.g, c.b).multiplyScalar(0.7)
+  }
   patch(m, { inkTexture: !!m.map })
   m.userData.glass = glass
   cache.set(src, m)

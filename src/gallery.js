@@ -30,7 +30,7 @@ import { disposeObject3D } from './gallery/dispose.js';
 import { InkPipeline } from './gallery/ink/pipeline.js';
 import { createSky, createLights } from './gallery/ink/sky.js';
 import { inkify, inkSolid, highlightTwin, forgetMaterials } from './gallery/ink/materials.js';
-import { countries, countryBySlug, countryByIso, cityBySlug, thumbUrl } from './data/places.js';
+import { countries, countryBySlug, countryByIso, cityBySlug, thumbUrl, fullUrl } from './data/places.js';
 
 // GLTFLoader runs names through PropertyBinding.sanitizeNodeName, which DELETES
 // '.', '[', ']', ':' and '/'. Multi-primitive meshes also gain '_1' suffixes.
@@ -59,9 +59,9 @@ const prettify = (id) => id.replace(/-/g, ' ').replace(/^./, (c) => c.toUpperCas
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
-export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } = {}) {
+export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
     let renderer = null, pipeline = null, camera = null, controls = null, sky = null;
-    let canvasEl = null, labelsEl = null, tipEl = null;
+    let canvasEl = null, labelsEl = null, tipEl = null, photosEl = null;
     let raf = null, open = false, lastT = 0;
     let view = VIEW.WORLD;
 
@@ -90,7 +90,6 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         if (renderer) return true;
         const canvas = document.createElement('canvas');
         canvas.className = 'gallery-canvas';
-        stageEl.appendChild(canvas);
         canvasEl = canvas;
         try {
             renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
@@ -113,7 +112,15 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         tipEl = document.createElement('div');
         tipEl.className = 'gallery-tip';
         tipEl.hidden = true;
-        stageEl.append(labelsEl, tipEl);
+        photosEl = document.createElement('div');
+        photosEl.className = 'gallery-photos';
+        photosEl.hidden = true;
+        // Click on the backdrop (not a photo) closes; Esc too.
+        photosEl.addEventListener('click', (e) => { if (e.target === photosEl) select(null); });
+        stageEl.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !photosEl.hidden) select(null); });
+        // The canvas goes first so the floating head stays above it.
+        stageEl.prepend(canvas);
+        stageEl.append(labelsEl, tipEl, photosEl);
 
         camera = new THREE.PerspectiveCamera(40, 1, 0.01, 60);
         camera.position.set(0, 0.6, 3.2);
@@ -222,7 +229,6 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         useWorldScene();
         if (titleEl) titleEl.textContent = 'Places I have been';
         setBack(null);
-        renderPanel(null);
         try { await loadGlobe(); } catch { return; }
         if (view !== VIEW.WORLD) return;
         const dir = camera.position.clone().normalize();
@@ -262,12 +268,10 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         clearPins();
         if (!list.length) {
             onStatus?.('Nothing from here is up yet.');
-            renderPanel(null);
             return;
         }
         onStatus?.('');
         buildPins(list);
-        renderPanel({ kind: 'country', country: c, cities: list });
     }
 
     // Pins are 3D (so the ink draws them and the globe hides the far ones),
@@ -494,7 +498,7 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         const prev = [selected];
         selected = id;
         refreshHighlight(prev);
-        renderPanel({ kind: 'city', city: cityBySlug[activeCity], object: id });
+        showPhotos(id);
     }
 
     async function enterCity(slug) {
@@ -509,7 +513,7 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         if (!city.model) {
             // A city without a diorama yet: photos only.
             clearPins();
-            renderPanel({ kind: 'city', city, object: null });
+            onStatus?.('No model of this city yet.');
             return;
         }
         onStatus?.('Loading…');
@@ -551,20 +555,21 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         pipeline.uniforms.uUnit.value = 0.03;
         camera.near = 0.02; camera.far = 40; camera.updateProjectionMatrix();
         controls.autoRotate = false;
-        controls.minDistance = 1.2;
-        controls.maxDistance = 5;
+        controls.minDistance = 0.9;
+        controls.maxDistance = 4.2;
         controls.minPolarAngle = 0.2;
         controls.maxPolarAngle = Math.PI / 2 - 0.05;
-        controls.target.set(0, 0.25, 0);
+        controls.target.set(0, 0.12, 0);
         flight = null;
-        camera.position.set(0, 1.45, 3.1);
+        // Close enough that the dome fills the window.
+        camera.position.set(0, 1.2, 2.6);
         controls.update();
-        renderPanel({ kind: 'city', city, object: null });
         onStatus?.('');
     }
 
     function leaveCity() {
         if (tipEl) tipEl.hidden = true;
+        if (photosEl) { photosEl.hidden = true; photosEl.replaceChildren(); }
         if (!cityRoot) return;
         hovered = null; selected = null;
         cityScene.remove(cityRoot, dome);
@@ -579,108 +584,88 @@ export function initGallery(stageEl, { filmstripEl, titleEl, backEl, onStatus } 
         activeCity = null;
     }
 
-    // ---- panel (DOM, beside the stage) ------------------------------------
+    // ---- back arrow and floating photos (DOM, over the stage) ------------
 
     function setBack(label, fn) {
         if (!backEl) return;
         backEl.hidden = !label;
-        if (label) backEl.textContent = label;
+        if (label) {
+            backEl.setAttribute('aria-label', label);
+            backEl.title = label;
+        }
         backEl.onclick = fn || null;
     }
 
-    function renderPanel(state) {
-        if (!filmstripEl) return;
-        if (!state) {
-            filmstripEl.replaceChildren();
-            filmstripEl.hidden = true;
+    // A clicked object's photos drop onto the scene as a fan of polaroids;
+    // clicking one shows it large. Nothing sits beside the stage.
+    function showPhotos(id) {
+        if (!photosEl) return;
+        if (!id) {
+            photosEl.hidden = true;
+            photosEl.replaceChildren();
             return;
         }
-        filmstripEl.hidden = false;
-        const frag = document.createDocumentFragment();
-        const p = (cls, text) => {
-            const el = document.createElement('p');
-            el.className = cls;
-            el.textContent = text;
-            return el;
-        };
-
-        if (state.kind === 'country') {
-            frag.appendChild(p('gallery-panel-hint', 'Pick a city on the globe, or here.'));
-            const row = document.createElement('div');
-            row.className = 'gallery-chips';
-            for (const city of state.cities) {
-                const btn = document.createElement('button');
-                btn.className = 'gallery-city-chip';
-                btn.textContent = city.name;
-                btn.addEventListener('click', () => enterCity(city.slug));
-                row.appendChild(btn);
-            }
-            frag.appendChild(row);
-            filmstripEl.replaceChildren(frag);
-            return;
-        }
-
-        const { city, object } = state;
-        const objects = city.objects || {};
-        if (city.tagline) frag.appendChild(p('gallery-tagline', city.tagline));
-
-        // Every clickable thing in the model, as chips: the keyboard way in,
-        // and a legend for what can be clicked.
-        const row = document.createElement('div');
-        row.className = 'gallery-chips';
-        for (const id of Object.keys(objects)) {
-            const btn = document.createElement('button');
-            btn.className = 'gallery-object-chip';
-            btn.textContent = objects[id].name || prettify(id);
-            btn.setAttribute('aria-pressed', String(id === object));
-            btn.addEventListener('click', () => select(id === object ? null : id));
-            btn.addEventListener('pointerenter', () => setHover(id));
-            btn.addEventListener('pointerleave', () => setHover(null));
-            row.appendChild(btn);
-        }
-        frag.appendChild(row);
-
-        if (!object) {
-            frag.appendChild(p('gallery-panel-hint', city.model
-                ? 'Click anything in the dome to see my photos of it.'
-                : 'No model of this city yet.'));
-            filmstripEl.replaceChildren(frag);
-            return;
-        }
-
-        const info = objects[object] || { name: prettify(object), photos: [] };
-        const h = document.createElement('h2');
-        h.className = 'gallery-object-title';
-        h.textContent = info.name || prettify(object);
-        frag.appendChild(h);
-        if (info.note) frag.appendChild(p('gallery-panel-hint', info.note));
-
+        const city = cityBySlug[activeCity];
+        const info = city?.objects?.[id] || {};
+        const name = info.name || prettify(id);
         const photos = info.photos || [];
+        tipEl.hidden = true;
+
+        const title = document.createElement('p');
+        title.className = 'gallery-photos-name';
+        title.textContent = name;
+
+        const fan = document.createElement('div');
+        fan.className = 'gallery-polaroids';
+        // Deterministic tilts so the same object always lands the same way.
+        const tilt = (i) => `${(((i * 37 + id.length * 11) % 13) - 6) * 0.9}deg`;
         if (!photos.length) {
-            frag.appendChild(p('gallery-panel-hint', 'No photos of this one up yet.'));
-        } else {
-            const grid = document.createElement('div');
-            grid.className = 'gallery-photo-grid';
-            for (const photo of photos) {
-                const fig = document.createElement('figure');
-                fig.className = 'gallery-thumb';
-                const img = document.createElement('img');
-                img.src = thumbUrl(photo.slug);
-                img.alt = photo.caption || '';
-                img.loading = 'lazy';
-                img.decoding = 'async';
-                if (photo.w && photo.h) { img.width = photo.w; img.height = photo.h; }
-                fig.appendChild(img);
-                if (photo.caption) {
-                    const cap = document.createElement('figcaption');
-                    cap.textContent = photo.caption;
-                    fig.appendChild(cap);
-                }
-                grid.appendChild(fig);
-            }
-            frag.appendChild(grid);
+            const card = document.createElement('figure');
+            card.className = 'gallery-polaroid is-empty';
+            card.style.setProperty('--tilt', tilt(0));
+            const blank = document.createElement('div');
+            blank.className = 'gallery-polaroid-blank';
+            blank.textContent = 'Photos coming soon';
+            card.appendChild(blank);
+            fan.appendChild(card);
         }
-        filmstripEl.replaceChildren(frag);
+        photos.forEach((photo, i) => {
+            const card = document.createElement('figure');
+            card.className = 'gallery-polaroid';
+            card.tabIndex = 0;
+            card.style.setProperty('--tilt', tilt(i));
+            card.style.animationDelay = `${Math.min(i, 8) * 45}ms`;
+            const img = document.createElement('img');
+            img.src = thumbUrl(photo.slug);
+            img.alt = photo.caption || name;
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            card.appendChild(img);
+            if (photo.caption) {
+                const cap = document.createElement('figcaption');
+                cap.textContent = photo.caption;
+                card.appendChild(cap);
+            }
+            const open = () => showPhotoFull(photo, name);
+            card.addEventListener('click', open);
+            card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+            fan.appendChild(card);
+        });
+        photosEl.replaceChildren(title, fan);
+        photosEl.hidden = false;
+    }
+
+    function showPhotoFull(photo, name) {
+        const fig = document.createElement('figure');
+        fig.className = 'gallery-photo-full';
+        const img = document.createElement('img');
+        img.src = fullUrl(photo.slug);
+        img.alt = photo.caption || name;
+        img.decoding = 'async';
+        fig.appendChild(img);
+        // Back to the fan, not out of the object.
+        fig.addEventListener('click', () => showPhotos(selected));
+        photosEl.replaceChildren(fig);
     }
 
     // ---- picking ----------------------------------------------------------

@@ -18,6 +18,7 @@ import random
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import bmesh  # noqa: E402
 from mathutils import Matrix  # noqa: E402
 import diorama_kit as k  # noqa: E402
 
@@ -57,20 +58,47 @@ def rotate_about(o, deg, cx, cy):
 
 
 # ---- Mt. Fuji ---------------------------------------------------------------
-FX, FY, FR, FH = 0.0, 0.1, 0.5, 0.56
-# Concave sides, a flat crater on top.
-prof = [(FR * (1 - t) ** 1.6 + 0.07 * t, FH * t) for t in [i / 20 for i in range(21)]]
-prof.append((0.0, FH))
-fuji = k.lathe("OBJ-mt-fuji", prof, segs=48, at=(FX, FY, 0), material=fuji_m)
-# The snow cap, a skin over the top fifth, with a ragged lower edge.
-cap_prof = [(FR * (1 - t) ** 1.6 + 0.07 * t + 0.003, FH * t + 0.002) for t in [0.7 + 0.3 * i / 10 for i in range(11)]]
-cap_prof.append((0.0, FH + 0.002))
-cap = k.lathe("fuji-snow", cap_prof, segs=48, at=(FX, FY, 0), material=snow)
-for v in cap.data.vertices:
-    if v.co.z < FH * 0.72 + 0.003:
-        a = math.atan2(v.co.y - FY, v.co.x - FX)
-        v.co.z -= 0.025 * (0.5 + 0.5 * math.sin(7 * a))
-cap.parent = fuji
+# The real silhouette: long gentle feet sweeping up into steeper upper slopes,
+# and a wide, flat, slightly dented summit, not a point. Snow comes down the
+# ridges in streaks rather than stopping at a clean line.
+FX, FY, FR, FH, FT = 0.0, 0.1, 0.52, 0.44, 0.13      # base radius, height, summit radius
+SEGS, RINGS = 120, 36
+bm = bmesh.new()
+rings = []
+for j in range(RINGS + 1):
+    t = j / RINGS                                     # 0 at the foot, 1 at the summit rim
+    r = FR + (FT - FR) * t
+    z = FH * t ** 1.7                                 # concave: flat feet, steep top
+    ring = []
+    for i in range(SEGS):
+        a_ = 2 * math.pi * i / SEGS
+        # Ridges and gullies, strongest mid-slope, gone at the rim and the foot.
+        wob = (0.035 * math.sin(5 * a_ + 0.7) + 0.02 * math.sin(11 * a_ + 2.1) + 0.012 * math.sin(23 * a_)) * math.sin(math.pi * t)
+        rr = r * (1 + wob)
+        ring.append(bm.verts.new((FX + rr * math.cos(a_), FY + rr * math.sin(a_), z)))
+    rings.append(ring)
+# The crater: a shallow dent inside the summit rim.
+dent = [bm.verts.new((FX + FT * 0.6 * math.cos(2 * math.pi * i / SEGS), FY + FT * 0.6 * math.sin(2 * math.pi * i / SEGS), FH - 0.012))
+        for i in range(SEGS)]
+centre = bm.verts.new((FX, FY, FH - 0.018))
+for ra, rb in zip(rings, rings[1:]):
+    for i in range(SEGS):
+        bm.faces.new((ra[i], ra[(i + 1) % SEGS], rb[(i + 1) % SEGS], rb[i]))
+for i in range(SEGS):
+    bm.faces.new((rings[-1][i], rings[-1][(i + 1) % SEGS], dent[(i + 1) % SEGS], dent[i]))
+    bm.faces.new((dent[i], dent[(i + 1) % SEGS], centre))
+bm.faces.new(list(reversed(rings[0])))
+bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+fuji = k.obj_from_bm("OBJ-mt-fuji", bm)
+fuji.data.materials.append(fuji_m)
+fuji.data.materials.append(snow)
+for poly in fuji.data.polygons:
+    c = poly.center
+    a_ = math.atan2(c.y - FY, c.x - FX)
+    streak = max(0.0, math.sin(9 * a_ + 0.4)) ** 3 * 0.16 + max(0.0, math.sin(17 * a_ + 1.3)) ** 4 * 0.08
+    snow_line = FH * (0.66 - streak)
+    poly.material_index = 1 if c.z > snow_line else 0
+k.smooth_by_angle(fuji, 50)
 
 
 # ---- Tokyo Tower ------------------------------------------------------------
@@ -133,6 +161,46 @@ c = k.join("crossing-people", crowd)
 c.parent = cross
 
 
+# ---- Shibuya: the buildings that make the crossing ---------------------------
+neon = [k.mat(n, c) for n, c in [
+    ("neon-blue", (0.25, 0.62, 1.0)), ("neon-pink", (1.0, 0.42, 0.78)), ("neon-yellow", (1.0, 0.86, 0.25)),
+    ("neon-green", (0.35, 0.95, 0.55)), ("neon-red", (1.0, 0.25, 0.28)), ("neon-white", (0.95, 0.96, 1.0))]]
+silver = k.mat("silver", (0.80, 0.82, 0.86))
+concrete = k.mat("concrete", (0.62, 0.62, 0.66))
+glassy = k.mat("tower-dark", (0.30, 0.36, 0.48))
+
+
+def block(name_, x, y, w, d, h, body, face_deg, screens):
+    """A building facing the crossing: body, lit window bands, and screens
+    [(width, height, z, material)] on its front."""
+    parts = [k.box(f"{name_}-body", (w, d, h), material=body, parent=cross)]
+    for b_ in range(int(h / 0.05)):
+        parts.append(k.box(f"{name_}-band-{b_}", (w + 0.002, d + 0.002, 0.005), at=(0, 0, 0.03 + b_ * 0.05),
+                           material=glow, parent=cross))
+    for j, (sw, sh, sz, m) in enumerate(screens):
+        parts.append(k.box(f"{name_}-screen-{j}", (sw, 0.006, sh), at=(0, -d / 2 - 0.003, sz), material=m, parent=cross))
+    for o in parts:
+        o.data.transform(Matrix.Translation((x, y, 0)) @ Matrix.Rotation(math.radians(face_deg), 4, "Z"))
+
+
+# Shibuya 109: the silver cylinder on the fork, with its tall sign.
+S9X, S9Y = -0.36, -0.46
+k.cylinder("s109-drum", 0.065, 0.42, at=(S9X, S9Y, 0), segs=28, material=silver, parent=cross)
+k.cylinder("s109-cap", 0.068, 0.02, at=(S9X, S9Y, 0.42), segs=28, material=concrete, parent=cross)
+k.box("s109-sign", (0.03, 0.006, 0.22), at=(S9X + 0.02, S9Y - 0.066, 0.17), material=neon[4], parent=cross)
+for b_ in range(7):
+    k.cylinder(f"s109-band-{b_}", 0.066, 0.005, at=(S9X, S9Y, 0.04 + b_ * 0.055), segs=28, material=glow, parent=cross)
+block("s109-wing", -0.44, -0.6, 0.1, 0.14, 0.26, concrete, -70, [(0.12, 0.06, 0.12, neon[1])])
+# QFRONT: the glass corner with the giant screen, Starbucks on its ground floor.
+block("qfront", 0.36, -0.47, 0.16, 0.12, 0.38, glassy, 35,
+      [(0.15, 0.16, 0.17, neon[0]), (0.15, 0.04, 0.02, neon[3])])
+# The two flanking blocks at the front corners, screens stacked up their faces.
+block("tsutaya-east", 0.37, -0.76, 0.12, 0.1, 0.3, concrete, 60,
+      [(0.11, 0.08, 0.16, neon[2]), (0.11, 0.05, 0.06, neon[5])])
+block("shibuya-west", -0.33, -0.8, 0.12, 0.1, 0.28, glassy, -55,
+      [(0.11, 0.09, 0.14, neon[1]), (0.11, 0.04, 0.04, neon[0])])
+
+
 # ---- Convenience stores -----------------------------------------------------
 def konbini(name, x, y, face_deg, bands, w=0.2, d=0.13, h=0.12):
     """A white corner shop with coloured fascia bands and a lit window, built
@@ -157,20 +225,27 @@ konbini("OBJ-familymart", -0.76, -0.06, -80, [f_blue, white, f_green], w=0.19)
 
 
 # ---- Seventeen Ice vending machine ------------------------------------------
-VX, VY = -0.5, -0.5
+# Just the machine, small: roughly a person and a half tall next to the crowd.
+# White cabinet, the round pink-and-blue top, a lit window of cones.
+VX, VY = -0.56, -0.4
 vend = k.empty("OBJ-seventeen-ice")
-parts = [k.box("vend-body", (0.12, 0.075, 0.21), at=(0, 0, 0), material=white, parent=vend),
-         k.box("vend-top", (0.124, 0.079, 0.03), at=(0, 0, 0.18), material=pink, parent=vend),
-         k.box("vend-base", (0.124, 0.079, 0.025), at=(0, 0, 0), material=sky, parent=vend),
-         k.box("vend-slot", (0.06, 0.004, 0.018), at=(0, -0.039, 0.03), material=black, parent=vend)]
-ice = [pink, sky, glow, s_orange, f_green]
-for r in range(3):
-    for col in range(4):
-        parts.append(k.box(f"vend-ice-{r}-{col}", (0.02, 0.004, 0.026),
-                           at=(-0.039 + col * 0.026, -0.039, 0.065 + r * 0.035),
-                           material=ice[(r * 4 + col) % len(ice)], parent=vend))
+vw, vd, vh = 0.05, 0.035, 0.075
+parts = [k.box("vend-body", (vw, vd, vh), material=white, parent=vend),
+         k.box("vend-base", (vw + 0.002, vd + 0.002, 0.008), material=sky, parent=vend),
+         k.box("vend-window", (vw * 0.8, 0.003, 0.032), at=(0, -vd / 2 - 0.0015, 0.03), material=glow, parent=vend),
+         k.box("vend-slot", (vw * 0.5, 0.003, 0.008), at=(0, -vd / 2 - 0.0015, 0.012), material=black, parent=vend)]
+top = k.cylinder("vend-top", vd / 2 + 0.001, vw + 0.002, segs=16, material=pink, parent=vend)
+top.data.transform(Matrix.Translation((0, 0, vh)) @ Matrix.Rotation(math.radians(90), 4, "Y")
+                   @ Matrix.Translation((0, 0, -(vw + 0.002) / 2)))
+parts.append(top)
+for col in range(3):
+    cone = k.cylinder(f"vend-cone-{col}", 0.004, 0.012, segs=6, r_top=0.0, material=s_orange, parent=vend)
+    cone.data.transform(Matrix.Translation((-0.013 + col * 0.013, -vd / 2 - 0.004, 0.037)) @ Matrix.Rotation(math.pi, 4, "X"))
+    scoop = k.sphere(f"vend-scoop-{col}", 0.004, at=(-0.013 + col * 0.013, -vd / 2 - 0.004, 0.039),
+                     material=[pink, sky, white][col], parent=vend, subdiv=1)
+    parts += [cone, scoop]
 for o in parts:
-    o.data.transform(Matrix.Translation((VX, VY, 0)) @ Matrix.Rotation(math.radians(-40), 4, "Z"))
+    o.data.transform(Matrix.Translation((VX, VY, 0)) @ Matrix.Rotation(math.radians(-30), 4, "Z"))
 
 
 # ---- Torii and sakura -------------------------------------------------------

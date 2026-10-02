@@ -51,7 +51,6 @@ let isModalOpen = false;
 // nothing until open() is called, so a visitor who never clicks the map pays
 // for none of it.
 const gallery = initGallery(document.getElementById("gallery-stage"), {
-    filmstripEl: document.getElementById("gallery-filmstrip"),
     titleEl: document.getElementById("gallery-title"),
     backEl: document.getElementById("gallery-back"),
     onStatus: (msg) => {
@@ -112,8 +111,8 @@ const showModal = (modal) => {
     isModalOpen = true;
     modal.style.display = "block";
     if (modal === modals.map) {
-        // The side-by-side stage and filmstrip need the width; .gallery also
-        // drops the backdrop-filter, which is expensive over a scrolling list.
+        // The 3D view needs the room; .gallery also drops the
+        // backdrop-filter, which is wasted behind an opaque WebGL canvas.
         modal.classList.add("gallery");
         gallery.open();
     }
