@@ -21,7 +21,7 @@
 export const countries = [
     // `tone` picks one of the globe palette's hues, so the visited countries
     // read as a set of separate trips rather than one blob.
-    { iso: 'US', slug: 'usa', name: 'United States', tone: 'mint', cities: ['new-york'] },
+    { iso: 'US', slug: 'usa', name: 'United States', tone: 'mint', cities: ['new-york', 'san-francisco'] },
     { iso: 'GB', slug: 'uk', name: 'United Kingdom', tone: 'red', cities: ['london', 'manchester'] },
     { iso: 'AR', slug: 'argentina', name: 'Argentina', tone: 'sky', cities: ['buenos-aires'] },
     { iso: 'EG', slug: 'egypt', name: 'Egypt', tone: 'sand' },
@@ -53,6 +53,25 @@ export const cities = [
             'subway': { name: 'The subway', photos: [] },
             'hop-on-hop-off': { name: 'Hop-on hop-off bus', photos: [] },
             'yellow-cab': { name: 'Yellow cab', photos: [] },
+        },
+    },
+    {
+        slug: 'san-francisco',
+        country: 'usa',
+        name: 'San Francisco',
+        lat: 37.77, lon: -122.42,
+        model: 'models/gallery/cities/san-francisco.glb',
+        objects: {
+            'golden-gate': { name: 'Golden Gate Bridge', photos: [] },
+            'bay-bridge': { name: 'Bay Bridge', photos: [] },
+            'cable-car': { name: 'Cable car', photos: [] },
+            'bay-wheels': { name: 'Bay Wheels', photos: [] },
+            'transamerica': { name: 'Transamerica Pyramid', photos: [] },
+            'salesforce-tower': { name: 'Salesforce Tower', photos: [] },
+            'painted-ladies': { name: 'Painted Ladies', photos: [] },
+            'coit-tower': { name: 'Coit Tower', photos: [] },
+            'alcatraz': { name: 'Alcatraz', photos: [] },
+            'ferry-building': { name: 'Ferry Building', photos: [] },
         },
     },
     {
