@@ -150,17 +150,39 @@ k.join("DECO-spruces", spr)
 # ---- Koktobe: TV tower, Ferris wheel, upper station --------------------------
 TV = (0.24, 0.33)
 tv = k.empty("OBJ-koktobe-tv-tower")
-for i, (z0, h, r0, r1) in enumerate([(0.0, 0.16, 0.026, 0.016), (0.16, 0.14, 0.016, 0.011), (0.3, 0.1, 0.011, 0.007)]):
-    seg = k.cylinder(f"tv-shaft-{i}", r0, h, segs=3, r_top=r1, material=white, parent=tv, smooth=False)
-    stand(seg, *TV, extra=z0)
-for i, (z, r) in enumerate([(0.14, 0.03), (0.2, 0.024), (0.29, 0.02)]):
-    stand(k.cylinder(f"tv-deck-{i}", r, 0.016, segs=16, material=white, parent=tv), *TV, extra=z)
-    stand(k.cylinder(f"tv-deck-win-{i}", r + 0.001, 0.006, segs=16, material=glow, parent=tv), *TV, extra=z + 0.005)
-stand(k.cylinder("tv-antenna", 0.004, 0.09, segs=6, material=cabin_red, parent=tv), *TV, extra=0.4)
-for leg in range(3):
-    a = 2 * math.pi * leg / 3
-    stand(k.tube(f"tv-strut-{leg}", [(0.06 * math.cos(a), 0.06 * math.sin(a), 0.0), (0.01 * math.cos(a), 0.01 * math.sin(a), 0.12)],
-                 0.004, material=white, segs=4, parent=tv), *TV)
+# Not a concrete needle: a tapering lattice of steel tubes (three legs,
+# rings and cross-bracing), two glazed viewing platforms, and a long
+# red-and-white antenna on top.
+BODY_H, TV_Z0 = 0.33, ground(*TV)
+lattice = []
+
+
+def leg_r(z):
+    return 0.05 + (0.012 - 0.05) * (z / BODY_H) ** 0.8
+
+
+def leg_pt(i, z):
+    a_ = 2 * math.pi * i / 3 + 0.3
+    return (TV[0] + leg_r(z) * math.cos(a_), TV[1] + leg_r(z) * math.sin(a_), TV_Z0 + z)
+
+
+for i in range(3):
+    lattice.append(k.tube(f"tv-leg-{i}", [leg_pt(i, BODY_H * j / 12) for j in range(13)], 0.0032, material=white, segs=5))
+levels = [BODY_H * j / 9 for j in range(10)]
+for li, z in enumerate(levels):
+    for i in range(3):
+        lattice.append(k.tube(f"tv-ring-{li}-{i}", [leg_pt(i, z), leg_pt((i + 1) % 3, z)], 0.0014, material=white, segs=4))
+for li, (z0, z1) in enumerate(zip(levels, levels[1:])):
+    for i in range(3):
+        lattice.append(k.tube(f"tv-brace-{li}-{i}", [leg_pt(i, z0), leg_pt((i + 1) % 3, z1)], 0.0011, material=white, segs=3))
+lat = k.join("tv-lattice", lattice)
+lat.parent = tv
+for i, (z, r) in enumerate([(0.15, 0.028), (0.265, 0.02)]):
+    k.cylinder(f"tv-deck-{i}", r, 0.02, at=(TV[0], TV[1], TV_Z0 + z), segs=20, material=white, parent=tv)
+    k.cylinder(f"tv-deck-glass-{i}", r + 0.001, 0.009, at=(TV[0], TV[1], TV_Z0 + z + 0.005), segs=20, material=glow, parent=tv)
+for j in range(6):
+    k.cylinder(f"tv-antenna-{j}", 0.0045 - j * 0.0005, 0.024, at=(TV[0], TV[1], TV_Z0 + BODY_H + j * 0.024),
+               segs=6, material=cabin_red if j % 2 == 0 else white, parent=tv)
 
 FW = (0.31, 0.21)
 fw = k.empty("OBJ-ferris-wheel")
@@ -240,96 +262,188 @@ for li, (off, frm, to) in enumerate(((side, A, B), (-side, B, A))):
 
 
 # ---- Hotel Kazakhstan --------------------------------------------------------
+# An elliptical slab, its curved faces ribbed with white vertical fins over
+# bronze glass, and the golden crown: a ring of tall pointed arches round
+# the top, lit at night.
 HK = (-0.52, 0.02)
+HK_ROT = -15
 hk = k.empty("OBJ-hotel-kazakhstan")
-stand(k.box("hk-tower", (0.13, 0.09, 0.44), material=gold, parent=hk), *HK, rot=-15)
-for b in range(14):
-    stand(k.box(f"hk-floor-{b}", (0.132, 0.092, 0.006), material=glow, parent=hk), *HK, rot=-15, extra=0.03 + b * 0.029)
-for rib in range(7):
-    o = k.box(f"hk-rib-{rib}", (0.006, 0.094, 0.44), at=(-0.06 + rib * 0.02, 0, 0), material=cream, parent=hk)
-    stand(o, *HK, rot=-15)
-# The crown: a row of spikes along the top.
+A_, B_, H_ = 0.098, 0.034, 0.42           # ellipse half-axes, height: a flat lens, not a drum
+
+
+def ell(t, grow=0.0):
+    return ((A_ + grow) * math.cos(t), (B_ + grow) * math.sin(t))
+
+
+body = k.cylinder("hk-body", 1.0, H_, segs=48, material=gold, parent=hk)
+body.data.transform(Matrix.Diagonal((A_, B_, 1, 1)))
+k.smooth_by_angle(body, 40)
+stand(body, *HK, rot=HK_ROT)
+fins = []
+for i in range(36):
+    t = 2 * math.pi * i / 36
+    x, y = ell(t, 0.002)
+    f = k.box(f"hk-fin-{i}", (0.004, 0.006, H_ - 0.02), at=(0, 0, 0.01), material=cream)
+    f.data.transform(Matrix.Translation((x, y, 0)) @ Matrix.Rotation(math.atan2(y / B_ ** 2, x / A_ ** 2) - math.pi / 2, 4, "Z"))
+    fins.append(f)
+for b_ in range(13):
+    band = k.cylinder(f"hk-floor-{b_}", 1.0, 0.004, segs=48, material=glow)
+    band.data.transform(Matrix.Translation((0, 0, 0.03 + b_ * 0.03)) @ Matrix.Diagonal((A_ + 0.001, B_ + 0.001, 1, 1)))
+    fins.append(band)
+ff = k.join("hk-fins", fins)
+ff.parent = hk
+stand(ff, *HK, rot=HK_ROT)
 crown = []
-for i in range(9):
-    sp = k.cylinder(f"hk-spike-{i}", 0.008, 0.05, segs=4, r_top=0.0, material=crown_m, smooth=False)
-    sp.data.transform(Matrix.Translation((-0.06 + i * 0.015, 0, 0.44)))
-    crown.append(sp)
-c = k.join("hk-crown", crown)
-c.parent = hk
-stand(c, *HK, rot=-15)
+N_ARCH = 20
+for i in range(N_ARCH):
+    t0, t1 = 2 * math.pi * i / N_ARCH, 2 * math.pi * (i + 1) / N_ARCH
+    p0, p1 = ell(t0, -0.004), ell(t1, -0.004)
+    pm = ell((t0 + t1) / 2, -0.004)
+    # A pointed arch between two posts.
+    pts = [(p0[0], p0[1], H_), (p0[0], p0[1], H_ + 0.035),
+           ((p0[0] + pm[0]) / 2, (p0[1] + pm[1]) / 2, H_ + 0.05), (pm[0], pm[1], H_ + 0.062),
+           ((pm[0] + p1[0]) / 2, (pm[1] + p1[1]) / 2, H_ + 0.05), (p1[0], p1[1], H_ + 0.035), (p1[0], p1[1], H_)]
+    crown.append(k.tube(f"hk-arch-{i}", pts, 0.0028, material=crown_m, segs=4))
+ring = k.cylinder("hk-crown-ring", 1.0, 0.008, segs=48, material=crown_m)
+ring.data.transform(Matrix.Translation((0, 0, H_)) @ Matrix.Diagonal((A_ - 0.002, B_ - 0.002, 1, 1)))
+crown.append(ring)
+cr = k.join("hk-crown", crown)
+cr.parent = hk
+stand(cr, *HK, rot=HK_ROT)
 
 
 # ---- Al-Farabi glass: Esentai Tower and its neighbours -----------------------
 glass = k.empty("OBJ-al-farabi")
+dark_glass = k.mat("facade-night", (0.20, 0.28, 0.44))
 for i, (x, y, w, d, h, m, slant) in enumerate([
-        (0.0, -0.3, 0.09, 0.08, 0.5, glass_blue, 0.08),     # Esentai: tallest, slanted crown
-        (0.12, -0.24, 0.08, 0.07, 0.32, glass_teal, 0.04),
-        (-0.11, -0.38, 0.07, 0.07, 0.24, glass_blue, 0.03)]):
+        (0.0, -0.3, 0.085, 0.07, 0.5, dark_glass, 0.07),     # Esentai: tallest, sliced crown
+        (0.12, -0.24, 0.075, 0.065, 0.3, glass_teal, 0.03),
+        (-0.11, -0.38, 0.07, 0.065, 0.22, glass_blue, 0.02)]):
     t = k.box(f"af-tower-{i}", (w, d, h), material=m, parent=glass)
-    # Slant the roof: lift the back edge.
     for v in t.data.vertices:
         if v.co.z > h - 1e-4:
             v.co.z += slant * (v.co.y / d + 0.5)
     stand(t, x, y, rot=20)
-    for b in range(int(h / 0.05)):
-        stand(k.box(f"af-band-{i}-{b}", (w + 0.002, d + 0.002, 0.004), material=glow, parent=glass), x, y, rot=20,
-              extra=0.03 + b * 0.05)
+    # Glass towers read by their mullions: thin light verticals, not floor bands.
+    for c_ in range(5):
+        for side in (-1, 1):
+            mull = k.box(f"af-mull-{i}-{c_}-{side}", (0.002, 0.003, h - 0.01), at=(-w / 2 + (c_ + 0.5) * w / 5, side * (d / 2 + 0.0015), 0.005),
+                         material=steel, parent=glass)
+            stand(mull, x, y, rot=20)
+    stand(k.box(f"af-lobby-{i}", (w + 0.004, d + 0.004, 0.025), material=glow, parent=glass), x, y, rot=20)
+# Esentai's lit crown edge.
+crown_edge = k.box("af-crown-light", (0.087, 0.004, 0.006), material=k.mat("neon-esentai", (0.6, 0.85, 1.0)), parent=glass)
+crown_edge.data.transform(Matrix.Translation((0, 0.035, 0.5 + 0.07)))
+stand(crown_edge, 0.0, -0.3, rot=20)
 
 
 # ---- Nurly Tau ---------------------------------------------------------------
+# Four symmetric glass towers of different heights whose roofs are cut into
+# steep peaks, so together they echo the Alatau behind them.
 nt = k.empty("OBJ-nurly-tau")
-for i, (dx, dy, h) in enumerate([(0, 0, 0.36), (0.075, 0.03, 0.3), (-0.07, 0.035, 0.27), (0.02, 0.08, 0.22)]):
-    t = k.box(f"nt-tower-{i}", (0.06, 0.06, h), material=glass_teal, parent=nt)
+NTX, NTY = 0.42, -0.06
+for i, (dx, dy, h, w, peak) in enumerate([(-0.034, 0.0, 0.38, 0.06, 0.1), (0.034, 0.0, 0.33, 0.06, 0.09),
+                                          (-0.1, 0.03, 0.24, 0.055, 0.07), (0.1, 0.03, 0.22, 0.055, 0.07)]):
+    t = k.box(f"nt-tower-{i}", (w, 0.06, h), material=glass_teal, parent=nt)
+    sign = -1 if dx < 0 else 1
     for v in t.data.vertices:
         if v.co.z > h - 1e-4:
-            v.co.z += 0.05 * (v.co.x / 0.06 + 0.5)        # the sloped tops it is known for
-    stand(t, 0.4 + dx, -0.06 + dy, rot=-10)
-    for b in range(int(h / 0.05)):
-        stand(k.box(f"nt-band-{i}-{b}", (0.062, 0.062, 0.004), material=glow, parent=nt), 0.4 + dx, -0.06 + dy,
-              rot=-10, extra=0.03 + b * 0.05)
+            # Highest on the inner edge: the pair forms one peak, the outer
+            # pair the lower shoulders.
+            v.co.z += peak * (0.5 - sign * v.co.x / w)
+    stand(t, NTX + dx, NTY + dy, rot=-10)
+    for c_ in range(4):
+        mull = k.box(f"nt-mull-{i}-{c_}", (0.002, 0.062, h - 0.01), at=(-w / 2 + (c_ + 0.5) * w / 4, 0, 0.005), material=white, parent=nt)
+        stand(mull, NTX + dx, NTY + dy, rot=-10)
+    stand(k.box(f"nt-lobby-{i}", (w + 0.004, 0.064, 0.02), material=glow, parent=nt), NTX + dx, NTY + dy, rot=-10)
+stand(k.box("nt-podium", (0.26, 0.09, 0.03), material=cream, parent=nt), NTX, NTY + 0.01, rot=-10)
 
 
-# ---- First President's Park: the gate ---------------------------------------
+# ---- First President's Park: the entrance ------------------------------------
+# A huge white semicircular colonnade, a tall arch in the middle with the
+# blue flag on top, and the fountain in front.
 PG = (0.5, -0.45)
 gate = k.empty("OBJ-first-presidents-park")
 gparts = []
+RC = 0.13
+for i in range(13):
+    a_ = math.pi * i / 12                       # 0..180 degrees, opening toward -Y
+    if 5 <= i <= 7:
+        continue                                # the arch replaces the middle columns
+    cx, cy = RC * math.cos(a_), RC * math.sin(a_) - 0.02
+    gparts.append(k.cylinder(f"pg-col-{i}", 0.006, 0.11, at=(cx, cy, 0.008), segs=8, material=white, parent=gate))
+arc_out = [(RC * 1.06 * math.cos(math.pi * i / 24), RC * 1.06 * math.sin(math.pi * i / 24) - 0.02) for i in range(25)]
+arc_in = [(RC * 0.94 * math.cos(math.pi * i / 24), RC * 0.94 * math.sin(math.pi * i / 24) - 0.02) for i in range(24, -1, -1)]
+ent = k.prism("pg-entablature", arc_out + arc_in, 0.016, z0=0.118, material=white)
+ent.parent = gate
+gparts.append(ent)
+step = k.prism("pg-stylobate", [(RC * 1.12 * math.cos(math.pi * i / 24), RC * 1.12 * math.sin(math.pi * i / 24) - 0.02) for i in range(25)]
+               + [(RC * 0.88 * math.cos(math.pi * i / 24), RC * 0.88 * math.sin(math.pi * i / 24) - 0.02) for i in range(24, -1, -1)],
+               0.008, material=white)
+step.parent = gate
+gparts.append(step)
 for sx in (-1, 1):
-    gparts.append(k.box(f"pg-pylon-{sx}", (0.035, 0.035, 0.2), at=(sx * 0.085, 0, 0), material=gate_gold, parent=gate))
-gparts.append(k.box("pg-lintel", (0.21, 0.04, 0.03), at=(0, 0, 0.2), material=gate_gold, parent=gate))
-for i in range(6):
-    gparts.append(k.box(f"pg-grille-{i}", (0.006, 0.006, 0.17), at=(-0.05 + i * 0.02, 0, 0.03), material=gate_gold, parent=gate))
-gparts.append(k.box("pg-grille-bar", (0.14, 0.006, 0.006), at=(0, 0, 0.12), material=gate_gold, parent=gate))
-gparts.append(k.box("pg-plaza", (0.3, 0.22, 0.006), at=(0, -0.06, 0), material=paving, parent=gate))
-gparts.append(k.cylinder("pg-fountain", 0.045, 0.014, at=(0, -0.11, 0.004), segs=24, material=paving, parent=gate))
-gparts.append(k.cylinder("pg-fountain-water", 0.038, 0.004, at=(0, -0.11, 0.016), segs=24, material=water, parent=gate))
+    gparts.append(k.box(f"pg-pylon-{sx}", (0.022, 0.022, 0.17), at=(sx * 0.034, RC - 0.02, 0.008), material=white, parent=gate))
+gparts.append(k.tube("pg-arch", [(0.034 * math.cos(math.pi * i / 12), RC - 0.02, 0.15 + 0.03 * math.sin(math.pi * i / 12)) for i in range(13)],
+                     0.008, material=white, segs=6, parent=gate))
+gparts.append(k.box("pg-attic", (0.09, 0.024, 0.02), at=(0, RC - 0.02, 0.178), material=white, parent=gate))
+gparts.append(k.cylinder("pg-flagpole", 0.0016, 0.07, at=(0, RC - 0.02, 0.198), segs=4, material=steel, parent=gate))
+gparts.append(k.box("pg-flag", (0.034, 0.002, 0.02), at=(0.018, RC - 0.02, 0.245), material=k.mat("kz-flag-blue", (0.0, 0.69, 0.79)), parent=gate))
+gparts.append(k.box("pg-plaza", (0.34, 0.26, 0.005), at=(0, -0.02, 0), material=paving, parent=gate))
+gparts.append(k.cylinder("pg-fountain", 0.05, 0.014, at=(0, -0.08, 0.004), segs=28, material=white, parent=gate))
+gparts.append(k.cylinder("pg-fountain-water", 0.043, 0.004, at=(0, -0.08, 0.016), segs=28, material=water, parent=gate))
+gparts.append(k.cylinder("pg-fountain-jet", 0.004, 0.04, at=(0, -0.08, 0.016), segs=6, r_top=0.0, material=water, parent=gate))
 for o in gparts:
     stand(o, *PG, rot=30)
 
 
 # ---- Home, in Kaskelen -------------------------------------------------------
+# Г-shaped, as in her drawing: the two-storey main block, a wing coming
+# forward from its right end with the garage, hip roofs, and the
+# rectangular pool tucked into the corner of the Г.
 HM = (-0.44, -0.56)
 home = k.empty("OBJ-home")
-hparts = [k.box("home-body", (0.16, 0.1, 0.1), material=house_y, parent=home),
-          k.box("home-wing", (0.07, 0.07, 0.07), at=(0.105, -0.01, 0), material=house_y, parent=home),
-          k.box("home-garage", (0.05, 0.003, 0.045), at=(0.105, -0.046, 0), material=win_blue, parent=home),
-          k.box("home-door", (0.02, 0.003, 0.04), at=(-0.02, -0.0515, 0), material=dark, parent=home)]
-for i, (x, z) in enumerate([(-0.055, 0.015), (0.03, 0.015), (-0.055, 0.06), (0.0, 0.06), (0.05, 0.06)]):
-    hparts.append(k.box(f"home-win-{i}", (0.022, 0.003, 0.022), at=(x, -0.0515, z), material=win_blue, parent=home))
-roof = k.cylinder("home-roof", 0.11, 0.045, segs=4, r_top=0.03, material=roof_red, parent=home, smooth=False)
-roof.data.transform(Matrix.Translation((0, 0, 0.1)) @ Matrix.Diagonal((1.05, 0.66, 1, 1)) @ Matrix.Rotation(math.radians(45), 4, "Z"))
-hparts.append(roof)
-wroof = k.cylinder("home-wing-roof", 0.055, 0.03, segs=4, r_top=0.0, material=roof_red, parent=home, smooth=False)
-wroof.data.transform(Matrix.Translation((0.105, -0.01, 0.07)) @ Matrix.Rotation(math.radians(45), 4, "Z"))
-hparts.append(wroof)
-# The pool: rectangular, beside the house, in a paved surround.
-hparts.append(k.box("home-pool-deck", (0.12, 0.08, 0.004), at=(0.0, -0.13, 0), material=paving, parent=home))
-hparts.append(k.box("home-pool", (0.09, 0.05, 0.005), at=(0.0, -0.13, 0.001), material=water, parent=home))
+hparts = [k.box("home-main", (0.17, 0.08, 0.1), at=(0, 0.02, 0), material=house_y, parent=home),
+          k.box("home-wing", (0.07, 0.12, 0.08), at=(0.05, -0.06, 0), material=house_y, parent=home),
+          k.box("home-garage", (0.05, 0.003, 0.045), at=(0.05, -0.1215, 0), material=win_blue, parent=home),
+          k.box("home-door", (0.02, 0.003, 0.042), at=(-0.03, -0.0215, 0), material=dark, parent=home)]
+for i, (x, z) in enumerate([(-0.065, 0.015), (-0.065, 0.062), (-0.03, 0.062), (0.0, 0.062)]):
+    hparts.append(k.box(f"home-win-{i}", (0.022, 0.003, 0.022), at=(x, -0.0215, z), material=win_blue, parent=home))
+for i, z in enumerate((0.015, 0.052)):
+    hparts.append(k.box(f"home-wing-win-{i}", (0.003, 0.03, 0.02), at=(0.0135, -0.06, z + 0.005), material=win_blue, parent=home))
+
+
+def hip_roof(name, cx, cy, w, d, z, h):
+    """A hip roof over a w x d rectangle: four sloped faces to a ridge."""
+    r = min(w, d) / 2
+    bm_ = bmesh.new()
+    e = 0.008   # eaves
+    c = [bm_.verts.new((cx + sx * (w / 2 + e), cy + sy * (d / 2 + e), z)) for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+    if w >= d:
+        r0 = bm_.verts.new((cx - w / 2 + r, cy, z + h))
+        r1 = bm_.verts.new((cx + w / 2 - r, cy, z + h))
+        faces = [(c[0], c[1], r1, r0), (c[1], c[2], r1), (c[2], c[3], r0, r1), (c[3], c[0], r0)]
+    else:
+        r0 = bm_.verts.new((cx, cy - d / 2 + r, z + h))
+        r1 = bm_.verts.new((cx, cy + d / 2 - r, z + h))
+        faces = [(c[0], c[1], r0), (c[1], c[2], r1, r0), (c[2], c[3], r1), (c[3], c[0], r0, r1)]
+    for f in faces:
+        bm_.faces.new(f)
+    bm_.faces.new(list(reversed(c)))
+    bmesh.ops.recalc_face_normals(bm_, faces=bm_.faces)
+    return k.obj_from_bm(name, bm_, roof_red, parent=home)
+
+
+hparts.append(hip_roof("home-main-roof", 0, 0.02, 0.17, 0.08, 0.1, 0.04))
+hparts.append(hip_roof("home-wing-roof", 0.05, -0.065, 0.07, 0.11, 0.08, 0.035))
+hparts.append(k.box("home-pool-deck", (0.11, 0.075, 0.004), at=(-0.05, -0.08, 0), material=paving, parent=home))
+hparts.append(k.box("home-pool", (0.085, 0.05, 0.005), at=(-0.05, -0.08, 0.001), material=water, parent=home))
 for o in hparts:
     stand(o, *HM, rot=-12)
 
 
 # ---- apple trees, and apples, in the gaps ------------------------------------
-keep = [(HK[0], HK[1], 0.11), (0.0, -0.3, 0.08), (0.12, -0.24, 0.07), (-0.11, -0.38, 0.07), (0.42, -0.04, 0.12),
+keep = [(HK[0], HK[1], 0.12), (0.0, -0.3, 0.08), (0.12, -0.24, 0.07), (-0.11, -0.38, 0.07), (0.42, -0.04, 0.16),
         (PG[0], PG[1] - 0.04, 0.17), (HM[0], HM[1] - 0.05, 0.15), (LO.x, LO.y, 0.07)]
 # Keep the cable car's corridor clear.
 keep += [((LO + (UP - LO) * (i / 10)).x, (LO + (UP - LO) * (i / 10)).y, 0.05) for i in range(11)]
