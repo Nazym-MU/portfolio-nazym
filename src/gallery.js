@@ -73,7 +73,7 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
 
     // city
     let cityScene = null, cityRoot = null, cityMaterials = null, dome = null;
-    let activeCity = null, orbiters = [];
+    let activeCity = null, orbiters = [], shuttles = [];
     let objectIndex = new Map();           // id -> { meshes: [], instances: [{ mesh, idx: [] }] }
     let hovered = null, selected = null;
     let loadToken = 0;
@@ -427,8 +427,23 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
             return index.get(id);
         };
         orbiters = [];
+        shuttles = [];
         root.traverse((o) => {
             if (o.userData.orbit) orbiters.push(o);
+            // A shuttle (the Koktobe cable car's cabins) slides from where it
+            // was placed by `shuttle` (Blender axes: x, y, z-up) and dips by
+            // `sag` mid-way, like the cable it hangs from; then wraps round.
+            const sh = o.userData.shuttle;
+            if (Array.isArray(sh) && sh.length === 3) {
+                shuttles.push({
+                    o,
+                    start: o.position.clone(),
+                    d: new THREE.Vector3(sh[0], sh[2], -sh[1]),
+                    period: o.userData.period || 30,
+                    phase: o.userData.phase || 0,
+                    sag: o.userData.sag || 0,
+                });
+            }
             if (!o.isMesh) return;
             // Instanced bricks carry their stand per instance (build-manchester.mjs).
             let src = o;
@@ -581,6 +596,7 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
         cityRoot = null; dome = null; cityMaterials = null;
         objectIndex = new Map();
         orbiters = [];
+        shuttles = [];
         activeCity = null;
     }
 
@@ -787,6 +803,12 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
         else camera.lookAt(controls.target);
         if (!reducedMotion()) {
             for (const o of orbiters) o.rotation.y += (dt * Math.PI * 2) / o.userData.orbit;
+            const now = t / 1000;
+            for (const s of shuttles) {
+                const u = (now / s.period + s.phase) % 1;
+                s.o.position.copy(s.start).addScaledVector(s.d, u);
+                s.o.position.y -= s.sag * 4 * u * (1 - u);
+            }
         }
         hoverFromPointer();
         sky.follow(camera);
@@ -816,7 +838,7 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
         goCity: enterCity,
         isOpen: () => open,
         stats: () => renderer?.info.memory ?? null,
-        debug: () => ({ cam: camera?.position.toArray(), target: controls?.target.toArray(), flight: !!flight, view }),
+        debug: () => ({ cam: camera?.position.toArray(), target: controls?.target.toArray(), flight: !!flight, view, shuttles: shuttles.map((s) => s.o.position.toArray().map((v) => +v.toFixed(3))) }),
         dispose() {
             this.close();
             controls?.dispose();

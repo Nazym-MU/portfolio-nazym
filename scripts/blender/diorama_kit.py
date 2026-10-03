@@ -11,6 +11,9 @@ Naming contract with the viewer (src/gallery.js):
              parent named OBJ-<id> with the parts beneath it.
              Give it a custom property orbit = <seconds per lap> and the
              viewer turns it slowly about the base's centre (the London bus).
+             Or give an empty shuttle = (dx, dy, dz), period, phase, sag and
+             the viewer slides it along that vector, dipping by sag mid-way,
+             wrapping round (the Koktobe cable-car cabins).
   DECO-...   scenery: drawn, never clickable.
 Materials are plain colours; the viewer re-maps every colour into the ink
 palette, so author them as you would see them in daylight. A material whose
