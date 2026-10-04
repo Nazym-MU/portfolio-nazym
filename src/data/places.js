@@ -8,6 +8,8 @@
 // named CTRY-<iso>; the countries listed here are the ones lit up and
 // clickable. A city appears as a pin at its lat/lon once its country is open.
 //
+// `night: true` dims the diorama's lights so its own glow carries it.
+//
 // `model` is OPTIONAL and that is the point. A city with one opens as a toy
 // diorama under a glass dome; a city without one just shows its photos.
 // Adding a model later is dropping in a .glb (scripts/blender/<city>.py) and
@@ -34,7 +36,7 @@ export const countries = [
     { iso: 'KR', slug: 'south-korea', name: 'South Korea', tone: 'violet', cities: ['seoul'] },
     { iso: 'TW', slug: 'taiwan', name: 'Taiwan', tone: 'mint' },
     { iso: 'TH', slug: 'thailand', name: 'Thailand', tone: 'amber' },
-    { iso: 'CN', slug: 'china', name: 'China', tone: 'rose' },
+    { iso: 'CN', slug: 'china', name: 'China', tone: 'rose', cities: ['shanghai'] },
 ];
 
 export const cities = [
@@ -187,6 +189,27 @@ export const cities = [
             'familymart': { name: 'FamilyMart', photos: [] },
             'seventeen-ice': { name: 'Seventeen Ice', photos: [] },
             'torii': { name: 'Torii and sakura', photos: [] },
+        },
+    },
+    {
+        slug: 'shanghai',
+        country: 'china',
+        name: 'Shanghai',
+        lat: 31.23, lon: 121.47,
+        // Drawn at night: the lights go down so the skyline's own glow shows.
+        night: true,
+        model: 'models/gallery/cities/shanghai.glb',
+        objects: {
+            'shanghai-tower': { name: 'Shanghai Tower', photos: [] },
+            'swfc': { name: 'Shanghai World Financial Center', photos: [] },
+            'jin-mao': { name: 'Jin Mao Tower', photos: [] },
+            'oriental-pearl': { name: 'Oriental Pearl Tower', photos: [] },
+            'lujiazui-skywalk': { name: 'Lujiazui skywalk', photos: [] },
+            'the-bund': { name: 'The Bund', photos: [] },
+            'yu-garden': { name: 'Yu Garden', photos: [] },
+            'disney-castle': { name: 'Shanghai Disneyland', photos: [] },
+            'zootopia': { name: 'Zootopia', photos: [] },
+            'river-cruise': { name: 'Huangpu river cruise', photos: [] },
         },
     },
 ];

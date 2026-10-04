@@ -72,7 +72,7 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
     let activeCountry = null;
 
     // city
-    let cityScene = null, cityRoot = null, cityMaterials = null, dome = null;
+    let cityScene = null, cityRoot = null, cityMaterials = null, dome = null, cityLights = null;
     let activeCity = null, orbiters = [], shuttles = [];
     let objectIndex = new Map();           // id -> { meshes: [], instances: [{ mesh, idx: [] }] }
     let hovered = null, selected = null;
@@ -129,7 +129,9 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
         worldScene = new THREE.Scene();
         worldScene.add(createLights(new THREE.Vector3(), 1.6));
         cityScene = new THREE.Scene();
-        cityScene.add(createLights(new THREE.Vector3(0, 0.3, 0), 1.6));
+        cityLights = createLights(new THREE.Vector3(0, 0.3, 0), 1.6);
+        cityLights.traverse((l) => { if (l.isLight) l.userData.dayIntensity = l.intensity; });
+        cityScene.add(cityLights);
 
         pipeline = new InkPipeline(renderer, { scene: worldScene, sky, camera, unit: 0.05 });
 
@@ -558,6 +560,12 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
         }
         dome = buildDome();
         cityScene.add(dome, root);
+
+        // A city marked `night` (Shanghai) dims its lights to a third, so what
+        // carries the scene is its own glow: windows, neon, floodlit facades.
+        cityLights.traverse((l) => {
+            if (l.isLight) l.intensity = l.userData.dayIntensity * (city.night ? 0.32 : 1);
+        });
 
         activeCity = slug;
         selected = null;
