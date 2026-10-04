@@ -228,16 +228,28 @@ def torus(name, R, r, at=(0, 0, 0), rot=(0, 0, 0), segs=48, tube_segs=8, materia
 def grow(o, f, anchor):
     """Scale an object (and everything parented under it) by f about a point
     on the ground, baked into the meshes. Used to make the landmarks read
-    bigger and fill the base without re-deriving every coordinate."""
-    ax, ay, az = anchor
-    m = Matrix.Translation((ax, ay, az)) @ Matrix.Scale(f, 4) @ Matrix.Translation((-ax, -ay, -az))
-    stack = [o]
+    bigger and fill the base without re-deriving every coordinate.
+
+    An empty placed away from the origin (a cable-car cabin) is moved
+    instead, its animation extras scaled with it, and its children scaled
+    about their own local origin, since they live in the empty's space."""
+    stack = [(o, Vector(anchor))]
     while stack:
-        x = stack.pop()
+        x, a = stack.pop()
+        child_anchor = a
         if x.type == "MESH":
+            m = Matrix.Translation(a) @ Matrix.Scale(f, 4) @ Matrix.Translation(-a)
             x.data.transform(m)
             x.data.update()
-        stack.extend(x.children)
+        elif x.type == "EMPTY" and x.location.length > 1e-9:
+            x.location = a + (x.location - a) * f
+            for key in ("shuttle",):
+                if key in x:
+                    x[key] = [v * f for v in x[key]]
+            if "sag" in x:
+                x["sag"] = x["sag"] * f
+            child_anchor = Vector((0, 0, 0))
+        stack.extend((c, child_anchor) for c in x.children)
     return o
 
 
