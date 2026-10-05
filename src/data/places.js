@@ -255,7 +255,6 @@ export const cities = [
             'dubai-mall': { name: 'Dubai Mall', photos: [] },
             'burj-al-arab': { name: 'Burj Al Arab', photos: [] },
             'dubai-marina': { name: 'Dubai Marina', photos: [] },
-            'miracle-garden': { name: 'Dubai Miracle Garden', photos: [] },
         },
     },
     {

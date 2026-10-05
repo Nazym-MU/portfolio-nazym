@@ -5,7 +5,7 @@ landmarks big because there are only a few of them.
   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup \
       --python scripts/blender/dubai.py
 
-      Miracle Garden (A380, hearts)                 dunes
+                      dunes                         dunes
    Dubai Marina            Burj Khalifa
    (canal, Cayan,          lake + Dubai Fountain   Dubai Mall
     yachts)
@@ -16,8 +16,7 @@ and rises in 27 setbacks arranged in a spiral, ending in a spire; the
 Dubai Fountain sits in the lake at its foot beside the Dubai Mall; Burj Al
 Arab is a dhow's sail, two wings in a V with the atrium between, a white
 fabric facade, a braced exoskeleton, a cantilevered helipad, on an islet
-joined to the beach by a curving bridge; the Miracle Garden's showpieces
-are the Emirates A380 made of flowers and the heart-arch tunnel.
+joined to the beach by a curving bridge.
 """
 
 import math
@@ -44,7 +43,7 @@ burj_band = k.mat("nightglow-burj-lights", (0.86, 0.92, 1.0))
 spire = k.mat("steel", (0.82, 0.84, 0.88))
 jet = k.mat("nightglow-fountain", (0.90, 0.96, 1.0))
 sail = k.mat("sail-white", (0.97, 0.97, 0.98))
-sail_glow = k.mat("nightglow-sail", (0.70, 0.80, 1.0))
+sail_glow = k.mat("nightglow-sail", (0.95, 0.96, 1.0))
 helipad = k.mat("helipad", (0.28, 0.30, 0.34))
 mall = k.mat("mall-stone", (0.90, 0.86, 0.78))
 glass_m = k.mat("facade-marina", (0.36, 0.54, 0.70))
@@ -69,7 +68,9 @@ def height(x, y):
     if r <= SHORE:
         # A couple of soft dunes at the back right, flat everywhere else.
         return GZ + 0.05 * math.exp(-((x - 0.5) ** 2 + (y - 0.42) ** 2) / (2 * 0.1 ** 2)) \
-               + 0.03 * math.exp(-((x - 0.3) ** 2 + (y - 0.58) ** 2) / (2 * 0.08 ** 2))
+               + 0.03 * math.exp(-((x - 0.3) ** 2 + (y - 0.58) ** 2) / (2 * 0.08 ** 2)) \
+               + 0.06 * math.exp(-((x + 0.36) ** 2 + (y - 0.46) ** 2) / (2 * 0.11 ** 2)) \
+               + 0.035 * math.exp(-((x + 0.14) ** 2 + (y - 0.56) ** 2) / (2 * 0.08 ** 2))
     return GZ + (-0.01 - GZ) * min(1.0, (r - SHORE) / (EDGE - SHORE))
 
 
@@ -124,30 +125,32 @@ def y_plan(lengths, w, core=0.03, rot=0.0):
 
 
 Z = height(*BK)
-H_BODY = 0.66
+# Slender: the real tower's body is ~5x taller than its base is wide, and
+# the spire adds a third again. Wider than this and it reads as a block.
+H_BODY = 0.68
 N_TIER = 27
-lengths = [0.13, 0.13, 0.13]
-w = 0.06
+lengths = [0.075, 0.075, 0.075]
+w = 0.034
 dz = H_BODY / N_TIER
 z = Z
 for j in range(N_TIER):
     # Each setback shortens one wing, turning round the building: the spiral.
     # Steeply: the tower ends a fraction of its base, the way it really does.
-    lengths[j % 3] -= 0.0036 + 0.0024 * (j / N_TIER)
+    lengths[j % 3] -= 0.002 + 0.0016 * (j / N_TIER)
     t = j / N_TIER
     ww = w * (1 - 0.55 * t)
-    tier = k.prism(f"bk-tier-{j}", y_plan(lengths, ww), dz * 0.94, z0=z, material=burj)
+    tier = k.prism(f"bk-tier-{j}", y_plan(lengths, ww, core=0.018), dz * 0.94, z0=z, material=burj)
     tier.parent = bk
     tier.data.transform(Matrix.Translation((BK[0], BK[1], 0)))
     if j % 3 == 2:
-        band = k.prism(f"bk-band-{j}", y_plan([l + 0.0012 for l in lengths], ww + 0.002), 0.003, z0=z + dz * 0.94 - 0.003, material=burj_band)
+        band = k.prism(f"bk-band-{j}", y_plan([l + 0.0012 for l in lengths], ww + 0.002, core=0.018), 0.003, z0=z + dz * 0.94 - 0.003, material=burj_band)
         band.parent = bk
         band.data.transform(Matrix.Translation((BK[0], BK[1], 0)))
     z += dz
 # The core rising out of the last setbacks, then the spire.
-k.cylinder("bk-core", 0.018, 0.06, at=(BK[0], BK[1], z), r_top=0.012, segs=12, material=burj, parent=bk)
-k.cylinder("bk-spire", 0.011, 0.15, at=(BK[0], BK[1], z + 0.06), r_top=0.0015, segs=10, material=spire, parent=bk)
-k.cylinder("bk-podium", 0.13, 0.012, at=(BK[0], BK[1], Z - 0.002), segs=36, material=paving, parent=bk)
+k.cylinder("bk-core", 0.012, 0.05, at=(BK[0], BK[1], z), r_top=0.008, segs=12, material=burj, parent=bk)
+k.cylinder("bk-spire", 0.007, 0.17, at=(BK[0], BK[1], z + 0.05), r_top=0.001, segs=10, material=spire, parent=bk)
+k.cylinder("bk-podium", 0.1, 0.012, at=(BK[0], BK[1], Z - 0.002), segs=36, material=paving, parent=bk)
 
 
 # ---- the lake and the Dubai Fountain at its foot ----------------------------
@@ -193,31 +196,82 @@ for o in mparts:
 BA = Vector((0.62, -0.58))
 ba = k.empty("OBJ-burj-al-arab")
 islet = k.cylinder("ba-islet", 0.075, 0.025, at=(BA.x, BA.y, -0.005), segs=32, material=sand, parent=ba)
-H_S = 0.42
-# The sail: in side view a tall curved blade, thick across.
-side_pts = [(0.0, 0.0), (0.0, H_S)]
-for i in range(1, 21):
-    t = i / 20
-    z_ = H_S * (1 - t)
-    x_ = 0.15 * math.sin(math.pi * t * 0.92) ** 0.8 * (1 - 0.15 * t)
-    side_pts.append((x_, z_))
-sail_o = k.prism("ba-sail", [(-x, z) for x, z in side_pts], 0.075, material=sail, parent=ba)
-sail_o.data.transform(Matrix.Rotation(math.radians(90), 4, "X") @ Matrix.Translation((0, 0, -0.0375)))
-# The glowing fabric face, set just proud of the sail's curve.
-face = k.prism("ba-sail-face", [(-x * 0.96, z) for x, z in side_pts[2:]] + [(0.0, 0.02)], 0.066, material=sail_glow, parent=ba)
-face.data.transform(Matrix.Rotation(math.radians(90), 4, "X") @ Matrix.Translation((-0.004, 0, -0.033)))
-# The mast at the back and the braced exoskeleton between the two wings.
-k.cylinder("ba-mast", 0.008, H_S + 0.06, at=(0.008, 0, 0.0), r_top=0.003, segs=8, material=white, parent=ba)
-for i in range(6):
-    z0, z1 = H_S * i / 6, H_S * (i + 1) / 6
-    for s in (-1, 1):
-        k.tube(f"ba-brace-{i}-{s}", [(0.006, s * 0.04, z0), (0.006, -s * 0.04, z1)], 0.0025, material=white, segs=4, parent=ba)
-# The helipad, cantilevered from near the top.
-k.cylinder("ba-helipad", 0.03, 0.004, at=(-0.03, 0.04, H_S * 0.82), segs=24, material=helipad, parent=ba)
-k.box("ba-helipad-arm", (0.03, 0.006, 0.004), at=(-0.012, 0.025, H_S * 0.82), material=white, parent=ba)
+H_S = 0.5
+# Built in a local frame: the mast stands at the origin, the two wings run
+# forward (+x) from it in a V, and the white fabric sail is stretched across
+# the open front of the V, bowing outward. Seen from the side, the sail is
+# deepest about a third of the way up and sweeps back to the mast at the top.
+DMAX, HALF = 0.13, math.radians(27)
+
+
+def depth(t):
+    if t < 0.3:
+        return DMAX * (0.82 + 0.18 * math.sin(0.5 * math.pi * t / 0.3))
+    return DMAX * max(0.0, math.cos(0.5 * math.pi * (t - 0.3) / 0.7)) ** 0.75
+
+
+ARC = 12
+levels = []
+bm = bmesh.new()
+for j in range(31):
+    t = min(j / 30, 0.985)
+    D = depth(t)
+    W = D * math.tan(HALF)
+    z = H_S * t
+    ring = [bm.verts.new((0.0, 0.0, z))]                       # the mast edge
+    for i in range(ARC + 1):                                    # the sail, left tip to right tip
+        u = i / ARC
+        ring.append(bm.verts.new((D + 0.2 * D * math.sin(math.pi * u), W * (1 - 2 * u), z)))
+    levels.append(ring)
+n = len(levels[0])
+for lo, hi in zip(levels, levels[1:]):
+    for i in range(n):
+        bm.faces.new((lo[i], lo[(i + 1) % n], hi[(i + 1) % n], hi[i]))
+bm.faces.new(list(reversed(levels[0])))
+top = bm.verts.new((0.0, 0.0, H_S))
+for i in range(n):
+    bm.faces.new((levels[-1][i], levels[-1][(i + 1) % n], top))
+bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+tower = k.obj_from_bm("ba-tower", bm, parent=ba)
+tower.data.materials.append(sail)          # 0: the wings
+tower.data.materials.append(sail_glow)     # 1: the fabric sail
+for poly in tower.data.polygons:
+    c = poly.center
+    # Faces out on the front arc are sail; the two flat sides back to the mast are wings.
+    D = depth(min(max(c.z / H_S, 0), 0.985))
+    poly.material_index = 1 if D > 1e-6 and c.x > D * 0.98 else 0
+k.smooth_by_angle(tower, 25)
+
+# The exoskeleton: great X-braces on the outer face of each wing.
+for side in (1, -1):
+    out = Vector((-math.sin(HALF), side * math.cos(HALF), 0)) * 0.004
+    for seg in range(4):
+        t0, t1 = 0.04 + seg * 0.2, 0.04 + (seg + 1) * 0.2
+        p0m = Vector((0.0, 0.0, H_S * t0)) + out
+        p1m = Vector((0.0, 0.0, H_S * t1)) + out
+        p0t = Vector((depth(t0), side * depth(t0) * math.tan(HALF), H_S * t0)) + out
+        p1t = Vector((depth(t1), side * depth(t1) * math.tan(HALF), H_S * t1)) + out
+        k.tube(f"ba-x-{side}-{seg}-a", [tuple(p0m), tuple(p1t)], 0.0026, material=white, segs=4, parent=ba)
+        k.tube(f"ba-x-{side}-{seg}-b", [tuple(p0t), tuple(p1m)], 0.0026, material=white, segs=4, parent=ba)
+        k.tube(f"ba-h-{side}-{seg}", [tuple(p1m), tuple(p1t)], 0.002, material=white, segs=4, parent=ba)
+# The mast rising above, the helipad on one side, the restaurant on the other.
+k.cylinder("ba-mast", 0.007, H_S + 0.08, at=(0, 0, 0), r_top=0.002, segs=8, material=white, parent=ba)
+tH = 0.83
+Dh = depth(tH)
+hp = Vector((Dh * 0.5, Dh * 0.5 * math.tan(HALF), 0)) + Vector((-math.sin(HALF), math.cos(HALF), 0)) * 0.036
+k.cylinder("ba-helipad", 0.028, 0.004, at=(hp.x, hp.y, H_S * tH), segs=24, material=helipad, parent=ba)
+k.cylinder("ba-helipad-ring", 0.026, 0.0045, at=(hp.x, hp.y, H_S * tH), segs=24, material=windows, parent=ba)
+pod = k.box("ba-restaurant", (0.09, 0.02, 0.016), material=white, parent=ba)
+pod.data.transform(Matrix.Translation((Dh * 0.35, -Dh * 0.35 * math.tan(HALF) - 0.03, H_S * (tH + 0.04)))
+                   @ Matrix.Rotation(-HALF - math.radians(60), 4, "Z"))
+k.box("ba-restaurant-glass", (0.084, 0.022, 0.006), at=(0, 0, 0), material=windows, parent=ba).data.transform(
+    Matrix.Translation((Dh * 0.35, -Dh * 0.35 * math.tan(HALF) - 0.03, H_S * (tH + 0.04) + 0.005))
+    @ Matrix.Rotation(-HALF - math.radians(60), 4, "Z"))
+k.box("ba-podium", (0.08, 0.1, 0.012), at=(0.03, 0, 0), material=white, parent=ba)
+# Turn it so the sail faces the island and the camera sees it three-quarter on.
 for o in ba.children:
     if o.name != "ba-islet":
-        o.data.transform(Matrix.Translation((BA.x, BA.y, 0.015)) @ Matrix.Rotation(math.radians(-40), 4, "Z"))
+        o.data.transform(Matrix.Translation((BA.x, BA.y, 0.015)) @ Matrix.Rotation(math.radians(150), 4, "Z"))
 # The curving bridge back to the beach.
 shore_pt = Vector((0.5, -0.5)) * (SHORE / math.hypot(0.5, -0.5))
 pts = []
@@ -240,8 +294,8 @@ for i in range(10):
     cx, cy = canal[int(t * 30)]
     side = -1 if i % 2 == 0 else 1
     x, y = cx + side * 0.07, cy
-    h = rnd.uniform(0.26, 0.44)
-    wv = rnd.uniform(0.045, 0.06)
+    h = rnd.uniform(0.34, 0.54)
+    wv = rnd.uniform(0.034, 0.044)
     if i == 5:
         # Cayan Tower: each floor turned a little, 90 degrees in all.
         n = 24
@@ -268,46 +322,10 @@ for i in range(5):
     k.box(f"yacht-cabin-{i}", (0.01, 0.018, 0.006), at=(cx, cy - 0.004, GZ + 0.012), material=windows, parent=ma)
 
 
-# ---- Miracle Garden: flower beds, heart arches, the flower A380 --------------
-MG = (-0.36, 0.44)
-mg = k.empty("OBJ-miracle-garden")
-gparts = []
-# Striped flower beds.
-for i in range(7):
-    gparts.append(k.box(f"mg-bed-{i}", (0.26, 0.022, 0.008), at=(0, -0.08 + i * 0.026, 0.0), material=flowers[i % 6], parent=mg))
-# The heart tunnel: a row of heart-shaped arches.
-for i in range(5):
-    pts = []
-    for j in range(25):
-        a = 2 * math.pi * j / 24
-        hx = 16 * math.sin(a) ** 3
-        hz = 13 * math.cos(a) - 5 * math.cos(2 * a) - 2 * math.cos(3 * a) - math.cos(4 * a)
-        pts.append((-0.12 + hx * 0.0028, -0.1 + i * 0.022, 0.05 + hz * 0.0028))
-    gparts.append(k.tube(f"mg-heart-{i}", pts, 0.004, material=flowers[0 if i % 2 == 0 else 2], segs=4, parent=mg))
-# The Emirates A380, made of flowers.
-PX, PY, PZ = 0.06, 0.02, 0.07
-fus = k.cylinder("mg-a380-fuselage", 0.022, 0.2, segs=16, material=flowers[5], parent=mg)
-fus.data.transform(Matrix.Translation((PX, PY, PZ)) @ Matrix.Rotation(math.radians(90), 4, "X") @ Matrix.Translation((0, 0, -0.1)))
-gparts.append(fus)
-nose = k.sphere("mg-a380-nose", 0.022, material=flowers[5], parent=mg, subdiv=2)
-nose.data.transform(Matrix.Translation((PX, PY - 0.1, PZ)) @ Matrix.Diagonal((1, 1.6, 1, 1)))
-gparts.append(nose)
-gparts.append(k.box("mg-a380-wings", (0.22, 0.05, 0.006), at=(PX, PY + 0.01, PZ - 0.008), material=flowers[5], parent=mg))
-gparts.append(k.box("mg-a380-tailplane", (0.08, 0.025, 0.005), at=(PX, PY + 0.09, PZ), material=flowers[5], parent=mg))
-gparts.append(k.box("mg-a380-fin", (0.004, 0.035, 0.05), at=(PX, PY + 0.09, PZ), material=emirates_red, parent=mg))
-gparts.append(k.box("mg-a380-stripe", (0.0005 + 0.045, 0.16, 0.006), at=(PX, PY, PZ + 0.004), material=emirates_red, parent=mg))
-for i, x in enumerate((-0.06, -0.035, 0.035, 0.06)):
-    gparts.append(k.cylinder(f"mg-a380-engine-{i}", 0.007, 0.022, at=(PX + x, PY - 0.01, PZ - 0.022), segs=10, material=flowers[1], parent=mg))
-gparts.append(k.cylinder("mg-a380-stand", 0.006, PZ - 0.02, at=(PX, PY, 0), segs=8, material=lawn, parent=mg))
-for o in gparts:
-    stand(o, *MG, rot=-20)
-
-
 # ---- big landmarks: there are only a few, so let them fill the island ------
 k.grow(dm, 1.45, (DM[0], DM[1], GZ))
 k.grow(fountain, 1.3, (LK[0], LK[1], GZ))
 k.grow(bpy.data.objects["DECO-burj-lake"], 1.3, (LK[0], LK[1], GZ))
-k.grow(mg, 1.35, (MG[0], MG[1], GZ))
 
 
 # ---- date palms along the shore and round the landmarks ---------------------
@@ -328,7 +346,7 @@ for i in range(30):
     if abs(math.degrees(a) % 360 - 318) < 14:   # leave the bridge's landing clear
         continue
     palms += palm(f"shore-palm-{i}", 0.67 * math.cos(a), 0.67 * math.sin(a), 0.08 + 0.02 * (i % 3))
-for i, (x, y) in enumerate([(0.18, 0.3), (0.12, 0.38), (-0.22, 0.12), (0.26, -0.36), (-0.24, -0.36), (0.55, 0.22), (0.4, 0.32), (0.06, -0.4), (-0.1, -0.44), (0.18, -0.46)]):
+for i, (x, y) in enumerate([(0.18, 0.3), (0.12, 0.38), (-0.22, 0.12), (0.26, -0.36), (-0.24, -0.36), (0.55, 0.22), (0.4, 0.32), (0.06, -0.4), (-0.1, -0.44), (0.18, -0.46), (-0.22, 0.36), (-0.46, 0.3), (-0.3, 0.56)]):
     palms += palm(f"palm-{i}", x, y, 0.09)
 k.join("DECO-palms", palms)
 
