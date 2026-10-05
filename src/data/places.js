@@ -32,7 +32,7 @@ export const countries = [
     { iso: 'UZ', slug: 'uzbekistan', name: 'Uzbekistan', tone: 'violet', cities: ['samarkand', 'bukhara'] },
     { iso: 'DE', slug: 'germany', name: 'Germany', tone: 'amber' },
     { iso: 'TR', slug: 'turkey', name: 'Turkey', tone: 'red' },
-    { iso: 'AE', slug: 'uae', name: 'United Arab Emirates', tone: 'sand' },
+    { iso: 'AE', slug: 'uae', name: 'United Arab Emirates', tone: 'sand', cities: ['dubai'] },
     { iso: 'JP', slug: 'japan', name: 'Japan', tone: 'rose', cities: ['tokyo'] },
     { iso: 'KR', slug: 'south-korea', name: 'South Korea', tone: 'violet', cities: ['seoul'] },
     { iso: 'TW', slug: 'taiwan', name: 'Taiwan', tone: 'mint', cities: ['taipei'] },
@@ -238,6 +238,24 @@ export const cities = [
             'chor-minor': { name: 'Chor Minor', photos: [] },
             'ulugbek-madrasah': { name: 'Ulugbek Madrasah', photos: [] },
             'trading-domes': { name: 'Trading domes and chapans', photos: [] },
+        },
+    },
+    {
+        slug: 'dubai',
+        country: 'uae',
+        name: 'Dubai',
+        lat: 25.2, lon: 55.27,
+        // The Burj Khalifa's lights, the fountain and Burj Al Arab's sail
+        // glow after dark.
+        dayNight: true,
+        model: 'models/gallery/cities/dubai.glb',
+        objects: {
+            'burj-khalifa': { name: 'Burj Khalifa', photos: [] },
+            'dubai-fountain': { name: 'Dubai Fountain', photos: [] },
+            'dubai-mall': { name: 'Dubai Mall', photos: [] },
+            'burj-al-arab': { name: 'Burj Al Arab', photos: [] },
+            'dubai-marina': { name: 'Dubai Marina', photos: [] },
+            'miracle-garden': { name: 'Dubai Miracle Garden', photos: [] },
         },
     },
     {
