@@ -34,7 +34,7 @@ export const countries = [
     { iso: 'AE', slug: 'uae', name: 'United Arab Emirates', tone: 'sand' },
     { iso: 'JP', slug: 'japan', name: 'Japan', tone: 'rose', cities: ['tokyo'] },
     { iso: 'KR', slug: 'south-korea', name: 'South Korea', tone: 'violet', cities: ['seoul'] },
-    { iso: 'TW', slug: 'taiwan', name: 'Taiwan', tone: 'mint' },
+    { iso: 'TW', slug: 'taiwan', name: 'Taiwan', tone: 'mint', cities: ['taipei'] },
     { iso: 'TH', slug: 'thailand', name: 'Thailand', tone: 'amber' },
     { iso: 'CN', slug: 'china', name: 'China', tone: 'rose', cities: ['shanghai'] },
 ];
@@ -189,6 +189,23 @@ export const cities = [
             'familymart': { name: 'FamilyMart', photos: [] },
             'seventeen-ice': { name: 'Seventeen Ice', photos: [] },
             'torii': { name: 'Torii and sakura', photos: [] },
+        },
+    },
+    {
+        slug: 'taipei',
+        country: 'taiwan',
+        name: 'Taipei',
+        lat: 25.03, lon: 121.56,
+        model: 'models/gallery/cities/taipei.glb',
+        objects: {
+            'taipei-101': { name: 'Taipei 101', photos: [] },
+            'cks-memorial-hall': { name: 'Chiang Kai-shek Memorial Hall', photos: [] },
+            'ntu': { name: 'National Taiwan University', photos: [] },
+            'youbike-dock': { name: 'YouBike dock', photos: [] },
+            'youbike': { name: 'YouBike', photos: [] },
+            'jiufen': { name: 'Jiufen', photos: [] },
+            'yehliu': { name: 'Yehliu Geopark', photos: [] },
+            'night-market': { name: 'Night market', photos: [] },
         },
     },
     {
