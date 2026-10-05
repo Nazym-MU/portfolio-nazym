@@ -37,7 +37,7 @@ export const countries = [
     { iso: 'KR', slug: 'south-korea', name: 'South Korea', tone: 'violet', cities: ['seoul'] },
     { iso: 'TW', slug: 'taiwan', name: 'Taiwan', tone: 'mint', cities: ['taipei'] },
     { iso: 'TH', slug: 'thailand', name: 'Thailand', tone: 'amber' },
-    { iso: 'CN', slug: 'china', name: 'China', tone: 'rose', cities: ['shanghai'] },
+    { iso: 'CN', slug: 'china', name: 'China', tone: 'rose', cities: ['shanghai', 'beijing'] },
 ];
 
 export const cities = [
@@ -255,6 +255,22 @@ export const cities = [
             'dubai-mall': { name: 'Dubai Mall', photos: [] },
             'burj-al-arab': { name: 'Burj Al Arab', photos: [] },
             'dubai-marina': { name: 'Dubai Marina', photos: [] },
+        },
+    },
+    {
+        slug: 'beijing',
+        country: 'china',
+        name: 'Beijing',
+        lat: 39.91, lon: 116.40,
+        model: 'models/gallery/cities/beijing.glb',
+        objects: {
+            'forbidden-city': { name: 'Forbidden City', photos: [] },
+            'tiananmen': { name: 'Tiananmen', photos: [] },
+            'tiananmen-square': { name: 'Tiananmen Square', photos: [] },
+            'temple-of-heaven': { name: 'Temple of Heaven', photos: [] },
+            'lama-temple': { name: 'Lama Temple', photos: [] },
+            'great-wall': { name: 'Great Wall', photos: [] },
+            'qianmen-street': { name: 'Qianmen Street', photos: [] },
         },
     },
     {
