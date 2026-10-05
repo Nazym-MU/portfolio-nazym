@@ -8,7 +8,8 @@
 // named CTRY-<iso>; the countries listed here are the ones lit up and
 // clickable. A city appears as a pin at its lat/lon once its country is open.
 //
-// `night: true` dims the diorama's lights so its own glow carries it.
+// `night: true` dims the diorama's lights so its own glow carries it;
+// `dayNight: true` shows a sun/moon switch and lights its nightglow-* parts.
 //
 // `model` is OPTIONAL and that is the point. A city with one opens as a toy
 // diorama under a glass dome; a city without one just shows its photos.
@@ -28,7 +29,7 @@ export const countries = [
     { iso: 'AR', slug: 'argentina', name: 'Argentina', tone: 'sky', cities: ['buenos-aires'] },
     { iso: 'EG', slug: 'egypt', name: 'Egypt', tone: 'sand' },
     { iso: 'KZ', slug: 'kazakhstan', name: 'Kazakhstan', tone: 'sky', cities: ['astana', 'almaty'] },
-    { iso: 'UZ', slug: 'uzbekistan', name: 'Uzbekistan', tone: 'violet' },
+    { iso: 'UZ', slug: 'uzbekistan', name: 'Uzbekistan', tone: 'violet', cities: ['samarkand', 'bukhara'] },
     { iso: 'DE', slug: 'germany', name: 'Germany', tone: 'amber' },
     { iso: 'TR', slug: 'turkey', name: 'Turkey', tone: 'red' },
     { iso: 'AE', slug: 'uae', name: 'United Arab Emirates', tone: 'sand' },
@@ -206,6 +207,37 @@ export const cities = [
             'jiufen': { name: 'Jiufen', photos: [] },
             'yehliu': { name: 'Yehliu Geopark', photos: [] },
             'night-market': { name: 'Night market', photos: [] },
+        },
+    },
+    {
+        slug: 'samarkand',
+        country: 'uzbekistan',
+        name: 'Samarkand',
+        lat: 39.65, lon: 66.96,
+        model: 'models/gallery/cities/samarkand.glb',
+        objects: {
+            'registan': { name: 'Registan', photos: [] },
+            'gur-e-amir': { name: 'Gur-e-Amir', photos: [] },
+            'siyob-bazaar': { name: 'Siyob Bazaar', photos: [] },
+            'ulugh-beg-observatory': { name: 'Ulugh Beg Observatory', photos: [] },
+        },
+    },
+    {
+        slug: 'bukhara',
+        country: 'uzbekistan',
+        name: 'Bukhara',
+        lat: 39.77, lon: 64.42,
+        // Drawn both ways: a sun/moon switch, the minarets lit at night.
+        dayNight: true,
+        model: 'models/gallery/cities/bukhara.glb',
+        objects: {
+            'kalan-minaret': { name: 'Kalan Minaret', photos: [] },
+            'kalyan-mosque': { name: 'Kalyan Mosque', photos: [] },
+            'mir-i-arab': { name: 'Mir-i-Arab Madrasah', photos: [] },
+            'ark': { name: 'Ark of Bukhara', photos: [] },
+            'chor-minor': { name: 'Chor Minor', photos: [] },
+            'ulugbek-madrasah': { name: 'Ulugbek Madrasah', photos: [] },
+            'trading-domes': { name: 'Trading domes and chapans', photos: [] },
         },
     },
     {

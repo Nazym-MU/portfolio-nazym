@@ -82,7 +82,8 @@ export function inkMaterial(src) {
   // sandstone and beige walls (Big Ben lit up like a lamp), so dioramas opt in
   // by calling a material lamp-*, glow-* or exactly gold; the LEGO set's own yellow and
   // beige keep glowing as they do on Dear United.
-  if (!glass && /lamp|glow|flood|^gold$|^yellow$|^beige$/i.test(src.name)) {
+  // (nightglow-* is excluded: it only glows at night, see below.)
+  if (!glass && !/^nightglow-/i.test(src.name) && /lamp|glow|flood|^gold$|^yellow$|^beige$/i.test(src.name)) {
     m.color.copy(GLOW)
     m.emissive = GLOW.clone().multiplyScalar(0.55)
   }
@@ -92,10 +93,30 @@ export function inkMaterial(src) {
     m.color.setRGB(c.r, c.g, c.b)
     m.emissive = new THREE.Color(c.r, c.g, c.b).multiplyScalar(0.7)
   }
+  // nightglow-*: an ordinary colour by day that lights up after dark (the
+  // floodlit minarets of Bukhara). setNight() blends between the two.
+  if (!glass && /^nightglow-/i.test(src.name)) {
+    const own = new THREE.Color(c.r, c.g, c.b)
+    // Brick and clay warm toward floodlight gold; tiles and domes keep their
+    // turquoise and just shine.
+    const warm = /dome|tile/i.test(src.name) ? 0.08 : 0.4
+    m.userData.nightGlow = { day: m.color.clone(), night: own.clone().lerp(GLOW, warm), emissive: own.clone().lerp(GLOW, warm + 0.05) }
+    m.emissive = new THREE.Color(0, 0, 0)
+  }
   patch(m, { inkTexture: !!m.map })
   m.userData.glass = glass
   cache.set(src, m)
   return m
+}
+
+/** Blend nightglow materials between day (t = 0) and night (t = 1). */
+export function setNight(materials, t) {
+  for (const m of materials) {
+    const g = m.userData.nightGlow
+    if (!g) continue
+    m.color.lerpColors(g.day, g.night, t)
+    m.emissive.copy(g.emissive).multiplyScalar(1.05 * t)
+  }
 }
 
 /** A flat-colour ink material from an sRGB hex, for things the viewer builds. */

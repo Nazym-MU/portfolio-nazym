@@ -29,7 +29,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { disposeObject3D } from './gallery/dispose.js';
 import { InkPipeline } from './gallery/ink/pipeline.js';
 import { createSky, createLights } from './gallery/ink/sky.js';
-import { inkify, inkSolid, highlightTwin, forgetMaterials } from './gallery/ink/materials.js';
+import { inkify, inkSolid, highlightTwin, forgetMaterials, setNight } from './gallery/ink/materials.js';
 import { countries, countryBySlug, countryByIso, cityBySlug, thumbUrl, fullUrl } from './data/places.js';
 
 // GLTFLoader runs names through PropertyBinding.sanitizeNodeName, which DELETES
@@ -79,6 +79,7 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
     let loadToken = 0;
 
     let flight = null;                     // camera tween
+    let nightAmt = 0, nightTarget = 0, nightBtn = null;   // 0 = day, 1 = night
     let gltfLoader = null, dracoLoader = null;
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -118,6 +119,17 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
         // Click on the backdrop (not a photo) closes; Esc too.
         photosEl.addEventListener('click', (e) => { if (e.target === photosEl) select(null); });
         stageEl.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !photosEl.hidden) select(null); });
+        // Day / night switch, for cities drawn both ways (Bukhara). Lives in
+        // the floating head, after the status text.
+        nightBtn = document.createElement('button');
+        nightBtn.className = 'gallery-daynight';
+        nightBtn.hidden = true;
+        nightBtn.addEventListener('click', () => {
+            nightTarget = nightTarget > 0.5 ? 0 : 1;
+            if (reducedMotion()) applyNight(nightTarget);
+            labelNightBtn();
+        });
+        (titleEl?.parentElement || stageEl).appendChild(nightBtn);
         // The canvas goes first so the floating head stays above it.
         stageEl.prepend(canvas);
         stageEl.append(labelsEl, tipEl, photosEl);
@@ -323,6 +335,7 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
         if (!pinLabels.length) return;
         const r = stageEl.getBoundingClientRect();
         _cam.copy(camera.position).normalize();
+        const placed = [];
         for (const { el, pin } of pinLabels) {
             _v.set(0, 0.1, 0).applyQuaternion(pin.quaternion).add(pin.position);
             const facing = pin.position.clone().normalize().dot(_cam);
@@ -331,7 +344,13 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
             el.style.opacity = vis ? '1' : '0';
             el.style.pointerEvents = vis ? 'auto' : 'none';
             el.tabIndex = vis ? 0 : -1;
-            el.style.transform = `translate(${((_v.x + 1) / 2) * r.width}px, ${((1 - _v.y) / 2) * r.height}px) translate(-50%, -100%)`;
+            const x = ((_v.x + 1) / 2) * r.width, y = ((1 - _v.y) / 2) * r.height;
+            // Close cities (Bukhara and Samarkand): if this label would sit on
+            // one already placed, hang it below its pin instead of above.
+            const w = el.offsetWidth || 90;
+            const clash = placed.some((p) => Math.abs(p.x - x) < (p.w + w) / 2 + 4 && Math.abs(p.y - y) < 26);
+            el.style.transform = `translate(${x}px, ${y}px) translate(-50%, ${clash ? '40%' : '-100%'})`;
+            if (vis) placed.push({ x, y, w });
         }
     }
 
@@ -561,11 +580,12 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
         dome = buildDome();
         cityScene.add(dome, root);
 
-        // A city marked `night` (Shanghai) dims its lights to a third, so what
-        // carries the scene is its own glow: windows, neon, floodlit facades.
-        cityLights.traverse((l) => {
-            if (l.isLight) l.intensity = l.userData.dayIntensity * (city.night ? 0.32 : 1);
-        });
+        // Night cities (Shanghai) are always dark; day/night cities (Bukhara)
+        // start in daylight with the switch showing; the rest are day.
+        nightTarget = city.night ? 1 : 0;
+        applyNight(nightTarget);
+        nightBtn.hidden = !city.dayNight;
+        labelNightBtn();
 
         activeCity = slug;
         selected = null;
@@ -592,6 +612,7 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
 
     function leaveCity() {
         if (tipEl) tipEl.hidden = true;
+        if (nightBtn) nightBtn.hidden = true;
         if (photosEl) { photosEl.hidden = true; photosEl.replaceChildren(); }
         if (!cityRoot) return;
         hovered = null; selected = null;
@@ -606,6 +627,28 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
         orbiters = [];
         shuttles = [];
         activeCity = null;
+    }
+
+    // ---- day and night -----------------------------------------------------
+
+    // Night dims the lights to about a quarter and lights the nightglow materials.
+    function applyNight(t) {
+        nightAmt = t;
+        cityLights?.traverse((l) => {
+            if (l.isLight) l.intensity = l.userData.dayIntensity * (1 - 0.72 * t);
+        });
+        if (cityMaterials) setNight(cityMaterials, t);
+    }
+
+    const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>';
+    const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
+    function labelNightBtn() {
+        if (!nightBtn) return;
+        const toNight = nightTarget < 0.5;
+        // Show what a click will do: the moon by day, the sun by night.
+        nightBtn.innerHTML = toNight ? MOON : SUN;
+        nightBtn.setAttribute('aria-label', toNight ? 'Switch to night' : 'Switch to day');
+        nightBtn.title = toNight ? 'Night' : 'Day';
     }
 
     // ---- back arrow and floating photos (DOM, over the stage) ------------
@@ -818,6 +861,13 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
                 s.o.position.y -= s.sag * 4 * u * (1 - u);
             }
         }
+        if (view === VIEW.CITY && Math.abs(nightAmt - nightTarget) > 1e-3) {
+            // About a second from day to night, like the lights coming up.
+            // Real elapsed time (not the clamped dt), so slow devices arrive.
+            const step = Math.max(dt, (t - (tick.prevT || t)) / 1000) / 1.1;
+            applyNight(nightTarget > nightAmt ? Math.min(nightTarget, nightAmt + step) : Math.max(nightTarget, nightAmt - step));
+        }
+        tick.prevT = t;
         hoverFromPointer();
         sky.follow(camera);
         pipeline.render();
