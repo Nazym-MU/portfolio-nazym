@@ -2,10 +2,10 @@
 cairo.py — Egypt in one dome, west to east the way the land lies:
 
    GIZA (desert)          | NILE |  CAIRO              | RED SEA (deep)
-   Khufu, Khafre,           feluccas  Muhammad Ali Mosque   beach, palms,
-   Menkaure, the Sphinx,    palm      on the Citadel,       a fringing reef that
-   a camel caravan          banks     Khan el-Khalili's     drops away, corals,
-   walking past                       bazaar lanes          divers, fish, boats
+   Khufu, Khafre,           feluccas  the city,             beach, palms,
+   Menkaure, the Sphinx,    palm      Khan el-Khalili's     a fringing reef that
+   a resting camel caravan  banks     bazaar lanes          drops away, corals,
+                                                            divers, fish, boats
 
 The Red Sea is genuinely deeper: the plinth drops away under it, the water
 is see-through (glass-sea-46) and the rim there is a glass wall, so the reef
@@ -21,8 +21,7 @@ turned to face along its path.
 
 Reference points (well known): Khufu, Khafre and Menkaure stand on a
 diagonal, Khafre keeping a cap of its white casing at the top; the Sphinx
-lies by Khafre's causeway facing east; Muhammad Ali Mosque has a big
-central dome with half domes and two slender pencil minarets; Khan
+lies by Khafre's causeway facing east; Khan
 el-Khalili is a maze of lanes under hanging lanterns; the Red Sea's reefs
 fringe the shore and drop away steeply.
 """
@@ -53,8 +52,6 @@ sea = k.mat("glass-sea-46", (0.10, 0.46, 0.80))
 rim_glass = k.mat("glass-sea-rim-40", (0.12, 0.42, 0.74))
 cairo_wall = k.mat("cairo-sand", (0.88, 0.78, 0.60))
 cairo_wall2 = k.mat("cairo-ochre", (0.80, 0.64, 0.44))
-mosque = k.mat("alabaster", (0.94, 0.92, 0.86))
-dome_grey = k.mat("mosque-dome", (0.62, 0.66, 0.72))
 glow = k.mat("lamp-yellow", (1.0, 0.82, 0.42))
 white = k.mat("white", (0.96, 0.96, 0.95))
 dark = k.mat("dark", (0.16, 0.16, 0.20))
@@ -89,14 +86,14 @@ def smoothstep(e0, e1, x):
 
 
 def nile_x(y):
-    return -0.04 + 0.035 * math.sin(3.0 * y + 0.4)
+    # East of centre, so Giza's pyramids stand well clear of it on the desert.
+    return 0.05 + 0.03 * math.sin(3.0 * y + 0.4)
 
 
 def shore_x(y):
     return 0.46 + 0.06 * math.sin(2.6 * y + 1.0)
 
 
-CITADEL = (0.24, 0.42)
 SEA_LEVEL = -0.004
 
 
@@ -115,10 +112,9 @@ def height(x, y):
     dn = abs(x - nile_x(y))
     if dn < 0.05:
         h = -0.016 * (1 - smoothstep(0.035, 0.05, dn))
-    # Gentle dunes on the Giza side, the Citadel's hill in Cairo.
+    # Gentle dunes on the Giza side.
     if x < nile_x(y) - 0.08:
         h += 0.012 * math.sin(9 * x + 2) * math.sin(7 * y) + 0.008
-    h += 0.05 * math.exp(-((x - CITADEL[0]) ** 2 + (y - CITADEL[1]) ** 2) / (2 * 0.07 ** 2))
     return h
 
 
@@ -222,37 +218,95 @@ def pyramid(name, cx, cy, side, h, cap=False):
     return root
 
 
-KH = (-0.24, 0.46)
-pyramid("OBJ-khufu", *KH, 0.4, 0.27)
-pyramid("OBJ-khafre", -0.52, 0.1, 0.38, 0.26, cap=True)
-pyramid("OBJ-menkaure", -0.68, -0.22, 0.2, 0.13)
+KH = (-0.36, 0.44)
+pyramid("OBJ-khufu", *KH, 0.36, 0.25)
+pyramid("OBJ-khafre", -0.64, 0.0, 0.32, 0.23, cap=True)
+pyramid("OBJ-menkaure", -0.58, -0.42, 0.18, 0.12)
 q = k.empty("DECO-queens-pyramids")
 for i in range(3):
-    x, y = KH[0] + 0.24, KH[1] - 0.1 + i * 0.07
+    # The queens' pyramids, south-east of Khufu, still on the plateau.
+    x, y = KH[0] + 0.14 + i * 0.05, KH[1] - 0.26 + i * 0.02
     for o in [k.cylinder(f"queen-{i}", 0.035, 0.05, at=(0, 0, 0), r_top=0.0, segs=4, material=limestone, parent=q, smooth=False)]:
         o.data.transform(Matrix.Translation((x, y, ground(x, y) - 0.003)) @ Matrix.Rotation(math.radians(37), 4, "Z"))
 
 
 # ---- the Sphinx, lying by Khafre's causeway, facing east toward the Nile --------
-SX, SY = -0.22, 0.03
+# A lion lying down, about three times as long as it is high: a long back
+# rising to the shoulders, rounded haunches, the front legs stretched far out
+# in front, an upright chest, and a human head in the striped nemes headdress
+# whose flaps fall either side of the face, the cobra on the brow.
+SX, SY = -0.3, -0.05
 sphinx = k.empty("OBJ-sphinx")
+stone_dk = k.mat("sphinx-stone-dark", (0.72, 0.58, 0.38))
+nemes_m = k.mat("nemes", (0.86, 0.74, 0.52))
 sp = []
-body = k.sphere("sphinx-body", 1.0, material=sphinx_m, parent=sphinx, subdiv=3)
-body.data.transform(Matrix.Translation((-0.02, 0, 0.026)) @ Matrix.Diagonal((0.075, 0.03, 0.028, 1)))
+
+
+def blob(name, c, r, m=sphinx_m, floor=0.0):
+    o = k.sphere(name, 1.0, material=m, parent=sphinx, subdiv=3)
+    for v in o.data.vertices:
+        v.co.z = max(v.co.z, -1.0 + floor)
+    o.data.transform(Matrix.Translation(c) @ Matrix.Diagonal((r[0], r[1], r[2], 1)))
+    sp.append(o)
+    return o
+
+
+# The body: one continuous loft, not blobs. Height and width along its
+# length: rounded haunches at the back, a gentle dip, rising to the shoulders.
+def body_h(t):
+    return (0.022 + 0.008 * math.exp(-((t - 0.14) / 0.1) ** 2) + 0.018 * smoothstep(0.55, 0.92, t)) * min(1.0, (t / 0.07) ** 0.5)
+
+
+def body_w(t):
+    return (0.024 + 0.005 * math.exp(-((t - 0.14) / 0.1) ** 2) + 0.006 * smoothstep(0.6, 0.92, t)) * min(1.0, (t / 0.07) ** 0.5)
+
+
+X0, X1, NS, NR = -0.11, 0.055, 26, 18
+bmb = bmesh.new()
+rings = []
+for i in range(NS + 1):
+    t = i / NS
+    x = X0 + (X1 - X0) * t
+    h, w = max(body_h(t), 0.002), max(body_w(t), 0.002)
+    ring = []
+    for j in range(NR + 1):
+        a = math.pi * j / NR               # 0..pi over the top, flat underneath
+        c, sn = math.cos(a), math.sin(a)
+        ring.append(bmb.verts.new((x, w * math.copysign(abs(c) ** 0.55, c), h * abs(sn) ** 0.6)))
+    rings.append(ring)
+for r0, r1 in zip(rings, rings[1:]):
+    for j in range(NR):
+        bmb.faces.new((r0[j], r0[j + 1], r1[j + 1], r1[j]))
+for ring in (rings[0], rings[-1]):
+    bmb.faces.new(ring)
+bmesh.ops.recalc_face_normals(bmb, faces=bmb.faces)
+body = k.obj_from_bm("sphinx-body", bmb, sphinx_m, parent=sphinx)
+k.smooth_by_angle(body, 60)
 sp.append(body)
 for sy in (-1, 1):
-    paw = k.box(f"sphinx-paw-{sy}", (0.07, 0.016, 0.014), at=(0.07, sy * 0.017, 0.0), material=sphinx_m, parent=sphinx)
-    sp.append(paw)
-sp.append(k.box("sphinx-chest", (0.03, 0.04, 0.05), at=(0.04, 0, 0.0), material=sphinx_m, parent=sphinx))
-sp.append(k.box("sphinx-head", (0.026, 0.024, 0.03), at=(0.05, 0, 0.05), material=sphinx_m, parent=sphinx))
-# The nemes headdress: a flared cloth behind and either side of the face.
-nm = k.prism("sphinx-nemes", [(-0.024, 0.0), (0.024, 0.0), (0.016, 0.036), (-0.016, 0.036)], 0.028, material=k.mat("nemes", (0.80, 0.68, 0.48)), parent=sphinx)
-nm.data.transform(Matrix.Translation((0.036, 0, 0.04)) @ Matrix.Rotation(math.radians(90), 4, "Z") @ Matrix.Rotation(math.radians(90), 4, "X"))
-sp.append(nm)
-sp.append(k.box("sphinx-face", (0.004, 0.016, 0.018), at=(0.064, 0, 0.055), material=k.mat("sphinx-face", (0.88, 0.76, 0.56)), parent=sphinx))
-sp.append(k.box("sphinx-enclosure", (0.22, 0.12, 0.004), at=(0.0, 0, -0.004), material=k.mat("enclosure", (0.80, 0.66, 0.44)), parent=sphinx))
+    # Back legs folded along the flanks, front legs stretched out ahead.
+    sp.append(k.box(f"sphinx-hind-{sy}", (0.05, 0.012, 0.012), at=(-0.07, sy * 0.028, 0.0), material=sphinx_m, parent=sphinx))
+    sp.append(k.box(f"sphinx-foreleg-{sy}", (0.085, 0.015, 0.013), at=(0.07, sy * 0.017, 0.0), material=sphinx_m, parent=sphinx))
+    paw = blob(f"sphinx-paw-{sy}", (0.112, sy * 0.017, 0.007), (0.01, 0.009, 0.007), floor=0.9)
+# Head: the nemes (a broad cloth framing the face, flaps down to the chest).
+HX, HZ = 0.05, 0.045
+sp.append(k.box("sphinx-nemes-back", (0.028, 0.034, 0.03), at=(HX - 0.008, 0, HZ), material=nemes_m, parent=sphinx))
+for sy in (-1, 1):
+    flap = k.box(f"sphinx-nemes-flap-{sy}", (0.008, 0.008, 0.032), at=(HX + 0.012, sy * 0.016, HZ - 0.018), material=nemes_m, parent=sphinx)
+    sp.append(flap)
+for j in range(4):   # stripes across the headcloth
+    sp.append(k.box(f"sphinx-nemes-stripe-{j}", (0.029, 0.035, 0.0025), at=(HX - 0.008, 0, HZ + 0.004 + j * 0.0065), material=stone_dk, parent=sphinx))
+sp.append(k.box("sphinx-face", (0.016, 0.022, 0.024), at=(HX + 0.012, 0, HZ + 0.002), material=sphinx_m, parent=sphinx))
+sp.append(k.box("sphinx-nose", (0.004, 0.005, 0.006), at=(HX + 0.021, 0, HZ + 0.01), material=stone_dk, parent=sphinx))
+sp.append(k.box("sphinx-brow", (0.003, 0.016, 0.0025), at=(HX + 0.0205, 0, HZ + 0.018), material=stone_dk, parent=sphinx))
+sp.append(k.cylinder("sphinx-uraeus", 0.0025, 0.007, at=(HX + 0.02, 0, HZ + 0.024), segs=6, material=stone_dk, parent=sphinx))
+sp.append(k.box("sphinx-beard", (0.005, 0.006, 0.01), at=(HX + 0.018, 0, HZ - 0.012), material=stone_dk, parent=sphinx))
+# The enclosure it was carved out of, and the causeway up to Khafre.
+sp.append(k.box("sphinx-enclosure", (0.28, 0.12, 0.004), at=(0.0, 0, -0.004), material=k.mat("enclosure", (0.80, 0.66, 0.44)), parent=sphinx))
 for o in sp:
     stand(o, SX, SY)
+cw = k.box("DECO-causeway", (0.24, 0.018, 0.004), material=k.mat("causeway", (0.82, 0.70, 0.50)))
+cw.data.transform(Matrix.Translation(((SX - 0.64) / 2 - 0.02, (SY + 0.0) / 2, ground(SX, SY))) @ Matrix.Rotation(math.atan2(0.0 - SY, -0.64 - SX), 4, "Z"))
 
 
 # ---- movers ------------------------------------------------------------------------
@@ -274,7 +328,7 @@ def mover(name, start, end, period, phase=0.0, bob=0.0, bob_hz=1.5, parent=None)
 
 # ---- the camel caravan, standing in the desert before the pyramids ------------
 caravan = k.empty("OBJ-camels")
-C0, C1 = Vector((-0.6, -0.5, 0.0)), Vector((-0.2, -0.44, 0.0))
+C0, C1 = Vector((-0.44, -0.3, 0.0)), Vector((-0.16, -0.26, 0.0))
 for i in range(4):
     off = Vector((0.045 * i, 0.007 * i, 0))
     a, b = C0 + off, C1 + off
@@ -316,15 +370,12 @@ for i, (y0, y1, ph) in enumerate([(-0.62, 0.0, 0.0), (0.1, 0.62, 0.4)]):
     sail.data.transform(Matrix.Rotation(math.radians(90), 4, "X"))
 
 
+dates = k.mat("dates", (0.66, 0.30, 0.14))
+
+
 def palm(tag, x, y, h, z=None):
     zz = ground(x, y) if z is None else z
-    parts = [k.tube(f"{tag}-trunk", [(x, y, zz), (x + 0.003, y, zz + h * 0.5), (x + 0.005, y, zz + h)], 0.0035, material=palm_trunk, segs=5)]
-    for i in range(7):
-        a = 2 * math.pi * i / 7
-        ca, sa = math.cos(a), math.sin(a)
-        parts.append(k.tube(f"{tag}-frond-{i}", [(x + 0.005, y, zz + h), (x + 0.005 + 0.016 * ca, y + 0.016 * sa, zz + h + 0.007),
-                                                (x + 0.005 + 0.03 * ca, y + 0.03 * sa, zz + h - 0.007)], 0.0025, material=palm_leaf, segs=3))
-    return parts
+    return k.palm(tag, x, y, zz, h, palm_trunk, palm_leaf, fruit_mat=dates, seed=hash(tag) & 0xffff)
 
 
 palms = []
@@ -335,8 +386,8 @@ for i in range(30):
         x = nile_x(y) + side * rnd.uniform(0.055, 0.085)
         if math.hypot(x, y) > 0.94 or (side < 0 and abs(y - SY) < 0.07):
             continue
-        if rnd.random() < 0.55:
-            palms += palm(f"nile-palm-{i}-{side}", x, y, rnd.uniform(0.06, 0.085))
+        if rnd.random() < 0.42:
+            palms += palm(f"nile-palm-{i}-{side}", x, y, rnd.uniform(0.07, 0.095))
 # The Red Sea beach: palms and umbrellas along the shore.
 for i in range(14):
     y = -0.6 + i * 0.09
@@ -351,31 +402,7 @@ for i in range(14):
 k.join("DECO-palms", palms)
 
 
-# ---- Cairo: the Citadel's Muhammad Ali Mosque, Khan el-Khalili, the city --------
-mq = k.empty("OBJ-muhammad-ali-mosque")
-CZ = ground(*CITADEL)
-mparts = [k.box("mq-citadel-wall", (0.18, 0.14, 0.03), at=(0, 0, -0.01), material=cairo_wall2, parent=mq),
-          k.box("mq-body", (0.09, 0.09, 0.05), at=(0, 0, 0.02), material=mosque, parent=mq)]
-dm = k.sphere("mq-dome", 0.04, material=dome_grey, parent=mq, subdiv=3)
-dm.data.transform(Matrix.Translation((0, 0, 0.07)))
-for v in dm.data.vertices:
-    v.co.z = max(v.co.z, 0.07)
-mparts.append(dm)
-for sx, sy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-    hd = k.sphere(f"mq-half-dome-{sx}-{sy}", 0.022, material=dome_grey, parent=mq, subdiv=2)
-    hd.data.transform(Matrix.Translation((sx * 0.035, sy * 0.035, 0.07)))
-    for v in hd.data.vertices:
-        v.co.z = max(v.co.z, 0.07)
-    mparts.append(hd)
-for sx in (-1, 1):
-    # The two pencil minarets: very slender, a sharp cone cap.
-    mparts.append(k.cylinder(f"mq-minaret-{sx}", 0.006, 0.17, at=(sx * 0.052, -0.05, 0.02), r_top=0.005, segs=12, material=mosque, parent=mq))
-    for b in range(2):
-        mparts.append(k.cylinder(f"mq-balcony-{sx}-{b}", 0.009, 0.004, at=(sx * 0.052, -0.05, 0.1 + b * 0.05), segs=12, material=mosque, parent=mq))
-    mparts.append(k.cylinder(f"mq-cap-{sx}", 0.006, 0.03, at=(sx * 0.052, -0.05, 0.19), r_top=0.0, segs=12, material=dome_grey, parent=mq))
-for o in mparts:
-    o.data.transform(Matrix.Translation((CITADEL[0], CITADEL[1], CZ)))
-
+# ---- Cairo: Khan el-Khalili and the city ------------------------------------------
 kh = k.empty("OBJ-khan-el-khalili")
 KX, KY = 0.24, -0.34
 kparts = []
@@ -401,10 +428,10 @@ for o in kparts:
 
 # The city between the Nile and the sea: flat-roofed blocks with lit windows.
 city = []
-for i in range(40):
-    y = rnd.uniform(-0.2, 0.3)
+for i in range(48):
+    y = rnd.uniform(-0.2, 0.5)
     x = rnd.uniform(nile_x(y) + 0.11, shore_x(y) - 0.07)
-    if math.hypot(x - CITADEL[0], y - CITADEL[1]) < 0.12 or math.hypot(x - KX, y - KY) < 0.15:
+    if math.hypot(x - KX, y - KY) < 0.15:
         continue
     w, h = rnd.uniform(0.025, 0.04), rnd.uniform(0.03, 0.08)
     city.append(stand(k.box(f"cb-{i}", (w, w, h), material=[cairo_wall, cairo_wall2][i % 2]), x, y, rot=rnd.uniform(-15, 15)))

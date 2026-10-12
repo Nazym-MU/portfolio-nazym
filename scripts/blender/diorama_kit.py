@@ -355,6 +355,61 @@ def forest(name, count, material, keep_out, seed=3, r_max=0.92, h=(0.07, 0.12), 
     return crowns
 
 
+def palm(tag, x, y, z, h, trunk_mat, leaf_mat, fruit_mat=None, seed=0, fronds=9, parent=None):
+    """A date palm that reads as one: a gently curving, tapering trunk with
+    bark rings, and a crown of real fronds, each a blade that arches up and
+    droops, ribbed down the middle and cut into leaflets along its edges.
+    Returns the objects (join them per city to keep draw calls down)."""
+    rnd_ = random.Random(seed)
+    lean = Vector((rnd_.uniform(-1, 1), rnd_.uniform(-1, 1), 0)).normalized() * h * 0.12
+    def trunk_pt(t):
+        return Vector((x, y, z + h * t)) + lean * (t ** 1.6)
+    parts = []
+    pts = [tuple(trunk_pt(i / 8)) for i in range(9)]
+    tr = tube(f"{tag}-trunk", pts, h * 0.045, material=trunk_mat, segs=7, parent=parent)
+    # Taper toward the crown.
+    for v in tr.data.vertices:
+        t = (v.co.z - z) / h
+        c = trunk_pt(max(0.0, min(1.0, t)))
+        v.co.x = c.x + (v.co.x - c.x) * (1.0 - 0.35 * t)
+        v.co.y = c.y + (v.co.y - c.y) * (1.0 - 0.35 * t)
+    parts.append(tr)
+    for i in range(1, 6):   # bark rings
+        t = i / 6.5
+        r = h * 0.045 * (1.0 - 0.35 * t) * 1.12
+        ring = torus(f"{tag}-ring{i}", r, h * 0.008, at=tuple(trunk_pt(t)), segs=10, tube_segs=3, material=trunk_mat, parent=parent)
+        parts.append(ring)
+    top = trunk_pt(1.0)
+    L = h * 0.62
+    for f in range(fronds):
+        a = 2 * math.pi * f / fronds + rnd_.uniform(-0.15, 0.15)
+        d = Vector((math.cos(a), math.sin(a), 0))
+        side = Vector((-d.y, d.x, 0))
+        rise = rnd_.uniform(0.25, 0.5)
+        n = 14
+        bm = bmesh.new()
+        rows = []
+        for i in range(n + 1):
+            t = i / n
+            p = top + d * (L * t) + Vector((0, 0, L * (rise * math.sin(math.pi * t * 0.8) - 0.75 * t * t)))
+            w = h * 0.11 * math.sin(math.pi * min(t * 1.15, 1.0)) ** 0.7
+            w *= 1.0 if i % 2 == 0 else 0.55          # leaflets: a comb along each edge
+            rib = p + Vector((0, 0, w * 0.18))
+            rows.append([bm.verts.new(p - side * w), bm.verts.new(rib), bm.verts.new(p + side * w)])
+        for r0, r1 in zip(rows, rows[1:]):
+            bm.faces.new((r0[0], r0[1], r1[1], r1[0]))
+            bm.faces.new((r0[1], r0[2], r1[2], r1[1]))
+        o = obj_from_bm(f"{tag}-frond{f}", bm, leaf_mat, parent=parent)
+        o.data.polygons.foreach_set("use_smooth", [False] * len(o.data.polygons))
+        parts.append(o)
+    if fruit_mat is not None:
+        for i in range(5):
+            a = 2 * math.pi * i / 5
+            parts.append(sphere(f"{tag}-dates{i}", h * 0.03, at=tuple(top + Vector((math.cos(a) * h * 0.05, math.sin(a) * h * 0.05, -h * 0.05))),
+                                material=fruit_mat, parent=parent, subdiv=1))
+    return parts
+
+
 def export(slug):
     out = os.path.join(REPO, "public", "models", "gallery", "cities", f"{slug}.glb")
     blend = os.path.expanduser(f"~/Downloads/Models/travel/{slug}.blend")

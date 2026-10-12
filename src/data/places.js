@@ -309,7 +309,6 @@ export const cities = [
             'sphinx': { name: 'The Sphinx', photos: [] },
             'camels': { name: 'Camels', photos: [] },
             'feluccas': { name: 'Feluccas on the Nile', photos: [] },
-            'muhammad-ali-mosque': { name: 'Muhammad Ali Mosque', photos: [] },
             'khan-el-khalili': { name: 'Khan el-Khalili bazaar', photos: [] },
             'coral-reef': { name: 'Red Sea coral reef', photos: [] },
             'scuba-divers': { name: 'Scuba diving', photos: [] },
