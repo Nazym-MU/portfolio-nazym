@@ -454,6 +454,9 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
             // A shuttle (the Koktobe cable car's cabins) slides from where it
             // was placed by `shuttle` (Blender axes: x, y, z-up) and dips by
             // `sag` mid-way, like the cable it hangs from; then wraps round.
+            // With `pingpong` it walks there and back instead, turning round at
+            // each end (Cairo's camels, boats, divers), and `bob` lifts it in
+            // little steps `bobHz` times a second.
             const sh = o.userData.shuttle;
             if (Array.isArray(sh) && sh.length === 3) {
                 shuttles.push({
@@ -463,6 +466,10 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
                     period: o.userData.period || 30,
                     phase: o.userData.phase || 0,
                     sag: o.userData.sag || 0,
+                    pingpong: !!o.userData.pingpong,
+                    bob: o.userData.bob || 0,
+                    bobHz: o.userData.bobHz || 1.5,
+                    baseRot: o.rotation.y,
                 });
             }
             if (!o.isMesh) return;
@@ -591,7 +598,11 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
         selected = null;
         view = VIEW.CITY;
         pipeline.scene = cityScene;
-        pipeline.hideInNormalPass = dome.userData.noInk;
+        // See-through parts (the Red Sea's water) stay out of the normal pass,
+        // so the reef beneath them still gets its ink lines.
+        const seeThrough = [];
+        root.traverse((o) => { if (o.isMesh && o.userData.glass) seeThrough.push(o); });
+        pipeline.hideInNormalPass = [...dome.userData.noInk, ...seeThrough];
         // Line thresholds scale with the scene: dioramas are ~2 units across,
         // their smallest parts (rails, bricks) a few hundredths.
         pipeline.uniforms.uDepthK.value = 0.006;
@@ -856,9 +867,14 @@ export function initGallery(stageEl, { titleEl, backEl, onStatus } = {}) {
             for (const o of orbiters) o.rotation.y += (dt * Math.PI * 2) / o.userData.orbit;
             const now = t / 1000;
             for (const s of shuttles) {
-                const u = (now / s.period + s.phase) % 1;
+                const raw = (now / s.period + s.phase) % 1;
+                const back = s.pingpong && raw >= 0.5;
+                const u = s.pingpong ? (back ? 2 - 2 * raw : 2 * raw) : raw;
                 s.o.position.copy(s.start).addScaledVector(s.d, u);
                 s.o.position.y -= s.sag * 4 * u * (1 - u);
+                if (s.bob) s.o.position.y += s.bob * Math.abs(Math.sin(Math.PI * s.bobHz * now + s.phase * 7));
+                // Turn round for the walk back (the geometry faces along d).
+                if (s.pingpong) s.o.rotation.y = s.baseRot + (back ? Math.PI : 0);
             }
         }
         if (view === VIEW.CITY && Math.abs(nightAmt - nightTarget) > 1e-3) {

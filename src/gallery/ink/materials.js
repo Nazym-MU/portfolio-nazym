@@ -67,9 +67,12 @@ export function inkMaterial(src) {
   const glass = /glass|transparent/i.test(src.name) || src.transparent || src.opacity < 1
   if (glass) {
     m.transparent = true
-    m.opacity = Math.min(src.opacity ?? 0.35, 0.5)
+    // A name like glass-sea-30 asks for 30% opacity; otherwise at most half.
+    const asked = /glass.*-(\d{2})$/i.exec(src.name)
+    m.opacity = asked ? +asked[1] / 100 : Math.min(src.opacity ?? 0.35, 0.5)
     m.depthWrite = false
-    m.emissive = GLOW.clone().multiplyScalar(0.18)
+    // Lit interiors read through window glass; sea water stays cool blue.
+    if (!/sea|water/i.test(src.name)) m.emissive = GLOW.clone().multiplyScalar(0.18)
   } else if (src.map) {
     m.map = src.map
     m.color.set(0xffffff)
