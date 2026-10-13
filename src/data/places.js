@@ -26,7 +26,7 @@ export const countries = [
     // read as a set of separate trips rather than one blob.
     { iso: 'US', slug: 'usa', name: 'United States', tone: 'mint', cities: ['new-york', 'san-francisco'] },
     { iso: 'GB', slug: 'uk', name: 'United Kingdom', tone: 'red', cities: ['london', 'manchester'] },
-    { iso: 'AR', slug: 'argentina', name: 'Argentina', tone: 'sky', cities: ['buenos-aires'] },
+    { iso: 'AR', slug: 'argentina', name: 'Argentina', tone: 'sky', cities: ['buenos-aires', 'ushuaia'] },
     { iso: 'EG', slug: 'egypt', name: 'Egypt', tone: 'sand', cities: ['cairo'] },
     { iso: 'KZ', slug: 'kazakhstan', name: 'Kazakhstan', tone: 'sky', cities: ['astana', 'almaty'] },
     { iso: 'UZ', slug: 'uzbekistan', name: 'Uzbekistan', tone: 'violet', cities: ['samarkand', 'bukhara'] },
@@ -124,6 +124,22 @@ export const cities = [
             'teatro-colon': { name: 'Teatro Colón', photos: [] },
             'empanadas': { name: 'Empanadas', photos: [] },
             'puente-de-la-mujer': { name: 'Puente de la Mujer', photos: [] },
+        },
+    },
+    {
+        slug: 'ushuaia',
+        country: 'argentina',
+        name: 'Ushuaia',
+        lat: -54.80, lon: -68.30,
+        model: 'models/gallery/cities/ushuaia.glb',
+        objects: {
+            'mountains': { name: 'Martial range, Monte Olivia and Cinco Hermanos', photos: [] },
+            'esmeralda-trail': { name: 'Trail to Laguna Esmeralda', photos: [] },
+            'beaver-dams': { name: 'Beaver dams in the peat bog', photos: [] },
+            'laguna-esmeralda': { name: 'Laguna Esmeralda', photos: [] },
+            'fin-del-mundo-sign': { name: 'Fin del mundo sign', photos: [] },
+            'ushuaia': { name: 'Ushuaia', photos: [] },
+            'beagle-channel': { name: 'Beagle Channel', photos: [] },
         },
     },
     {
