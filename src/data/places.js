@@ -36,7 +36,7 @@ export const countries = [
     { iso: 'JP', slug: 'japan', name: 'Japan', tone: 'rose', cities: ['tokyo'] },
     { iso: 'KR', slug: 'south-korea', name: 'South Korea', tone: 'violet', cities: ['seoul'] },
     { iso: 'TW', slug: 'taiwan', name: 'Taiwan', tone: 'mint', cities: ['taipei'] },
-    { iso: 'TH', slug: 'thailand', name: 'Thailand', tone: 'amber' },
+    { iso: 'TH', slug: 'thailand', name: 'Thailand', tone: 'amber', cities: ['pattaya'] },
     { iso: 'CN', slug: 'china', name: 'China', tone: 'rose', cities: ['shanghai', 'beijing'] },
 ];
 
@@ -332,6 +332,25 @@ export const cities = [
             'simit-truck': { name: 'Simit truck', photos: [] },
             'cats': { name: 'The cats', photos: [] },
             'touristanbul-bus': { name: 'Touristanbul bus', photos: [] },
+        },
+    },
+    {
+        slug: 'pattaya',
+        country: 'thailand',
+        name: 'Pattaya',
+        lat: 12.93, lon: 100.88,
+        // The night market and Beach Road light up after dark.
+        dayNight: true,
+        model: 'models/gallery/cities/pattaya.glb',
+        objects: {
+            'runway-night-market': { name: 'Runway night market', photos: [] },
+            'tuk-tuks': { name: 'Tuk-tuks', photos: [] },
+            'pattaya-beach': { name: 'Pattaya Beach', photos: [] },
+            'koh-lan': { name: 'Koh Lan', photos: [] },
+            'ferries-to-koh-lan': { name: 'Boats to Koh Lan', photos: [] },
+            'ramayana-water-park': { name: 'Ramayana Water Park', photos: [] },
+            'terminal-21': { name: 'Terminal 21 Pattaya', photos: [] },
+            'khao-kheow-zoo': { name: 'Khao Kheow Open Zoo', photos: [] },
         },
     },
     {
