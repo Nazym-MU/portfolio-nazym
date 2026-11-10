@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mean Teacher: Weight-Averaged Consistency Targets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+  min-width:6.2em;
+}
+.dial output{display:inline-block;min-width:1.4em;text-align:left;text-transform:none}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.maps{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:clamp(.6rem, 3vw, 1.4rem);
+}
+@media(max-width:560px){
+  .maps{grid-template-columns:1fr}
+}
+.maps figure{margin:0}
+.maps figcaption{font-size:1.05rem}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.sq{aspect-ratio:1 / 1}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.btn{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  background:var(--paper);
+  color:var(--ink);
+  border:1px solid var(--ink);
+  box-shadow:2px 2px 0 var(--ink);
+  padding:.4em 1em .35em;
+  cursor:pointer;
+}
+.btn:active{box-shadow:none;transform:translate(2px,2px)}
+.btn:focus-visible{outline:1px dotted var(--ink);outline-offset:3px}
+.btnrow{text-align:center;margin:.2rem 0 1rem}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- a jagged student path and the smooth teacher average through it -->
+    <svg class="strip" viewBox="0 0 420 60" fill="none" stroke="currentColor" stroke-linejoin="round" aria-hidden="true">
+      <path stroke-width="1.2" d="M4 52 L16 30 L26 46 L38 18 L50 40 L60 24 L72 44 L84 14 L96 36 L106 26 L118 48 L130 20 L142 38 L152 28 L164 46 L176 16 L188 34 L200 24 L212 42 L224 22 L236 40 L248 18 L260 36 L272 28 L284 44 L296 20 L308 34 L320 26 L332 42 L344 22 L356 38 L368 26 L380 40 L392 24 L404 36 L416 30"/>
+      <path stroke-width="4" d="M4 50 C 40 40, 70 34, 120 32 S 260 31, 416 31"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; NIPS 2017 &middot; 1,098 citations</p>
+      <h1>Mean Teacher</h1>
+    </div>
+    <p class="tagline">Mean teachers are better role models: Weight-averaged consistency targets improve semi-supervised deep learning results</p>
+    <p class="tagline-hand">Antti Tarvainen &amp; Harri Valpola &middot; 2017 &middot;
+    <a href="https://arxiv.org/abs/1703.01780">arXiv:1703.01780</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>To learn from images that mostly have no labels, the paper trains a network to agree with a second copy of itself whose weights are a running average of its own past weights. That averaged copy makes better targets than the network itself, at the cost of one extra forward pass.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: average away the noise</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">250 labels, 73k images</span></div>
+    <p class="entry-desc"><em>Semi-supervised</em> learning: you have a few labelled images and many unlabelled ones. A common trick is <em>consistency</em>: a good classifier should give the same answer when its input is slightly perturbed (shifted a pixel, noise added) or when random internal units are switched off (<em>dropout</em>). So for an unlabelled image, run the network twice with different random noise and penalise disagreement. One run serves as the <em>teacher</em> that produces a target. The other is the <em>student</em> that gets trained toward it.</p>
+    <p class="entry-desc">If the teacher is just the student itself (the earlier “Π model”), its targets are as wrong as the student, and the student learns to agree with its own mistakes. <em>Temporal Ensembling</em> improved targets by averaging each image's predictions over training, but each image's average is only refreshed once per pass through the dataset (an <em>epoch</em>). On big or streaming data that is far too slow.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\theta' \leftarrow \alpha\theta' + (1-\alpha)\theta\)</span></div>
+    <p class="entry-desc">Average the <em>weights</em>, not the predictions. The teacher is the same network architecture whose weights \(\theta'\) are an exponential moving average of the student's weights \(\theta\), updated after every training step with \(\alpha = 0.999\): the teacher keeps 99.9% of its old weights and takes 0.1% from the student. The teacher is never trained by gradient descent. It is a time-average of the student that is refreshed every step.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">27.8% → 4.35% error</span></div>
+    <p class="entry-desc">On SVHN (photos of house-number digits, 73,257 training images) with only 250 labels, training on labels alone gives 27.77% test error. The Π model gives 9.69%, and Mean Teacher gives 4.35%. That beats Temporal Ensembling trained with four times as many labels (4.42% at 1000).</p>
+    <p class="entry-desc">On CIFAR-10 (tiny 32×32 photos of 10 object classes) with 4000 of 50,000 labels and a deeper residual network, error falls from the previous best of 10.55% to 6.28%. On ImageNet (1.2M photos, 1000 classes) with 10% of labels, it falls from 35.24% to 9.11%.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>A linear filter on weight space</b></p>
+
+  <p>The network is a classifier with \(N\) classes (\(N=10\) here). Given an image \(x\), it outputs a probability vector, so the output lives on the simplex \(\{p\in\mathbb R^N : p_i\ge 0,\ \textstyle\sum_i p_i=1\}\).</p>
+
+  <h3 class="sub">The objects</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(\theta\in\mathbb R^P\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">student, trained</span></div>
+    <p class="entry-desc">Every weight of the network, flattened into one long vector of length \(P\). Gradient descent updates it.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(\theta'\in\mathbb R^P\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">teacher, averaged</span></div>
+    <p class="entry-desc">Same architecture, same shape, different numbers. It is a fixed linear function of the student's history (below) and receives no gradient.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(\eta,\ \eta'\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">independent noise</span></div>
+    <p class="entry-desc">Each side gets its own random draw of perturbations: a random shift of up to 2 pixels, Gaussian noise of standard deviation 0.15 added to the input, and dropout. Dropout multiplies a layer's activation vector by a random diagonal 0/1 matrix \(D\), with each diagonal entry 0 with probability ½.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(f(x,\theta,\eta)\in\mathbb R^N\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">softmax output</span></div>
+    <p class="entry-desc">The predicted class probabilities: \(p=\operatorname{softmax}(z)\), where \(z\in\mathbb R^N\) are the network's final scores (<em>logits</em>) and \(p_i = e^{z_i}/\sum_j e^{z_j}\).</p>
+  </div>
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 220" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1.2"/>
+        </pattern>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        </marker>
+      </defs>
+      <g font-family="Oswald, sans-serif" fill="currentColor" stroke="none" letter-spacing="1.5" text-anchor="middle">
+        <text x="125" y="116" font-size="14">STUDENT &#952;</text>
+        <text x="355" y="116" font-size="14" style="paint-order:stroke" stroke="#f4efe3" stroke-width="6">TEACHER &#952;&#8242;</text>
+        <text x="240" y="214" font-size="13">IMAGE x</text>
+        <text x="96" y="176" font-size="12">noise &#951;</text>
+        <text x="388" y="176" font-size="12">noise &#951;&#8242;</text>
+        <text x="125" y="48" font-size="12">f(x, &#952;, &#951;)</text>
+        <text x="355" y="48" font-size="12">f(x, &#952;&#8242;, &#951;&#8242;)</text>
+        <text x="240" y="16" font-size="11">CONSISTENCY  &#8214;&#183;&#8214;&#178;</text>
+        <text x="240" y="102" font-size="11">EMA</text>
+        <text x="240" y="134" font-size="10" letter-spacing=".5">&#952;&#8242; &#8592; &#945;&#952;&#8242; + (1&#8722;&#945;)&#952;</text>
+        <text x="30" y="16" font-size="11">LABEL y</text>
+        <text x="30" y="30" font-size="9" letter-spacing=".5">(if any)</text>
+      </g>
+      <!-- boxes -->
+      <rect x="60" y="88" width="130" height="44"/>
+      <rect x="290" y="88" width="130" height="44" fill="url(#hatch)"/>
+      <!-- input feeds -->
+      <path d="M240 198 V186 H125 V134" marker-end="url(#ah)" stroke-width="1.5"/>
+      <path d="M240 186 H355 V134" marker-end="url(#ah)" stroke-width="1.5"/>
+      <!-- outputs -->
+      <path d="M125 86 V56" marker-end="url(#ah)" stroke-width="1.5"/>
+      <path d="M355 86 V56" marker-end="url(#ah)" stroke-width="1.5"/>
+      <!-- consistency -->
+      <path d="M150 26 H330" stroke-width="1.2" stroke-dasharray="3 4"/>
+      <path d="M150 26 V36 M330 26 V36" stroke-width="1.2"/>
+      <!-- classification -->
+      <path d="M30 36 V42 H90" stroke-width="1.2" stroke-dasharray="3 4"/>
+      <!-- EMA arrow -->
+      <path d="M192 110 H286" marker-end="url(#ah)" stroke-width="2.4"/>
+    </svg>
+    <figcaption>gradients flow only into the outlined student. the hatched teacher is never trained: after each step it moves a little toward the student.</figcaption>
+  </figure>
+
+  <p>Let \(C(\theta)\) be the usual cross-entropy on the labelled images and \(w(t)\) a weight that ramps up from 0 over the first 40,000 steps. The student minimises</p>
+  $$C(\theta) + w(t)\,J(\theta),\qquad J(\theta)=\mathbb E_{x,\eta,\eta'}\Big[\big\|f(x,\theta',\eta')-f(x,\theta,\eta)\big\|^2\Big],$$
+  <p>where \(x\) runs over all images, labelled or not, and \(\theta'\) is held constant when differentiating. On SVHN each minibatch holds 1 labelled image and 99 unlabelled ones.</p>
+
+  <p>Because the two noise draws are independent, \(J\) splits by the usual bias–variance identity. Write \(\bar a=\mathbb E_{\eta'}f(x,\theta',\eta')\) and \(\bar b=\mathbb E_{\eta}f(x,\theta,\eta)\) for each side's mean prediction:</p>
+  $$J=\mathbb E_x\Big[\ \|\bar a-\bar b\|^2\ +\ \operatorname{tr}\operatorname{Cov}_{\eta}\,f(x,\theta,\eta)\ +\ \operatorname{tr}\operatorname{Cov}_{\eta'}\,f(x,\theta',\eta')\ \Big].$$
+  <p>The last term has zero gradient with respect to \(\theta\). So the student is pushed toward two things: its average prediction should match the teacher's average, and its prediction should not depend on the noise (small covariance trace). The second is the invariance; the first is where the quality of the teacher matters.</p>
+
+  <h3 class="sub">The teacher is a geometric convolution of the student's path</h3>
+
+  <p>With \(\theta_s\) the student after step \(s\), unrolling \(\theta'_t=\alpha\theta'_{t-1}+(1-\alpha)\theta_t\) gives</p>
+  $$\theta'_t=\alpha^t\theta'_0+(1-\alpha)\sum_{s=1}^{t}\alpha^{\,t-s}\,\theta_s .$$
+  <p>This is a convex combination of past iterates with geometrically decaying weights, a one-pole low-pass filter applied coordinatewise in \(\mathbb R^P\). The weights have mean age \(\sum_k k(1-\alpha)\alpha^k=\alpha/(1-\alpha)\) steps. If the student drifts at constant velocity \(v\), the teacher trails it by exactly \(v\cdot\alpha/(1-\alpha)\): 99 steps behind at \(\alpha=0.99\), 999 at \(\alpha=0.999\). That lag is why the paper uses \(\alpha=0.99\) early in training, when the student improves fast, and 0.999 afterwards.</p>
+
+  <div class="callout">
+    <span class="callout-label">Why an averaged network is better: the Hessian's spectrum</span>
+    <p>The paper justifies this step only by citing Polyak &amp; Juditsky (1992), who showed that averaging the iterates of stochastic gradient descent speeds up convergence. Here is the standard argument behind that citation, worked out for the EMA. Near a minimum \(\theta^*\), model the loss as quadratic with Hessian \(H\), which is symmetric positive semidefinite. Let \(e_t=\theta_t-\theta^*\) be the error, \(\eta_{\rm lr}\) the learning rate, and \(\xi_t\) zero-mean gradient noise from sampling minibatches. Stochastic gradient descent is then the linear recursion</p>
+    $$e_{t+1}=(I-\eta_{\rm lr}H)\,e_t-\eta_{\rm lr}\,\xi_t .$$
+    <p>By the spectral theorem, \(H=Q\Lambda Q^\top\) with \(Q\) orthogonal. In the eigenbasis, the recursion decouples into independent scalar processes, one per eigenvalue \(\lambda_i\), each with its own decay factor \(\rho_i=1-\eta_{\rm lr}\lambda_i\). Assume the noise is isotropic, \(\operatorname{Cov}\xi=\sigma^2 I\). Then each coordinate settles to a stationary variance \(\eta_{\rm lr}^2\sigma^2/(1-\rho_i^2)\), and its contribution to the excess loss, \(\tfrac12\lambda_i\operatorname{Var}\), is about \(\eta_{\rm lr}\sigma^2/4\) <em>in every direction</em>. So the noise costs roughly the same loss in every eigendirection.</p>
+    <p>Pass coordinate \(i\) through the EMA. Summing the double geometric series \(\sum_{j,k}\alpha^{j+k}\rho^{|j-k|}\) gives the stationary variance ratio</p>
+    $$\frac{\operatorname{Var}(\text{teacher}_i)}{\operatorname{Var}(\text{student}_i)}=\frac{(1-\alpha)(1+\alpha\rho_i)}{(1+\alpha)(1-\alpha\rho_i)} .$$
+    <p>For a stiff direction (large \(\lambda_i\), \(\rho_i\) well below 1) the ratio is close to \((1-\alpha)/(1+\alpha)\), a huge cut. For a flat direction (\(\rho_i\to1\)) it tends to 1, because the student's error there is already slow and the filter cannot separate it from signal. With \(\alpha=0.999\): \(\rho=0.9\) gives about 0.009, while \(\rho=0.999\) gives 0.5.</p>
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>\(H=\begin{pmatrix}2&1\\1&2\end{pmatrix}\), with eigenvalues 3 and 1 on eigenvectors \((1,1)/\sqrt2\) and \((1,-1)/\sqrt2\). Take \(\eta_{\rm lr}=0.1\). Then \(I-\eta_{\rm lr}H=\begin{pmatrix}0.8&-0.1\\-0.1&0.8\end{pmatrix}\), with the same eigenvectors and eigenvalues \(\rho=0.7\) and \(0.9\).</p>
+    <p>With \(\alpha=0.9\), the stiff direction's ratio is \(\frac{0.1\cdot1.63}{1.9\cdot0.37}\approx0.23\) and the flat direction's is \(\frac{0.1\cdot1.81}{1.9\cdot0.19}\approx0.50\). The teacher has about a quarter of the student's jitter along \((1,1)\) and half along \((1,-1)\). The averaging works best where the loss is most sensitive.</p>
+  </div>
+
+  <h3 class="sub">What the consistency gradient does: the softmax Jacobian</h3>
+
+  <p>Let \(p\) be the student's output and \(q\) the teacher's, and differentiate with respect to the student's logits \(z\). The Jacobian of softmax is</p>
+  $$\frac{\partial p}{\partial z}=\operatorname{diag}(p)-pp^\top=:S_p .$$
+  <p>\(S_p\) is the covariance matrix of a one-hot vector \(e_Y\) with the class \(Y\) drawn from \(p\). So it is symmetric and PSD, with \(S_p\mathbf 1=0\) (adding a constant to all logits changes nothing), and \(S_p\preceq\operatorname{diag}(p)\preceq(\max_i p_i)I\). The two candidate costs then give</p>
+  $$\nabla_z\,\tfrac12\|p-q\|^2=S_p\,(p-q),\qquad \nabla_z\,D_{\rm KL}(q\,\|\,p)=p-q .$$
+  <p>Here \(D_{\rm KL}\) is the Kullback–Leibler divergence, the natural mismatch measure between distributions. Squared error is the KL gradient passed through the PSD filter \(S_p\). When the student is confident (\(p\) close to one-hot), \(S_p\to0\), so a teacher that disagrees can barely move it.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>\(N=3\), student \(p=(0.7,0.2,0.1)\), teacher \(q=(0.5,0.3,0.2)\), so \(p-q=(0.2,-0.1,-0.1)\).</p>
+    <p>\(S_p=\begin{pmatrix}0.21&-0.14&-0.07\\-0.14&0.16&-0.02\\-0.07&-0.02&0.09\end{pmatrix}\). Its rows sum to 0, as they must.</p>
+    <p>The squared-error gradient is \(S_p(p-q)=(0.063,\,-0.042,\,-0.021)\). The KL gradient is \((0.2,-0.1,-0.1)\). Both lower the top class, but squared error does so about 3× more gently.</p>
+  </div>
+
+  <p>The appendix makes the link exact. To second order around \(p=q\), \(D_{\rm KL}(q\|p)\approx\tfrac12\sum_i (p_i-q_i)^2/q_i\): KL is squared distance in the metric \(\operatorname{diag}(1/q)\) (the Fisher information metric). The authors blend both distributions toward uniform, \(p_\tau=\tau p+(1-\tau)/N\), which turns the metric into \(\approx N\,I\). Their rescaled cost \(C_\tau(p,q)=\tfrac{2}{N^2\tau^2}D_{\rm KL}(p_\tau\|q_\tau)\) then runs from plain squared error (\(\tau\to0\)) to KL (\(\tau=1\)). Squared error, the Euclidean end, wins on 250-label SVHN.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It: Average Away the Noise</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive<b>Noisy SGD vs. its EMA</b></p>
+
+  <p>A two-weight “network” with a quadratic loss whose Hessian has a stiff eigenvalue \(\lambda=4\) and a flat one \(\lambda=4/\kappa\). Here \(\kappa\) is the condition number, the ratio of the largest curvature to the smallest. The student runs 2000 steps of noisy gradient descent (learning rate 0.1) from a far-off start. The teacher is its EMA with decay \(\alpha\), started at the same point. Left: the paths over the loss's contour ellipses. Right: excess loss over time, on a log scale.</p>
+  <p><strong>Try:</strong> set \(\alpha=0\), then slide up through 0.9 and 0.99 to 0.999. <strong>Notice:</strong> the thick teacher line smooths more and more, and its loss floor drops well below the student's jagged one. At 0.999 it lags so far behind that it is still high at the end, which is the reason for the paper's 0.99-then-0.999 schedule. Then raise \(\kappa\) and compare the two variance rows: the cut is large in the stiff direction and much smaller in the flat one, as the formula above predicts.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="al">α = <output id="alv" for="al">0.99</output></label>
+      <input id="al" type="range" min="0" max="8" value="6" step="1">
+    </div>
+    <div class="dial">
+      <label for="kp">κ = <output id="kpv" for="kp">20</output></label>
+      <input id="kp" type="range" min="1" max="40" value="20" step="1">
+    </div>
+    <div class="btnrow"><button class="btn" id="rs" type="button">New noise</button></div>
+    <div class="maps">
+      <figure><canvas id="cP" class="sq" width="400" height="400"></canvas><figcaption>thin: student &middot; thick: teacher &middot; ✕: optimum</figcaption></figure>
+      <figure><canvas id="cL" class="sq" width="400" height="400"></canvas><figcaption>excess loss vs. step (log scale); hatched: warm-up, not measured</figcaption></figure>
+    </div>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">teacher memory \(1/(1-\alpha)\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lM">–</span></div>
+      <div class="entry"><span class="entry-name">stiff dir.: teacher / student mean sq. (formula)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lS">–</span></div>
+      <div class="entry"><span class="entry-name">flat dir.: teacher / student mean sq. (formula)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lF">–</span></div>
+      <div class="entry"><span class="entry-name">mean excess loss: student → teacher</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lL">–</span></div>
+    </div>
+    <p class="aside-hand" style="margin:.8rem auto 0">measured over steps 1000–2000. when the measured ratio is far above the formula, the teacher is still lagging (bias), not jittering</p>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>From the paper's tables</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Averaging weights of a nonlinear net shouldn't work, but does</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(f(\bar\theta)\approx\overline{f(\theta)}\)</span></div>
+    <p class="entry-desc">For a nonlinear network, the averaged weights give a different function from the average of the networks' outputs. Here the two agree to first order: consecutive iterates lie in one small region where \(f\) is nearly linear in \(\theta\), so \(f(x,\sum_s c_s\theta_s)\approx\sum_s c_s f(x,\theta_s)\). The teacher is then a free ensemble over about 1000 recent students. It also improves every intermediate layer, not just the output.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">A virtuous loop</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">Fig. 3</span></div>
+    <p class="entry-desc">The teacher improves the student through the consistency cost, and the student improves the teacher through the average. With 500 labels on SVHN, the Π model stops improving while Mean Teacher keeps going. With all labels present, the two behave identically, so the gain comes entirely from the unlabelled data.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">More unlabelled data keeps paying</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">4.18% → 2.46%</span></div>
+    <p class="entry-desc">On SVHN, the labels stay fixed at 500 while the unlabelled pool grows from 73k to 573k images, and error drops from 4.18% to 2.46%. Temporal Ensembling could not do this, because its targets refresh once per epoch and an epoch over 573k images is slow. Keeping each target fresh at a fixed time span would take \(O(n^2)\) evaluations per epoch for \(n\) images.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Label propagation with a learned metric</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">graphs</span></div>
+    <p class="entry-desc">Classic label propagation spreads labels along a similarity graph with a fixed distance on inputs. Consistency training does the same, except the distance is the one the network's own features induce. That distance improves as the features improve, so the graph is effectively re-learned during training.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>An exponential moving average of a network's own weights is a low-pass filter that removes most of SGD's jitter in the stiff directions of the loss. That gives a better network for free, and training the student to agree with it on unlabelled images lets 250 labels do the work of thousands.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Mean teachers are better role models: Weight-averaged consistency targets improve semi-supervised deep learning results</strong>, by Antti Tarvainen and Harri Valpola (The Curious AI Company, Aalto University), 2017.
+  <a href="https://arxiv.org/abs/1703.01780">arxiv.org/abs/1703.01780</a></p>
+  <p class="signoff">Written from the full text (arXiv v6). Numbers are from the paper's tables. The paper does not say which ImageNet error it reports; 9.11% is in the range of the usual top-5 measure. The Hessian-spectrum argument is standard background behind the paper's citation of Polyak &amp; Juditsky, not an analysis from the paper. The interactive uses a synthetic two-weight quadratic.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var ALPHAS = [0, 0.5, 0.8, 0.9, 0.95, 0.98, 0.99, 0.995, 0.999];
+  var LR = 0.1, LS = 4, T = 2000, SIG = 1, START = [2.2, 2.2];
+  var ANG = Math.PI / 6, CA = Math.cos(ANG), SA = Math.sin(ANG);
+  var seed = 1703;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3";
+
+  // Coordinates are in the Hessian's eigenbasis: index 0 = stiff, 1 = flat.
+  function simulate(alpha, kappa) {
+    var rand = mulberry32(seed);
+    function gauss() {
+      var u = 0; while (u === 0) u = rand();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rand());
+    }
+    var lf = LS / kappa, rs = 1 - LR * LS, rf = 1 - LR * lf;
+    var e0 = START[0], e1 = START[1], m0 = e0, m1 = e1;
+    var S = [[e0, e1]], M = [[m0, m1]];
+    for (var t = 1; t <= T; t++) {
+      e0 = rs * e0 - LR * SIG * gauss();
+      e1 = rf * e1 - LR * SIG * gauss();
+      m0 = alpha * m0 + (1 - alpha) * e0;
+      m1 = alpha * m1 + (1 - alpha) * e1;
+      S.push([e0, e1]); M.push([m0, m1]);
+    }
+    return { S: S, M: M, lf: lf, rs: rs, rf: rf };
+  }
+
+  function loss(v, lf) { return 0.5 * (LS * v[0] * v[0] + lf * v[1] * v[1]); }
+  function ratio(a, r) { return (1 - a) * (1 + a * r) / ((1 + a) * (1 - a * r)); }
+
+  function hatchPattern(ctx) {
+    var t = document.createElement("canvas");
+    t.width = 8; t.height = 8;
+    var h = t.getContext("2d");
+    h.strokeStyle = INK; h.lineWidth = 1;
+    h.beginPath();
+    h.moveTo(-1, 1); h.lineTo(1, -1);
+    h.moveTo(0, 8); h.lineTo(8, 0);
+    h.moveTo(7, 9); h.lineTo(9, 7);
+    h.stroke();
+    return ctx.createPattern(t, "repeat");
+  }
+
+  var cP = document.getElementById("cP"), cL = document.getElementById("cL");
+  var pP = cP.getContext("2d"), pL = cL.getContext("2d");
+  var hatchL = hatchPattern(pL);
+
+  function drawPlane(sim) {
+    var ctx = pP, W = cP.width, H = cP.height, sc = W / 6.4, cx = W / 2, cy = H / 2;
+    function px(v) {
+      var x = v[0] * CA - v[1] * SA, y = v[0] * SA + v[1] * CA;
+      return [cx + x * sc, cy - y * sc];
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = INK; ctx.lineWidth = 1;
+    // contour ellipses
+    var levels = [0.01, 0.04, 0.16, 0.64, 2.56, 10.24];
+    ctx.setLineDash([2, 4]);
+    for (var i = 0; i < levels.length; i++) {
+      var a = Math.sqrt(2 * levels[i] / LS) * sc, b = Math.sqrt(2 * levels[i] / sim.lf) * sc;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, a, b, -ANG, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // student path
+    ctx.globalAlpha = 0.4; ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    for (i = 0; i < sim.S.length; i++) { var p = px(sim.S[i]); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }
+    ctx.stroke();
+    // teacher path
+    ctx.globalAlpha = 1; ctx.lineWidth = 3; ctx.lineJoin = "round";
+    ctx.beginPath();
+    for (i = 0; i < sim.M.length; i++) { p = px(sim.M[i]); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }
+    ctx.stroke();
+    // start and optimum
+    ctx.lineWidth = 1.5;
+    p = px(START);
+    ctx.fillStyle = PAPER;
+    ctx.beginPath(); ctx.arc(p[0], p[1], 6, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - 7, cy - 7); ctx.lineTo(cx + 7, cy + 7);
+    ctx.moveTo(cx + 7, cy - 7); ctx.lineTo(cx - 7, cy + 7);
+    ctx.stroke();
+    ctx.fillStyle = INK;
+    ctx.font = "15px Oswald, sans-serif";
+    ctx.fillText("START", p[0] + 10, p[1] - 6);
+  }
+
+  function drawLoss(sim) {
+    var ctx = pL, W = cL.width, H = cL.height, pad = 30;
+    var lo = -4, hi = 1.5; // log10 range
+    function X(t) { return pad + (W - pad - 10) * t / T; }
+    function Y(L) {
+      var l = Math.log(Math.max(L, 1e-12)) / Math.LN10;
+      l = Math.max(lo, Math.min(hi, l));
+      return 10 + (H - 10 - pad) * (hi - l) / (hi - lo);
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+    // warm-up hatch
+    ctx.globalAlpha = 0.25; ctx.fillStyle = hatchL;
+    ctx.fillRect(X(0), 10, X(T / 2) - X(0), H - 10 - pad);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = INK; ctx.fillStyle = INK; ctx.lineWidth = 1;
+    // axes and decade ticks
+    ctx.beginPath(); ctx.moveTo(pad, 10); ctx.lineTo(pad, H - pad); ctx.lineTo(W - 10, H - pad); ctx.stroke();
+    ctx.font = "13px Oswald, sans-serif";
+    for (var d = lo; d <= 1; d++) {
+      var y = Y(Math.pow(10, d));
+      ctx.beginPath(); ctx.moveTo(pad - 5, y); ctx.lineTo(pad, y); ctx.stroke();
+      ctx.save(); ctx.setLineDash([1, 5]); ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - 10, y); ctx.stroke(); ctx.restore();
+      ctx.fillText(d === 0 ? "1" : "1e" + d, 0, y + 4);
+    }
+    ctx.fillText("0", pad - 3, H - pad + 16);
+    ctx.fillText("2000", W - 40, H - pad + 16);
+    ctx.fillText("step", W / 2 - 12, H - pad + 16);
+    // student
+    ctx.globalAlpha = 0.45; ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    for (var t = 0; t <= T; t++) { var yy = Y(loss(sim.S[t], sim.lf)); t ? ctx.lineTo(X(t), yy) : ctx.moveTo(X(t), yy); }
+    ctx.stroke();
+    // teacher
+    ctx.globalAlpha = 1; ctx.lineWidth = 3; ctx.lineJoin = "round";
+    ctx.beginPath();
+    for (t = 0; t <= T; t++) { yy = Y(loss(sim.M[t], sim.lf)); t ? ctx.lineTo(X(t), yy) : ctx.moveTo(X(t), yy); }
+    ctx.stroke();
+  }
+
+  function fmt(x) {
+    if (x >= 100) return x.toFixed(0);
+    if (x >= 1) return x.toFixed(2);
+    if (x >= 0.01) return x.toFixed(3);
+    return x.toExponential(1);
+  }
+
+  var al = document.getElementById("al"), kp = document.getElementById("kp");
+
+  function update() {
+    var alpha = ALPHAS[+al.value], kappa = +kp.value;
+    document.getElementById("alv").textContent = String(alpha);
+    document.getElementById("kpv").textContent = String(kappa);
+    var sim = simulate(alpha, kappa);
+    drawPlane(sim);
+    drawLoss(sim);
+    var s0 = 0, s1 = 0, m0 = 0, m1 = 0, ls = 0, lm = 0, n = 0;
+    for (var t = T / 2; t <= T; t++) {
+      var a = sim.S[t], b = sim.M[t];
+      s0 += a[0] * a[0]; s1 += a[1] * a[1];
+      m0 += b[0] * b[0]; m1 += b[1] * b[1];
+      ls += loss(a, sim.lf); lm += loss(b, sim.lf); n++;
+    }
+    document.getElementById("lM").textContent = alpha === 0 ? "1 step" : Math.round(1 / (1 - alpha)) + " steps";
+    document.getElementById("lS").textContent = fmt(m0 / s0) + " (" + fmt(ratio(alpha, sim.rs)) + ")";
+    document.getElementById("lF").textContent = fmt(m1 / s1) + " (" + fmt(ratio(alpha, sim.rf)) + ")";
+    document.getElementById("lL").textContent = fmt(ls / n) + " → " + fmt(lm / n);
+  }
+
+  al.addEventListener("input", update);
+  kp.addEventListener("input", update);
+  document.getElementById("rs").addEventListener("click", function () {
+    seed = (seed * 48271 + 11) % 2147483647;
+    update();
+  });
+  update();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+})();
+</script>
+</body>
+</html>

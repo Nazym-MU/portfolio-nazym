@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A3C: Asynchronous Methods for Deep Reinforcement Learning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:2.2em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.maps{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:clamp(.6rem, 3vw, 1.4rem);
+}
+.maps figure{margin:0}
+.maps figcaption{font-size:1.05rem}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.sq{aspect-ratio:1 / 1}
+.bench .spectrum{margin:1.2rem 0 0}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- sixteen threads converging on one shared parameter vector (silhouette) -->
+    <svg class="strip" viewBox="0 0 420 60" fill="currentColor" aria-hidden="true">
+      <path d="M8 2h8L206 52h8z"/><path d="M34 2h8L206 52h8z"/><path d="M60 2h8L207 52h6z"/><path d="M86 2h8L207 52h6z"/>
+      <path d="M112 2h8L208 52h4z"/><path d="M138 2h8L208 52h4z"/><path d="M164 2h8L209 52h2z"/><path d="M190 2h8L209 52h2z"/>
+      <path d="M222 2h8L209 52h2z"/><path d="M248 2h8L209 52h2z"/><path d="M274 2h8L208 52h4z"/><path d="M300 2h8L208 52h4z"/>
+      <path d="M326 2h8L207 52h6z"/><path d="M352 2h8L207 52h6z"/><path d="M378 2h8L206 52h8z"/><path d="M404 2h8L206 52h8z"/>
+      <rect x="186" y="50" width="48" height="10"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; ICML 2016</p>
+      <h1>A3C</h1>
+    </div>
+    <p class="tagline">Asynchronous Methods for Deep Reinforcement Learning</p>
+    <p class="tagline-hand">Volodymyr Mnih, Adrià Puigdomènech Badia, Mehdi Mirza et al. &middot; 2016 &middot;
+    <a href="https://arxiv.org/abs/1602.01783">arXiv:1602.01783</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>Instead of training a game-playing neural network on a stored memory of its past experience, the paper runs sixteen copies of the agent at once on one CPU. Each plays its own copy of the game and writes its updates into one shared set of weights. That alone keeps training stable, and the paper's best method built on it, A3C, was the strongest Atari agent of its time.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: correlation and reach</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">correlated data</span></div>
+    <p class="entry-desc">In <em>reinforcement learning</em> (RL), an agent repeatedly sees the current state of a world (here, a frame of an Atari video game), picks an action, and receives a numerical reward. It learns to pick actions that maximise its total future reward. When the agent is a deep neural network trained by gradient descent, there's a snag: the frames one agent sees are consecutive moments of one game, so they are strongly correlated, and their distribution drifts as the agent's behaviour changes. Gradient descent expects roughly independent samples. Fed a correlated stream, it chases whatever happened most recently and can diverge.</p>
+    <p class="entry-desc">The standard fix was the one used by DQN (DeepMind's 2015 "Deep Q-Network", the first network to learn Atari games from pixels): <em>experience replay</em>. The agent stores its last million transitions and trains on random samples from that memory. This costs memory, and it only works with <em>off-policy</em> algorithms, which can learn from data produced by an older version of the agent.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">16 threads, 1 θ</span></div>
+    <p class="entry-desc">Run 16 agents in parallel CPU threads on one machine. Each has its own copy of the game and explores a little differently. Each thread plays 5 steps, computes a gradient from them, and writes it into one shared parameter vector \(\theta\) without locks. At any moment the threads are at different points in different games, so the stream of updates reaching \(\theta\) is far less correlated than a single agent's. Parallelism supplies the decorrelation that replay used to supply, with no memory buffer.</p>
+    <p class="entry-desc">That makes <em>on-policy</em> methods usable, meaning methods that must learn from the current agent's own behaviour. The paper builds asynchronous versions of four classic algorithms. The best is <strong>A3C</strong>, asynchronous advantage actor-critic: one network outputs both a policy (action probabilities) and an estimate of how good the current state is.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">623% · 4 CPU-days</span></div>
+    <p class="entry-desc">The test is 57 Atari games, scored as a <em>human-normalised score</em>: 0% is random play and 100% is a professional human tester. Averaged over the games, A3C with a recurrent memory layer (an LSTM) reaches 623% after 4 days on 16 CPU cores. The best earlier agent (Prioritized DQN) reached 463.6% after 8 days on a GPU. The median game tells a more modest story: 112.6% vs 127.6%.</p>
+    <p class="entry-desc">The same agent also learns 3D maze navigation from raw pixels and continuous robot control in a physics simulator. With 16 threads, the time to reach a fixed score falls by 12.5× to 24.1×, depending on the algorithm.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Three matrices do the work</b></p>
+
+  <p>Three matrices explain why A3C works. The first is a stochastic matrix \(P\), which says how far a reward travels backwards in one update. The second is the softmax covariance \(\operatorname{diag}(\pi)-\pi\pi^{\top}\), which shapes every policy gradient. The third is the covariance \(\Sigma\) of the gradient samples in a batch: the direction \(\mathbf 1\) (the all-ones vector) is what decides whether averaging those samples helps.</p>
+
+  <h3 class="sub">The objects</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(\theta\in\mathbb R^{p}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">shared</span></div>
+    <p class="entry-desc">Every network weight, flattened into one vector held in shared memory. The network is small: two convolutional layers and a 256-unit layer. It has two outputs. A <em>policy head</em> gives a vector of logits \(z(s)\in\mathbb R^{|\mathcal A|}\), one per action in the action set \(\mathcal A\) (up to 18 joystick moves), turned into probabilities \(\pi(\cdot\mid s)=\operatorname{softmax}(z)\). A <em>value head</em> gives a scalar \(V(s)\), the network's estimate of the future reward from state \(s\). All other layers are shared between the two heads.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(\theta'\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">per thread</span></div>
+    <p class="entry-desc">Each thread copies \(\theta\) into its own \(\theta'\), plays \(t_{\max}=5\) steps with it, computes a gradient at \(\theta'\), and adds the step into the shared \(\theta\). By then other threads may have changed \(\theta\), so gradients are slightly stale.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(R_t,\ \gamma\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\gamma = 0.99\)</span></div>
+    <p class="entry-desc">The <em>return</em> is \(R_t=\sum_{k\ge0}\gamma^k r_{t+k}\), the rewards \(r\) from time \(t\) on, discounted by \(\gamma\in(0,1)\) so that later rewards count less.</p>
+  </div>
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 190" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1.2"/>
+        </pattern>
+      </defs>
+      <!-- game screens -->
+      <rect x="14" y="14" width="64" height="46"/><rect x="104" y="14" width="64" height="46"/>
+      <rect x="312" y="14" width="64" height="46"/><rect x="402" y="14" width="64" height="46"/>
+      <path d="M22 50l10-14 8 9 10-16 10 21M112 46h48M126 26v20M330 50l14-24 14 24M410 30h48M410 40h30M410 50h40" stroke-width="1.2"/>
+      <text x="240" y="42" font-family="Oswald, sans-serif" font-size="16" text-anchor="middle" fill="currentColor" stroke="none">&middot; &middot; &middot;</text>
+      <text x="46" y="8" font-family="Oswald, sans-serif" font-size="10" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">THREAD 1</text>
+      <text x="434" y="8" font-family="Oswald, sans-serif" font-size="10" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">THREAD 16</text>
+      <!-- arrows to theta -->
+      <path d="M46 62L218 138M136 62L224 134M344 62L256 134M434 62L262 138"/>
+      <path d="M210 130l8 8-11 2M216 126l8 8-10 3M262 126l-6 8 10 3M268 130l-6 8 11 2" stroke-width="1.6"/>
+      <!-- dashed sync -->
+      <path d="M220 152C150 170 60 140 40 66M260 152C330 170 420 140 440 66" stroke-width="1" stroke-dasharray="3 4"/>
+      <!-- theta -->
+      <circle cx="240" cy="148" r="24" fill="url(#hatch)"/>
+      <circle cx="240" cy="148" r="24"/>
+      <rect x="226" y="137" width="28" height="22" fill="#f4efe3" stroke="none"/>
+      <text x="240" y="155" font-family="Spectral, serif" font-style="italic" font-size="20" text-anchor="middle" fill="currentColor" stroke="none">θ</text>
+      <text x="140" y="104" font-family="Oswald, sans-serif" font-size="10" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none" transform="rotate(24 140 104)">GRADIENT, NO LOCK</text>
+      <text x="58" y="160" font-family="Oswald, sans-serif" font-size="10" letter-spacing="1.5" fill="currentColor" stroke="none">COPY θ → θ′</text>
+    </svg>
+    <figcaption>sixteen games, sixteen threads, one shared parameter vector. solid arrows: lock-free gradient writes. dashed: each thread re-copies θ every 5 steps.</figcaption>
+  </figure>
+
+  <h3 class="sub">1 &middot; Returns are a Neumann series, and n-step returns use \(P^n\)</h3>
+
+  <p>Fix the agent's behaviour and suppose there are finitely many states. Let \(P\) be the transition matrix: \(P_{ss'}\) is the probability that the next state is \(s'\) given the current state \(s\). It is <em>row-stochastic</em>: its entries are nonnegative and each row sums to 1. Let \(r\) be the vector of expected one-step rewards. Then the vector of state values satisfies a linear system:</p>
+  $$V^{\pi}=r+\gamma P V^{\pi}\quad\Longrightarrow\quad V^{\pi}=(I-\gamma P)^{-1}r=\sum_{k\ge0}\gamma^kP^k r .$$
+  <p>The inverse exists because \(\|P\|_\infty=1\) (the max row sum), so \(\|\gamma P\|_\infty=\gamma\lt1\). Every eigenvalue of \(\gamma P\) therefore has modulus at most \(\gamma\), and the Neumann series converges.</p>
+  <p>Learning never forms \(P\). It moves \(V\) towards a <em>target</em> built from observed rewards. A one-step target applies \(TV=r+\gamma PV\) once. An \(n\)-step target applies it \(n\) times:</p>
+  $$T^nV=\sum_{k=0}^{n-1}\gamma^kP^kr+\gamma^nP^nV,\qquad T^nV-V^{\pi}=\gamma^nP^n\,(V-V^{\pi}).$$
+  <p>So the error shrinks by a factor of \(\gamma^n\) in sup norm per target, not \(\gamma\). Seen another way, a reward reaches \(n\) earlier states per update instead of one. A3C uses this inside each 5-step segment: the last state of the segment gets a 1-step target and the first gets a 5-step target. The resulting <em>advantage</em>, meaning how much better the action taken turned out than the value predicted, is</p>
+  $$A_t=\sum_{i=0}^{k-1}\gamma^i r_{t+i}+\gamma^kV(s_{t+k})-V(s_t),\qquad k\le t_{\max}=5.$$
+
+  <h3 class="sub">2 &middot; The softmax covariance: symmetric, PSD, kernel \(\mathbf 1\)</h3>
+
+  <p>The <em>actor</em> half of actor-critic updates the policy along \(\nabla_\theta\log\pi(a_t\mid s_t)\,A_t\): make the action taken more likely if it beat expectation, less likely otherwise. The <em>critic</em> half is the value head that supplies \(V\). By the chain rule, every policy gradient passes through the logits, where the gradient for a sampled action \(a\) is</p>
+  $$\frac{\partial\log\pi_a}{\partial z}=e_a-\pi,$$
+  <p>with \(e_a\) the standard basis vector for action \(a\). Two facts about this random vector (random because \(a\sim\pi\)) carry the method:</p>
+  $$\mathbb E_{a\sim\pi}[e_a-\pi]=0,\qquad \operatorname{Cov}(e_a-\pi)=\operatorname{diag}(\pi)-\pi\pi^{\top}=:J .$$
+  <p><strong>Mean zero.</strong> Subtracting any baseline that depends only on the state, such as \(V(s_t)\), leaves the expected gradient unchanged, but it can cut the variance a lot. That is why the update multiplies by \(A_t\) and not by the raw return.</p>
+  <p><strong>\(J\) is a covariance matrix,</strong> so it is symmetric and positive semidefinite. It is also the Jacobian \(\partial\pi/\partial z\) of the softmax. It satisfies \(J\mathbf 1=\pi-\pi(\pi^{\top}\mathbf 1)=0\): adding a constant to every logit leaves the policy unchanged. If all \(\pi_a\gt0\), its rank is exactly \(|\mathcal A|-1\).</p>
+  <p>The same \(J\) shows up in the paper's <em>entropy bonus</em>. A term \(\beta H(\pi)\) with \(\beta=0.01\) is added to the objective, where \(H(\pi)=-\sum_a\pi_a\log\pi_a\) is high when the policy is spread out. It keeps the agent exploring and stops it locking into one action too early. Its gradient is</p>
+  $$\nabla_zH=-J\log\pi .$$
+  <p>Because \(J\mathbf 1=0\), only the deviation of \(\log\pi\) from its mean matters. The gradient vanishes exactly at the uniform policy.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: three actions</span>
+    <p>\(\pi=(\tfrac12,\tfrac14,\tfrac14)\). Then
+    \(J=\begin{pmatrix}\tfrac14&-\tfrac18&-\tfrac18\\-\tfrac18&\tfrac3{16}&-\tfrac1{16}\\-\tfrac18&-\tfrac1{16}&\tfrac3{16}\end{pmatrix}\). Every row sums to 0.</p>
+    <p>Eigenpairs: \(0\) on \((1,1,1)\); \(\tfrac14\) on \((0,1,-1)\); \(\tfrac38\) on \((2,-1,-1)\). The trace checks out: \(0+\tfrac14+\tfrac38=\tfrac58=\tfrac14+\tfrac3{16}+\tfrac3{16}\).</p>
+    <p>Entropy push: \(\log\pi=-\ln2\,(1,2,2)\), so \(-J\log\pi=\ln2\,(-\tfrac14,\tfrac18,\tfrac18)\approx(-0.17,\,0.09,\,0.09)\). It lowers the logit of the favourite action and raises the other two, and it lies entirely along the eigenvector \((2,-1,-1)\).</p>
+  </div>
+
+  <h3 class="sub">3 &middot; Why parallel actors stabilise: the \(\mathbf 1\) direction of \(\Sigma\)</h3>
+
+  <p>Take one coordinate of the gradient and let \(g_1,\dots,g_B\) be the \(B\) samples that feed one update, each with variance \(\sigma^2\). Collect their covariances in \(\Sigma\in\mathbb R^{B\times B}\), which is symmetric and PSD. The update uses their average, which is a projection onto \(\mathbf 1\):</p>
+  $$\operatorname{Var}\Big(\tfrac1B\textstyle\sum_i g_i\Big)=\frac{\mathbf 1^{\top}\Sigma\,\mathbf 1}{B^2}.$$
+  <p>If consecutive samples from one agent all have correlation \(\rho\), then \(\Sigma=\sigma^2\big((1-\rho)I+\rho\,\mathbf 1\mathbf 1^{\top}\big)\). Its spectrum is one large eigenvalue \(\sigma^2(1+(B-1)\rho)\) with eigenvector \(\mathbf 1\), and \(B-1\) small ones equal to \(\sigma^2(1-\rho)\) on \(\mathbf 1^{\perp}\). The correlation piles all the variance onto the exact direction the average measures:</p>
+  $$\operatorname{Var}=\sigma^2\,\frac{1+(B-1)\rho}{B}\ \xrightarrow{\,B\to\infty\,}\ \rho\,\sigma^2 .$$
+  <p>So adding more correlated samples never pushes the variance below the floor \(\rho\sigma^2\). Samples from \(K\) independent games instead make \(\Sigma\) block-diagonal, and the variance falls like \(1/K\).</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>\(B=16\), \(\rho=0.9\). One agent: \(\operatorname{Var}=\sigma^2(1+15\cdot0.9)/16\approx0.91\,\sigma^2\), so 16 samples are worth about 1.1 independent ones. Sixteen threads contributing one sample each: \(\Sigma=\sigma^2I\) and \(\operatorname{Var}=0.0625\,\sigma^2\), worth all 16.</p>
+  </div>
+  <p>The paper makes this argument in words ("less correlated in time"). The covariance computation above is the standard way to make it precise, and the first interactive below shows it. Asynchrony adds one more effect: the sequence of updates that hits \(\theta\) interleaves the threads, so consecutive steps of the optimiser come from different games.</p>
+
+  <h3 class="sub">4 &middot; The optimiser: a shared diagonal preconditioner</h3>
+  <p>Updates use RMSProp, which divides each coordinate of the gradient \(\Delta\theta\) by a running root-mean-square of its past values. All operations are elementwise:</p>
+  $$g\leftarrow\alpha g+(1-\alpha)\,\Delta\theta^{2},\qquad \theta\leftarrow\theta-\eta\,D^{-1/2}\Delta\theta,\quad D=\operatorname{diag}(g+\epsilon).$$
+  <p>Here \(\eta\) is the learning rate, \(\alpha=0.99\) the averaging rate, and \(\epsilon\) a small constant that keeps the division safe. \(D\) is a positive-definite diagonal preconditioner that rescales each coordinate's step. In <em>shared</em> RMSProp, the statistics \(g\) live in shared memory, so all 16 threads estimate one \(D\) together. Across 50 random learning rates and initialisations, this variant was clearly the most robust, ahead of per-thread RMSProp and of momentum SGD.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive 1<b>One agent vs sixteen</b></p>
+
+  <p>Each update averages \(B=16\) gradient samples. They come from \(K\) threads, and each thread contributes \(16/K\) <em>consecutive</em> samples. Within a thread, a sample's correlation with the one \(k\) steps later is \(\rho^k\). Across threads, samples are independent. The left panel is the covariance \(\Sigma\) (16×16, ink = high correlation). The right panel is a histogram of the batch average over 3,000 simulated batches, with the predicted normal curve in outline. The bars underneath are the eigenvalues of \(\Sigma\).</p>
+  <p><strong>Try:</strong> set \(\rho=0.9\) and \(K=1\), then raise \(K\) to 16. <strong>Notice:</strong> at \(K=1\), \(\Sigma\) is one solid block and one eigenvalue towers over the rest, and the histogram is wide. As \(K\) grows, \(\Sigma\) breaks into \(K\) diagonal blocks, the spectrum flattens, and the histogram narrows. "Effective samples" climbs from about 1 to 16.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="kk">K = <output id="kv" for="kk">1</output></label>
+      <input id="kk" type="range" min="0" max="4" value="0" step="1" aria-label="number of threads">
+    </div>
+    <div class="dial">
+      <label for="rr">ρ = <output id="rv" for="rr">0.90</output></label>
+      <input id="rr" type="range" min="0" max="0.95" value="0.9" step="0.05" aria-label="within-thread correlation">
+    </div>
+    <div class="maps">
+      <figure><canvas id="cSig" class="sq" width="320" height="320"></canvas><figcaption>covariance \(\Sigma\) of the 16 samples</figcaption></figure>
+      <figure><canvas id="cHist" class="sq" width="320" height="320"></canvas><figcaption>batch averages (true mean 0)</figcaption></figure>
+    </div>
+    <figure class="spectrum">
+      <canvas id="cEig" width="640" height="150"></canvas>
+      <figcaption>eigenvalues of \(\Sigma\), largest first (scale fixed: full height = 16)</figcaption>
+    </figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">Var of average, \(\mathbf 1^{\top}\Sigma\mathbf 1/B^2\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lT">–</span></div>
+      <div class="entry"><span class="entry-name">Var of average, simulated</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lE">–</span></div>
+      <div class="entry"><span class="entry-name">effective samples, of 16</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lN">–</span></div>
+      <div class="entry"><span class="entry-name">largest eigenvalue</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lL">–</span></div>
+    </div>
+  </div>
+
+  <p class="regime" style="margin-top:2.4rem">Interactive 2<b>How far a reward travels</b></p>
+  <p>A corridor of 16 states. The agent always walks right, and only the last step pays a reward of 1. With \(\gamma=0.9\), the true value of each state is \(0.9^{\text{steps to go}}\), drawn as outlines. Values start at 0. One <em>sweep</em> moves every state to its \(n\)-step target, computed from the current values. Here \(P\) is a shift matrix, so \(P^n\) looks exactly \(n\) states ahead.</p>
+  <p><strong>Try:</strong> with \(n=1\), drag the sweep count up and watch the reward creep left one state per sweep. Then set \(n=5\) (A3C's longest target). <strong>Notice:</strong> the solid bars fill in five states per sweep, and the whole corridor is correct after \(\lceil 16/n\rceil\) sweeps instead of 16.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="nn">n = <output id="nv" for="nn">1</output></label>
+      <input id="nn" type="range" min="1" max="8" value="1" step="1" aria-label="steps in the target">
+    </div>
+    <div class="dial">
+      <label for="ss">sweeps = <output id="sv" for="ss">3</output></label>
+      <input id="ss" type="range" min="0" max="16" value="3" step="1" aria-label="number of sweeps">
+    </div>
+    <canvas id="cChain" width="640" height="200"></canvas>
+    <p class="aside-hand" style="margin:.6rem auto 0">solid: current estimate &middot; outline: true value &middot; the reward is paid on leaving the rightmost state</p>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">states already exact</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="cR">–</span></div>
+      <div class="entry"><span class="entry-name">largest error \(\|V-V^\pi\|_\infty\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="cE">–</span></div>
+      <div class="entry"><span class="entry-name">sweeps to finish \(\lceil 16/n\rceil\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="cS">–</span></div>
+      <div class="entry"><span class="entry-name">general contraction \(\gamma^n\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="cG">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>From the paper's tables</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">More than 16× faster with 16 threads</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">24.1×</span></div>
+    <p class="entry-desc">For one-step Q-learning, the time to reach a reference score drops 3.0× with 2 threads and 24.1× with 16 (averaged over seven games). That is superlinear: more threads also need <em>less total experience</em> to learn. The authors attribute this to the threads' varied exploration reducing the bias of one-step targets. A3C itself scales sublinearly (12.5× at 16 threads).</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">A CPU beat the GPUs</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1 day ≈ 8 days</span></div>
+    <p class="entry-desc">After a single day on 16 CPU cores, the feed-forward A3C (no memory layer) averages 344.1%, level with Dueling Double DQN's 343.8% after 8 days on a GPU. Gorila, an earlier distributed agent, used 100 machines plus 30 parameter servers.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Writes without locks still converge</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">Hogwild!</span></div>
+    <p class="entry-desc">Threads add into \(\theta\) with no locking, in the style of Hogwild! (a 2011 lock-free parallel SGD scheme). Occasionally they overwrite each other, and every gradient is computed at a slightly stale copy. A classic result (Tsitsiklis, 1994) says Q-learning still converges with outdated information, provided stale information is eventually discarded.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Hard to break with a bad learning rate</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">50 runs</span></div>
+    <p class="entry-desc">The authors drew 50 learning rates log-uniformly from \(10^{-4}\) to \(10^{-2}\), each with a fresh random initialisation. A3C does well across a wide band of them, and in that band there are virtually no runs scoring 0. Once it starts learning, it doesn't collapse.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>Gradient samples from one agent are correlated, so averaging more of them stalls at a variance floor of \(\rho\sigma^2\). Samples from many agents playing separate games are independent, so their variance keeps falling like \(1/K\). That alone replaces experience replay and lets plain actor-critic train deep networks on a CPU.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Asynchronous Methods for Deep Reinforcement Learning</strong>, by Volodymyr Mnih, Adrià Puigdomènech Badia, Mehdi Mirza, Alex Graves, Timothy P. Lillicrap, Tim Harley, David Silver and Koray Kavukcuoglu (Google DeepMind), ICML 2016.
+  <a href="https://arxiv.org/abs/1602.01783">arxiv.org/abs/1602.01783</a></p>
+  <p class="signoff">Written from the full text (arXiv v2, with supplement). All results are from the paper's tables. The covariance and Neumann-series framing is this page's, not the paper's. Both interactives are synthetic toys.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3";
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function hatchPattern(ctx) {
+    var t = document.createElement("canvas");
+    t.width = 6; t.height = 6;
+    var h = t.getContext("2d");
+    h.strokeStyle = INK; h.lineWidth = 1.3;
+    h.beginPath();
+    h.moveTo(-1, 1); h.lineTo(1, -1);
+    h.moveTo(0, 6); h.lineTo(6, 0);
+    h.moveTo(5, 7); h.lineTo(7, 5);
+    h.stroke();
+    return ctx.createPattern(t, "repeat");
+  }
+
+  function clear(ctx, W, H) {
+    ctx.globalAlpha = 1;
+    ctx.setLineDash([]);
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Cyclic Jacobi eigenvalues for a symmetric matrix.
+  function eigvals(A0) {
+    var n = A0.length, a = A0.map(function (r) { return r.slice(); }), p, q, k;
+    for (var sweep = 0; sweep < 60; sweep++) {
+      var off = 0;
+      for (p = 0; p < n; p++) for (q = p + 1; q < n; q++) off += a[p][q] * a[p][q];
+      if (off < 1e-20) break;
+      for (p = 0; p < n - 1; p++) for (q = p + 1; q < n; q++) {
+        if (Math.abs(a[p][q]) < 1e-14) continue;
+        var th = (a[q][q] - a[p][p]) / (2 * a[p][q]);
+        var t = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th * th + 1));
+        var c = 1 / Math.sqrt(t * t + 1), s = t * c, x, y;
+        for (k = 0; k < n; k++) { x = a[k][p]; y = a[k][q]; a[k][p] = c * x - s * y; a[k][q] = s * x + c * y; }
+        for (k = 0; k < n; k++) { x = a[p][k]; y = a[q][k]; a[p][k] = c * x - s * y; a[q][k] = s * x + c * y; }
+      }
+    }
+    var ev = [];
+    for (p = 0; p < n; p++) ev.push(a[p][p]);
+    ev.sort(function (u, v) { return v - u; });
+    return ev;
+  }
+
+  /* ================= Interactive 1: correlation ================= */
+  var B = 16, KS = [1, 2, 4, 8, 16], TRIALS = 3000;
+  var kk = document.getElementById("kk"), rr = document.getElementById("rr");
+  var cSig = document.getElementById("cSig"), cHist = document.getElementById("cHist"), cEig = document.getElementById("cEig");
+  var histPat = hatchPattern(cHist.getContext("2d"));
+
+  function covariance(K, rho) {
+    var m = B / K, S = [], i, j;
+    for (i = 0; i < B; i++) {
+      S.push([]);
+      for (j = 0; j < B; j++) {
+        S[i].push(Math.floor(i / m) === Math.floor(j / m) ? Math.pow(rho, Math.abs(i - j)) : 0);
+      }
+    }
+    return S;
+  }
+
+  function simulate(K, rho) {
+    var rand = mulberry32(1602017831);
+    function gauss() {
+      var u = 0; while (u === 0) u = rand();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rand());
+    }
+    var m = B / K, out = [], c = Math.sqrt(1 - rho * rho);
+    for (var t = 0; t < TRIALS; t++) {
+      var sum = 0;
+      for (var k = 0; k < K; k++) {
+        var x = gauss();
+        sum += x;
+        for (var j = 1; j < m; j++) { x = rho * x + c * gauss(); sum += x; }
+      }
+      out.push(sum / B);
+    }
+    return out;
+  }
+
+  function drawSigma(S) {
+    var ctx = cSig.getContext("2d"), W = cSig.width, cell = W / B;
+    clear(ctx, W, W);
+    ctx.fillStyle = INK;
+    for (var i = 0; i < B; i++) for (var j = 0; j < B; j++) {
+      if (S[i][j] <= 0) continue;
+      ctx.globalAlpha = S[i][j];
+      ctx.fillRect(j * cell, i * cell, cell, cell);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawHist(samples, v) {
+    var ctx = cHist.getContext("2d"), W = cHist.width, H = cHist.height;
+    clear(ctx, W, H);
+    var lo = -2.5, hi = 2.5, nb = 40, bw = (hi - lo) / nb, counts = [], i;
+    for (i = 0; i < nb; i++) counts.push(0);
+    samples.forEach(function (x) {
+      var b = Math.floor((x - lo) / bw);
+      if (b >= 0 && b < nb) counts[b]++;
+    });
+    var dens = counts.map(function (c) { return c / (TRIALS * bw); });
+    var peak = 1 / Math.sqrt(2 * Math.PI * v);
+    var ymax = Math.max(peak, Math.max.apply(null, dens)) * 1.08;
+    var pad = 14, base = H - pad, scaleY = (H - 2 * pad) / ymax, scaleX = (W - 2 * pad) / (hi - lo);
+    ctx.strokeStyle = INK; ctx.lineWidth = 1;
+    for (i = 0; i < nb; i++) {
+      if (!dens[i]) continue;
+      var x = pad + i * bw * scaleX, h = dens[i] * scaleY;
+      ctx.fillStyle = histPat;
+      ctx.fillRect(x, base - h, bw * scaleX, h);
+      ctx.strokeRect(x + 0.5, base - h + 0.5, bw * scaleX - 1, h - 1);
+    }
+    // predicted normal
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (i = 0; i <= 200; i++) {
+      var xv = lo + (hi - lo) * i / 200;
+      var yv = Math.exp(-xv * xv / (2 * v)) / Math.sqrt(2 * Math.PI * v);
+      var px = pad + (xv - lo) * scaleX, py = base - yv * scaleY;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    // baseline and zero tick
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(pad, base + 0.5); ctx.lineTo(W - pad, base + 0.5); ctx.stroke();
+    var zx = pad + (0 - lo) * scaleX;
+    ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(zx, pad); ctx.lineTo(zx, base); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawEig(ev) {
+    var ctx = cEig.getContext("2d"), W = cEig.width, H = cEig.height;
+    clear(ctx, W, H);
+    var pad = 12, bw = (W - 2 * pad) / B, top = B;
+    ctx.fillStyle = INK; ctx.strokeStyle = INK; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(pad, H - pad + 0.5); ctx.lineTo(W - pad, H - pad + 0.5); ctx.stroke();
+    // dashed line at 1 (the eigenvalue of independent samples)
+    var y1 = H - pad - (H - 2 * pad) / top;
+    ctx.save(); ctx.setLineDash([4, 5]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, y1); ctx.lineTo(W - pad, y1); ctx.stroke(); ctx.restore();
+    for (var k = 0; k < B; k++) {
+      var h = Math.max(1, (H - 2 * pad) * Math.max(0, ev[k]) / top);
+      ctx.fillRect(pad + k * bw + bw * 0.18, H - pad - h, bw * 0.64, h);
+    }
+  }
+
+  function update1() {
+    var K = KS[+kk.value], rho = +rr.value;
+    document.getElementById("kv").textContent = K;
+    document.getElementById("rv").textContent = rho.toFixed(2);
+    var S = covariance(K, rho), tot = 0, i, j;
+    for (i = 0; i < B; i++) for (j = 0; j < B; j++) tot += S[i][j];
+    var vT = tot / (B * B);
+    var smp = simulate(K, rho), mean = 0, vE = 0;
+    smp.forEach(function (x) { mean += x; }); mean /= TRIALS;
+    smp.forEach(function (x) { vE += (x - mean) * (x - mean); }); vE /= (TRIALS - 1);
+    var ev = eigvals(S);
+    drawSigma(S);
+    drawHist(smp, vT);
+    drawEig(ev);
+    document.getElementById("lT").textContent = vT.toFixed(3) + " σ²";
+    document.getElementById("lE").textContent = vE.toFixed(3) + " σ²";
+    document.getElementById("lN").textContent = (1 / vT).toFixed(1);
+    document.getElementById("lL").textContent = ev[0].toFixed(2) + " σ²";
+  }
+  kk.addEventListener("input", update1);
+  rr.addEventListener("input", update1);
+  update1();
+
+  /* ================= Interactive 2: n-step corridor ================= */
+  var N = 16, G = 0.9;
+  var nn = document.getElementById("nn"), ss = document.getElementById("ss"), cChain = document.getElementById("cChain");
+  var vStar = [];
+  for (var s0 = 0; s0 < N; s0++) vStar.push(Math.pow(G, N - 1 - s0));
+
+  function sweeps(n, k) {
+    var V = [], s, it;
+    for (s = 0; s < N; s++) V.push(0);
+    for (it = 0; it < k; it++) {
+      var W2 = [];
+      for (s = 0; s < N; s++) {
+        var d = N - 1 - s;               // steps before the rewarding step
+        W2.push(d < n ? Math.pow(G, d) : Math.pow(G, n) * V[s + n]);
+      }
+      V = W2;
+    }
+    return V;
+  }
+
+  function update2() {
+    var n = +nn.value, k = +ss.value;
+    document.getElementById("nv").textContent = n;
+    document.getElementById("sv").textContent = k;
+    var V = sweeps(n, k);
+    var ctx = cChain.getContext("2d"), W = cChain.width, H = cChain.height;
+    clear(ctx, W, H);
+    var pad = 16, right = 40, bw = (W - pad - right) / N, base = H - 26, scaleY = base - pad;
+    ctx.strokeStyle = INK; ctx.fillStyle = INK; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(pad, base + 0.5); ctx.lineTo(W - right + 6, base + 0.5); ctx.stroke();
+    var exact = 0, err = 0;
+    for (var s = 0; s < N; s++) {
+      var x = pad + s * bw + bw * 0.16, w = bw * 0.68;
+      var hs = vStar[s] * scaleY, hv = V[s] * scaleY;
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(x + 0.5, base - hs + 0.5, w - 1, hs - 1);
+      if (hv > 0.5) ctx.fillRect(x + 3, base - hv + 3, w - 6, hv - 3);
+      var e = Math.abs(V[s] - vStar[s]);
+      if (e < 1e-12) exact++;
+      err = Math.max(err, e);
+      // state dot
+      ctx.beginPath(); ctx.arc(x + w / 2, base + 12, 3, 0, 2 * Math.PI); ctx.fill();
+    }
+    // goal flag
+    var gx = W - right + 16;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(gx, base + 14); ctx.lineTo(gx, base - 34); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(gx, base - 34); ctx.lineTo(gx + 16, base - 28); ctx.lineTo(gx, base - 22); ctx.closePath(); ctx.fill();
+    ctx.font = "13px Oswald, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("+1", gx + 4, base - 42);
+    document.getElementById("cR").textContent = exact + " / " + N;
+    document.getElementById("cE").textContent = err.toFixed(3);
+    document.getElementById("cS").textContent = Math.ceil(N / n);
+    document.getElementById("cG").textContent = Math.pow(G, n).toFixed(3);
+  }
+  nn.addEventListener("input", update2);
+  ss.addEventListener("input", update2);
+  update2();
+})();
+</script>
+</body>
+</html>

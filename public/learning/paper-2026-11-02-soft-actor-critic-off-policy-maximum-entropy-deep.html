@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soft Actor-Critic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 .7rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+  min-width:6.2em;
+}
+.dial output{display:inline-block;min-width:2.4em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.sq{aspect-ratio:1 / 1;max-width:440px;margin:0 auto}
+.bench figure{margin:.8rem auto 0}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+  .dial{gap:.6rem}
+  .dial label{min-width:5.4em;font-size:.85rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- a two-humped softmax policy (silhouette) -->
+    <svg class="strip" viewBox="0 0 420 60" fill="currentColor" aria-hidden="true">
+      <rect x="10" y="57" width="22" height="3"/><rect x="40" y="52" width="22" height="8"/>
+      <rect x="70" y="36" width="22" height="24"/><rect x="100" y="12" width="22" height="48"/>
+      <rect x="130" y="6" width="22" height="54"/><rect x="160" y="28" width="22" height="32"/>
+      <rect x="190" y="46" width="22" height="14"/><rect x="220" y="40" width="22" height="20"/>
+      <rect x="250" y="18" width="22" height="42"/><rect x="280" y="10" width="22" height="50"/>
+      <rect x="310" y="30" width="22" height="30"/><rect x="340" y="50" width="22" height="10"/>
+      <rect x="370" y="56" width="22" height="4"/><rect x="400" y="58" width="20" height="2"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; ICML 2018</p>
+      <h1>Soft Actor-Critic</h1>
+    </div>
+    <p class="tagline">Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor</p>
+    <p class="tagline-hand">Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel et al. &middot; 2018 &middot;
+    <a href="https://arxiv.org/abs/1801.01290">arXiv:1801.01290</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>A learning agent that controls a simulated robot is rewarded for reaching its goal and, in this paper, also for acting as randomly as it can while still reaching it. That one change makes a learning method that reuses old experience both stable and fast, and it beat every method the authors compared it with on the hardest robot-control tasks they tried.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: curvature and contraction</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">data-hungry or brittle</span></div>
+    <p class="entry-desc">In <em>reinforcement learning</em>, an agent repeatedly observes a <em>state</em> (here, a simulated robot's joint angles and velocities), picks an <em>action</em> (the torques for each joint), and receives a number called the <em>reward</em>. Its rule for picking actions is the <em>policy</em>, and the goal is a policy with a large total reward over time.</p>
+    <p class="entry-desc">The two families of methods in 2018 each had a flaw. <em>On-policy</em> methods, such as PPO, learn only from data gathered with the current policy and throw it away after each update, so they need millions of trial steps. <em>Off-policy</em> methods, such as DDPG, keep every past step in a <em>replay buffer</em> and reuse it, which is far cheaper, but they were notoriously unstable: change a learning rate or a random seed and training could fail.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">reward + α · entropy</span></div>
+    <p class="entry-desc">Reward the agent for <em>entropy</em> too: the randomness of its action distribution. The agent maximises reward plus \(\alpha\) times entropy, where \(\alpha\) is a fixed weight called the <em>temperature</em>. The policy then spreads its choices over every action that is nearly as good as the best one, instead of collapsing onto one.</p>
+    <p class="entry-desc">The algorithm is an <em>actor-critic</em>. The <em>critic</em> is a neural network that estimates how good each action is in each state. The <em>actor</em> is a second network, the policy itself: for each state it outputs a Gaussian distribution over actions. Both learn from the replay buffer, so the method is off-policy.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">≈6,000 vs ≈2,000</span></div>
+    <p class="entry-desc">The tests are simulated robots that must learn to walk or run, from a one-legged hopper (3 joint torques to choose) to a humanoid (21). On the hardest, the 21-joint humanoid, soft actor-critic reaches an average score of about 6,000 within 10 million steps. PPO and the earlier entropy-based method reach about 2,000, and DDPG makes no progress at all (values read off the paper's Figure 1).</p>
+    <p class="entry-desc">Its five runs with different random seeds give nearly the same curve. Only one setting, the scale of the reward, had to be tuned per task.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Contraction, softmax, inverse curvature</b></p>
+
+  <p>The setting is a <em>Markov decision process</em>. At time \(t\) the agent is in state \(s_t\), takes action \(a_t\), receives reward \(r(s_t,a_t)\), and the world moves to \(s_{t+1}\) with probability \(p(s_{t+1}\mid s_t,a_t)\). The policy \(\pi(a\mid s)\) is a probability distribution over actions for each state. A <em>discount</em> \(\gamma\in[0,1)\) (0.99 in the paper) shrinks rewards that arrive later. The paper's objective, with \(\mathcal H\) the entropy of the policy's distribution at the states the agent visits, is</p>
+  $$J(\pi)=\sum_t \mathbb E\big[\,r(s_t,a_t)+\alpha\,\mathcal H(\pi(\cdot\mid s_t))\,\big],\qquad \mathcal H(q)=-\mathbb E_{a\sim q}\log q(a).$$
+  <p>Setting \(\alpha=0\) gives ordinary reinforcement learning. Scaling the reward by \(1/\alpha\) gives the same optimum with \(\alpha=1\), so from here on take \(\alpha=1\) unless it is shown.</p>
+  <p>The paper's theory runs on finitely many states and actions. There, everything is a vector or a matrix, and the argument is three facts of linear algebra.</p>
+
+  <h3 class="sub">The objects, in the finite case</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(Q\in\mathbb R^{|S||A|}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">the critic</span></div>
+    <p class="entry-desc">The <em>soft Q-function</em>: one number per state–action pair, the expected future reward plus entropy bonus from taking \(a\) in \(s\) and then following \(\pi\). \(|S|\) and \(|A|\) are the numbers of states and actions.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(P\in\mathbb R^{|S||A|\times|S|}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">the world</span></div>
+    <p class="entry-desc">Row \((s,a)\) is the distribution \(p(\cdot\mid s,a)\) of next states. Entrywise nonnegative, each row sums to 1 (<em>row-stochastic</em>). Unknown to the agent.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(M_\pi\in\mathbb R^{|S|\times|S||A|}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">the policy</span></div>
+    <p class="entry-desc">Row \(s\) holds \(\pi(\cdot\mid s)\) in the columns belonging to state \(s\) and zeros elsewhere. Also row-stochastic, and block-sparse.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(P^\pi=P\,M_\pi\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">rank ≤ |S|</span></div>
+    <p class="entry-desc">The transition matrix between state–action pairs: \(P^\pi_{(s,a),(s',a')}=p(s'\mid s,a)\,\pi(a'\mid s')\). A product of row-stochastic matrices is row-stochastic. It factors through the much smaller state space, so on \(\mathbb R^{|S||A|}\) it has rank at most \(|S|\).</p>
+  </div>
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 190" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1.2"/>
+        </pattern>
+      </defs>
+      <!-- P^pi square -->
+      <rect x="20" y="20" width="120" height="120"/>
+      <text x="80" y="86" font-family="Oswald, sans-serif" font-size="16" letter-spacing="1" text-anchor="middle" fill="currentColor" stroke="none">P<tspan dy="-7" font-size="11">π</tspan></text>
+      <text x="80" y="166" font-family="Oswald, sans-serif" font-size="12" letter-spacing="2" text-anchor="middle" fill="currentColor" stroke="none">|S||A| × |S||A|</text>
+      <!-- equals -->
+      <path d="M160 74h20M160 86h20"/>
+      <!-- P tall: hatched (the world) -->
+      <rect x="200" y="20" width="44" height="120" fill="url(#hatch)"/>
+      <text x="222" y="166" font-family="Oswald, sans-serif" font-size="12" letter-spacing="2" text-anchor="middle" fill="currentColor" stroke="none">P &middot; WORLD</text>
+      <!-- M_pi wide, block structure -->
+      <rect x="262" y="20" width="200" height="44"/>
+      <path d="M262 20h50v15h-50zM312 35h50v15h-50zM362 50h50v14h-50z" stroke-width="1" fill="url(#hatch)" opacity=".55"/>
+      <path d="M412 50h50" stroke-width="1" stroke-dasharray="2 3"/>
+      <text x="362" y="86" font-family="Oswald, sans-serif" font-size="12" letter-spacing="2" text-anchor="middle" fill="currentColor" stroke="none">M<tspan dy="4" font-size="9">π</tspan><tspan dy="-4"> &middot; POLICY</tspan></text>
+      <text x="362" y="112" font-family="Oswald, sans-serif" font-size="11" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">ONE BLOCK π(·|s) PER ROW</text>
+      <path d="M282 122h160" stroke-width="1"/>
+      <text x="362" y="140" font-family="Oswald, sans-serif" font-size="11" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">BOTH ROW-STOCHASTIC</text>
+    </svg>
+    <figcaption>the next-pair matrix factors as world × policy. hatched: what the agent can't change. outlined: what it learns.</figcaption>
+  </figure>
+
+  <h3 class="sub">Fact 1 · Evaluating a policy is an affine contraction</h3>
+
+  <p>The paper's soft Bellman backup (its Eqs. 2–3) updates \(Q\) to “reward now, plus the discounted soft value of where you land”. Written with the matrices above, it is an affine map:</p>
+  $$\mathcal T^\pi Q \;=\; r_\pi+\gamma\,P^\pi Q,\qquad r_\pi(s,a)=r(s,a)+\gamma\,\mathbb E_{s'\sim p(\cdot\mid s,a)}\,\mathcal H\big(\pi(\cdot\mid s')\big).$$
+  <p>The vector \(r_\pi\) is the reward with the expected entropy of the next state's action distribution folded in. Lemma 1 says iterating \(Q_{k+1}=\mathcal T^\pi Q_k\) from any start converges to the soft Q-function \(Q^\pi\) of the policy.</p>
+
+  <div class="callout">
+    <span class="callout-label">The spectral fact doing the work</span>
+    <p>A row-stochastic matrix has \(\|P^\pi\|_{\infty}=1\) (the max-row-sum norm), so every eigenvalue satisfies \(|\lambda|\le1\), and \(\mathbf 1\) is an eigenvector with \(\lambda=1\). Hence</p>
+    $$\|\mathcal T^\pi Q-\mathcal T^\pi Q'\|_\infty=\gamma\|P^\pi(Q-Q')\|_\infty\le\gamma\|Q-Q'\|_\infty,$$
+    $$Q^\pi=(I-\gamma P^\pi)^{-1}r_\pi=\sum_{k\ge0}\gamma^k(P^\pi)^k r_\pi .$$
+    <p>The spectral radius of \(\gamma P^\pi\) is \(\gamma&lt;1\), so the Neumann series converges, \(I-\gamma P^\pi\) is invertible, and the error shrinks by at least \(\gamma\) per sweep. The paper needs finitely many actions only so that the entropy bonus, at most \(\log|A|\), keeps \(r_\pi\) bounded.</p>
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>Two state–action pairs that always lead to each other: \(P^\pi=\begin{pmatrix}0&1\\1&0\end{pmatrix}\), with \(r_\pi=\binom{1}{0}\) and \(\gamma=0.5\).</p>
+    <p>\(I-\gamma P^\pi=\begin{pmatrix}1&-0.5\\-0.5&1\end{pmatrix}\) has determinant \(0.75\), so \(Q^\pi=\tfrac{1}{0.75}\begin{pmatrix}1&0.5\\0.5&1\end{pmatrix}\binom10=\binom{4/3}{2/3}\). Check: \(4/3=1+0.5\cdot\tfrac23\) and \(2/3=0+0.5\cdot\tfrac43\).</p>
+    <p>The eigenvalues of \(\gamma P^\pi\) are \(\pm0.5\), so starting from \(Q_0=0\) the error halves every sweep.</p>
+  </div>
+
+  <h3 class="sub">Fact 2 · Improving a policy is a softmax</h3>
+
+  <p>Given the current critic \(Q^{\pi_{\text{old}}}\), the new policy at each state is the distribution closest to the <em>softmax</em> of \(Q\), the paper's Eq. 4. Closeness is measured by the <em>KL divergence</em> \(D_{\mathrm{KL}}(q\Vert p)=\mathbb E_q[\log q-\log p]\), and \(\Pi\) is the family of policies we allow, such as Gaussians:</p>
+  $$\pi_{\text{new}}(\cdot\mid s)=\arg\min_{q\in\Pi}D_{\mathrm{KL}}\!\Big(q\;\Big\Vert\;\frac{e^{Q(s,\cdot)}}{Z(s)}\Big),\qquad Z(s)=\sum_a e^{Q(s,a)}.$$
+  <p>Why the softmax: expand the KL and you get, for any distribution \(q\),</p>
+  $$D_{\mathrm{KL}}\big(q\,\Vert\,e^{Q}/Z\big)=\log Z-\big(\mathbb E_q[Q]+\mathcal H(q)\big).$$
+  <p>The bracket is exactly \(q\)'s soft value under the current critic. So minimising KL <em>is</em> maximising soft value, and since KL \(\ge0\), the best possible is \(\log Z\) (the convex-duality fact that log-sum-exp is the conjugate of negative entropy). The normaliser \(Z\) doesn't depend on \(q\), which is why the algorithm never needs to compute it.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>One state, two actions, \(Q=(1,0)\). The softmax is \(\pi=(\tfrac{e}{1+e},\tfrac{1}{1+e})=(0.731,\,0.269)\): \(\mathbb E_\pi Q=0.731\), \(\mathcal H(\pi)=0.582\), total \(1.313=\log(1+e)=\log Z\).</p>
+    <p>Always taking the better action scores \(1+0=1\). Uniform scores \(0.5+\log2=1.193\). Both lose to the softmax.</p>
+  </div>
+
+  <p><strong>Why the new policy is better everywhere (Lemma 2).</strong> Since \(\pi_{\text{old}}\in\Pi\) was a candidate, the KL-minimiser's soft value under \(Q^{\pi_{\text{old}}}\) is at least the old one, state by state: call the gap \(\delta(s)\ge0\). Subtract the two soft Bellman equations and the difference \(D=Q^{\pi_{\text{new}}}-Q^{\pi_{\text{old}}}\) satisfies \(D=\gamma P^{\pi_{\text{new}}}D+\gamma P\delta\), so</p>
+  $$D=(I-\gamma P^{\pi_{\text{new}}})^{-1}\gamma P\,\delta=\sum_{k\ge0}\gamma^{k}(P^{\pi_{\text{new}}})^k\,\gamma P\,\delta\;\ge\;0\ \text{ entrywise}.$$
+  <p>The Neumann series of a nonnegative matrix is nonnegative, so \((I-\gamma P^\pi)^{-1}\) preserves the order “\(\ge\) in every entry”. A gain at each state becomes a gain at every state–action pair. Theorem 1 then follows: the \(Q\)'s rise monotonically, are bounded, and converge to the best policy in \(\Pi\).</p>
+
+  <h3 class="sub">Fact 3 · With continuous actions, the policy's covariance is the critic's inverse curvature</h3>
+
+  <p>For a robot, the action is a vector \(a\in\mathbb R^n\) of \(n\) joint torques, and \(\Pi\) is the Gaussians \(\mathcal N(\mu,\Sigma)\) with mean \(\mu\) and covariance \(\Sigma\) produced by the actor network. Near its peak, write the critic as a quadratic in the action: peak value \(q_0\) at action \(m\), and \(C\) the symmetric positive-definite matrix of its curvature (minus its Hessian):</p>
+  $$Q(s,a)\approx q_0-\tfrac12(a-m)^{\top}C\,(a-m)\quad\Longrightarrow\quad \frac{e^{Q/\alpha}}{Z}=\mathcal N\big(m,\;\alpha\,C^{-1}\big).$$
+  <p>So the softmax target is itself Gaussian, the projection is exact, and the policy's covariance is the temperature times the inverse curvature. Diagonalise \(C=R\,\mathrm{diag}(\lambda_1,\dots,\lambda_n)R^{\top}\): along the eigenvector \(u_i\) the policy's standard deviation is \(\sqrt{\alpha/\lambda_i}\). The agent explores most in the directions where the critic is flattest, where trying something different costs least.</p>
+
+  <div class="callout">
+    <span class="callout-label">Restricted to a diagonal covariance</span>
+    <p>The usual choice (and the released code's) is a diagonal \(\Sigma\), which can't tilt. Projecting \(\mathcal N(m,\alpha C^{-1})\) onto diagonal Gaussians with the paper's KL gives \(\sigma_i^2=\alpha/C_{ii}\) (set \(\partial/\partial\sigma_i^2\) of \(\tfrac12[\operatorname{tr}(C\Sigma)/\alpha-\log\det\Sigma]\) to zero). The KL lost is</p>
+    $$D_{\mathrm{KL}}=\tfrac12\log\frac{\prod_i C_{ii}}{\det C}\;\ge\;0\quad\text{(Hadamard's inequality)},$$
+    <p>zero iff \(C\) is diagonal, and independent of \(\alpha\).</p>
+    <p><strong>Tiny example.</strong> \(\alpha=1\), \(C=\begin{pmatrix}2&1\\1&2\end{pmatrix}\), with eigenvalues 3 along \((1,1)\) and 1 along \((1,-1)\). The exact policy is \(C^{-1}=\tfrac13\begin{pmatrix}2&-1\\-1&2\end{pmatrix}\): variance \(1\) along \((1,-1)\), \(1/3\) along \((1,1)\). The diagonal policy has \(\sigma_i^2=1/2\), smaller than the true marginal \(2/3\). It under-explores, by \(\tfrac12\log\tfrac43\approx0.14\) nats.</p>
+  </div>
+
+  <h3 class="sub">From theory to the algorithm</h3>
+  <p>Exact iteration is impossible for continuous states, so each piece becomes a network trained by stochastic gradient descent on batches from the replay buffer. Critic: \(Q_\theta\) is fitted to the target \(r+\gamma V_{\bar\psi}(s')\), where \(V\) is a separate state-value network, and \(\bar\psi\) is a slowly moving copy of its weights, \(\bar\psi\leftarrow0.005\,\psi+0.995\,\bar\psi\). Actor: minimise the KL above, which with \(Z\) dropped is (Eq. 12)</p>
+  $$J_\pi(\phi)=\mathbb E_{s,\ \varepsilon\sim\mathcal N(0,I)}\Big[\log\pi_\phi(a\mid s)-Q_\theta(s,a)\Big],\qquad a=\mu_\phi(s)+\Sigma_\phi(s)^{1/2}\varepsilon .$$
+  <p>Writing the sampled action as an affine function of fixed noise \(\varepsilon\) (the <em>reparameterisation trick</em>) lets the gradient flow through \(\nabla_aQ\), the critic's slope in action space. The alternative estimator, which only weights \(\nabla\log\pi\) by sampled values, has much higher variance.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive 1<b>Policy = α · C⁻¹</b></p>
+
+  <p>A two-joint action space (\(n=2\)). The dotted ellipses are level sets of a quadratic critic with curvature \(C\), whose eigenvalues \(\lambda_1,\lambda_2\) and tilt you set. The hatched solid ellipses are the exact max-entropy policy \(\mathcal N(m,\alpha C^{-1})\) at 1 and 2 standard deviations, and the dots are 160 actions drawn from it. The dashed box-aligned ellipse is the best diagonal-covariance policy.</p>
+  <p><strong>Try:</strong> set \(\lambda_1\) large and \(\lambda_2\) small, then turn the tilt. <strong>Notice:</strong> the policy stretches along the critic's <em>flat</em> direction. At tilt 0° or 90° the dashed ellipse matches exactly. At 45° it shrinks inside, and the KL lost peaks. Raise \(\alpha\): everything scales by \(\sqrt\alpha\), but the KL lost doesn't change. The dots move smoothly because each is \(m+\Sigma^{1/2}\varepsilon\) with fixed \(\varepsilon\), the reparameterisation trick.</p>
+
+  <div class="bench">
+    <div class="dial"><label for="gA">α = <output id="oA">0.50</output></label><input id="gA" type="range" min="0.05" max="1.5" step="0.05" value="0.5"></div>
+    <div class="dial"><label for="gL1">λ₁ = <output id="oL1">4.0</output></label><input id="gL1" type="range" min="0.25" max="6" step="0.25" value="4"></div>
+    <div class="dial"><label for="gL2">λ₂ = <output id="oL2">0.5</output></label><input id="gL2" type="range" min="0.25" max="6" step="0.25" value="0.5"></div>
+    <div class="dial"><label for="gT">tilt = <output id="oT">35°</output></label><input id="gT" type="range" min="0" max="180" step="5" value="35"></div>
+    <figure><canvas id="cG" class="sq" width="600" height="600"></canvas>
+      <figcaption>dotted: critic contours &middot; hatched: exact policy &middot; dashed: diagonal policy</figcaption></figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">policy std along each eigenvector \(\sqrt{\alpha/\lambda_i}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gS">–</span></div>
+      <div class="entry"><span class="entry-name">entropy, exact vs diagonal (nats)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gH">–</span></div>
+      <div class="entry"><span class="entry-name">KL lost by going diagonal</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gK">–</span></div>
+    </div>
+  </div>
+
+  <p class="regime" style="margin-top:2.6rem">Interactive 2<b>Contraction by γ</b></p>
+  <p>Soft policy evaluation on three state–action pairs, with \(P^\pi=\begin{pmatrix}.1&.6&.3\\.5&.2&.3\\.3&.3&.4\end{pmatrix}\) and \(r_\pi=(1,\,0,\,0.5)^{\top}\). Starting from \(Q_0=0\), the plot shows the error \(\|Q_k-Q^\pi\|_\infty\) on a log scale after each sweep \(k\). The dashed line is the guarantee \(\gamma^k\|Q_0-Q^\pi\|_\infty\).</p>
+  <p><strong>Try:</strong> drag \(\gamma\) from 0.5 to 0.99, the paper's value. <strong>Notice:</strong> the error is a straight line with slope \(\log_{10}\gamma\). It hugs the bound because the start error lies mostly along \(\mathbf 1\), the eigenvalue-1 eigenvector. Near \(\gamma=1\) the slope flattens and \(Q^\pi\) blows up like \(1/(1-\gamma)\). That is the eigenvalue of \(I-\gamma P^\pi\) closest to zero.</p>
+
+  <div class="bench">
+    <div class="dial"><label for="gG">γ = <output id="oG">0.90</output></label><input id="gG" type="range" min="0.5" max="0.99" step="0.01" value="0.9"></div>
+    <figure><canvas id="cE" width="640" height="300"></canvas>
+      <figcaption>solid: actual error &middot; dashed: γᵏ bound &middot; 120 sweeps</figcaption></figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">\(Q^\pi=(I-\gamma P^\pi)^{-1}r_\pi\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="eQ">–</span></div>
+      <div class="entry"><span class="entry-name">horizon \(1/(1-\gamma)\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="eH">–</span></div>
+      <div class="entry"><span class="entry-name">sweeps to cut error 10⁶×</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="eN">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>From the paper</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The only knob is a temperature</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">reward scale 5–20</span></div>
+    <p class="entry-desc">Multiplying rewards by a constant is the same as dividing \(\alpha\) by it. This was the only setting tuned per task: 5 for the small robots, 10 or 20 for the humanoids. Too small, and the policy stays nearly uniform and ignores the reward. Too large, and it turns nearly deterministic early and stalls for lack of exploration. Every other setting (2 hidden layers of 256 units, learning rate \(3\cdot10^{-4}\)) was shared by all tasks.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Squashing costs only a diagonal Jacobian</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">log det = a sum</span></div>
+    <p class="entry-desc">Torques must lie in \((-1,1)\), so the Gaussian sample \(u\) is passed through \(a=\tanh(u)\) entrywise. Change of variables needs \(\log|\det\partial a/\partial u|\). That Jacobian is \(\mathrm{diag}(1-\tanh^2u_i)\), so the log-determinant is \(\sum_i\log(1-\tanh^2u_i)\): \(O(n)\) instead of \(O(n^3)\), even for the 21-dimensional humanoid.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Randomness buys stability</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">5 seeds</span></div>
+    <p class="entry-desc">The authors also ran a version whose policy is deterministic and has no entropy term, otherwise much like SAC. On the 21-joint humanoid, its five seeded runs scatter wildly, while SAC's five almost coincide. At test time, though, SAC does better if it just plays the Gaussian's mean: the randomness is for learning, not for performing.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Two critics, take the min</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\mathbb E\max\ge\max\mathbb E\)</span></div>
+    <p class="entry-desc">An actor that climbs a noisy critic seeks out the critic's errors upward. By Jensen's inequality, the maximum of a noisy estimate is biased high. SAC trains two independent critics and uses the smaller of the two, which counteracts the bias. The authors found this markedly sped up learning on the harder tasks.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>Rewarding entropy turns policy improvement into a softmax of the critic, and for continuous actions that softmax is a Gaussian with covariance \(\alpha C^{-1}\), where \(C\) is the critic's curvature. So the agent explores most where mistakes are cheapest, and that is what keeps off-policy learning stable.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor</strong>, by Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel and Sergey Levine (UC Berkeley), 2018.
+  <a href="https://arxiv.org/abs/1801.01290">arxiv.org/abs/1801.01290</a></p>
+  <p class="signoff">Written from the full text (arXiv v2). The matrix form of the proofs and the inverse-curvature reading of the Gaussian policy are this page's restatement, not the paper's notation. Scores are read off the paper's figures. Both interactives use synthetic numbers.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3", SOFT = css("--ink-soft") || "#4a463f";
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  var rand = mulberry32(1801012);
+  function gauss() {
+    var u = 0; while (u === 0) u = rand();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rand());
+  }
+  function hatchPattern(ctx) {
+    var t = document.createElement("canvas");
+    t.width = 8; t.height = 8;
+    var h = t.getContext("2d");
+    h.strokeStyle = INK; h.lineWidth = 1;
+    h.beginPath();
+    h.moveTo(-1, 1); h.lineTo(1, -1);
+    h.moveTo(0, 8); h.lineTo(8, 0);
+    h.moveTo(7, 9); h.lineTo(9, 7);
+    h.stroke();
+    return ctx.createPattern(t, "repeat");
+  }
+
+  /* ---------------- Interactive 1: policy = alpha * C^{-1} ---------------- */
+  var cG = document.getElementById("cG"), g = cG.getContext("2d");
+  var pat = hatchPattern(g);
+  var sA = document.getElementById("gA"), sL1 = document.getElementById("gL1"),
+      sL2 = document.getElementById("gL2"), sT = document.getElementById("gT");
+  var EPS = [];
+  for (var e = 0; e < 160; e++) EPS.push([gauss(), gauss()]);
+  var LN2PIE = Math.log(2 * Math.PI * Math.E);
+
+  function drawG() {
+    var al = +sA.value, l1 = +sL1.value, l2 = +sL2.value, th = +sT.value * Math.PI / 180;
+    document.getElementById("oA").textContent = al.toFixed(2);
+    document.getElementById("oL1").textContent = l1.toFixed(2).replace(/0$/, "");
+    document.getElementById("oL2").textContent = l2.toFixed(2).replace(/0$/, "");
+    document.getElementById("oT").textContent = (+sT.value) + "°";
+
+    var c = Math.cos(th), s = Math.sin(th);
+    // C = R diag(l1,l2) R^T
+    var C11 = l1 * c * c + l2 * s * s, C22 = l1 * s * s + l2 * c * c;
+    var W = cG.width, H = cG.height, sc = W / 6;
+    function X(x) { return W / 2 + x * sc; }
+    function Y(y) { return H / 2 - y * sc; }
+
+    g.globalAlpha = 1;
+    g.fillStyle = PAPER; g.fillRect(0, 0, W, H);
+    // axes
+    g.strokeStyle = SOFT; g.lineWidth = 1; g.setLineDash([]);
+    g.beginPath(); g.moveTo(0, H / 2 + .5); g.lineTo(W, H / 2 + .5); g.moveTo(W / 2 + .5, 0); g.lineTo(W / 2 + .5, H); g.stroke();
+
+    function ellipse(rc, rs, s1, s2) {
+      g.beginPath();
+      for (var k = 0; k <= 96; k++) {
+        var ph = 2 * Math.PI * k / 96, u = s1 * Math.cos(ph), v = s2 * Math.sin(ph);
+        var x = rc * u - rs * v, y = rs * u + rc * v;
+        if (k === 0) g.moveTo(X(x), Y(y)); else g.lineTo(X(x), Y(y));
+      }
+      g.closePath();
+    }
+    // critic contours: a^T C a = lev
+    g.setLineDash([2, 5]); g.lineWidth = 1.4; g.strokeStyle = INK;
+    [0.5, 2, 4.5, 8, 12.5].forEach(function (lev) {
+      ellipse(c, s, Math.sqrt(lev / l1), Math.sqrt(lev / l2)); g.stroke();
+    });
+    // exact policy: 1 and 2 sigma
+    var s1 = Math.sqrt(al / l1), s2 = Math.sqrt(al / l2);
+    g.setLineDash([]);
+    ellipse(c, s, s1, s2);
+    g.globalAlpha = 0.55; g.fillStyle = pat; g.fill(); g.globalAlpha = 1;
+    g.lineWidth = 2.2; g.stroke();
+    ellipse(c, s, 2 * s1, 2 * s2); g.lineWidth = 1.6; g.stroke();
+    // eigen-axes of the policy
+    g.lineWidth = 1.2;
+    g.beginPath();
+    g.moveTo(X(-2 * s1 * c), Y(-2 * s1 * s)); g.lineTo(X(2 * s1 * c), Y(2 * s1 * s));
+    g.moveTo(X(2 * s2 * s), Y(-2 * s2 * c)); g.lineTo(X(-2 * s2 * s), Y(2 * s2 * c));
+    g.stroke();
+    // diagonal policy: sigma_i^2 = alpha / C_ii, 1 sigma
+    var d1 = Math.sqrt(al / C11), d2 = Math.sqrt(al / C22);
+    g.setLineDash([9, 6]); g.lineWidth = 2;
+    ellipse(1, 0, d1, d2); g.stroke();
+    g.setLineDash([]);
+    // samples a = Sigma^{1/2} eps
+    g.fillStyle = INK;
+    for (var k = 0; k < EPS.length; k++) {
+      var u = s1 * EPS[k][0], v = s2 * EPS[k][1];
+      var x = c * u - s * v, y = s * u + c * v;
+      g.beginPath(); g.arc(X(x), Y(y), 2.6, 0, 2 * Math.PI); g.fill();
+    }
+    // labels
+    g.font = "500 15px Oswald, sans-serif"; g.fillStyle = SOFT;
+    g.fillText("a\u2081", W - 26, H / 2 - 8); g.fillText("a\u2082", W / 2 + 8, 18);
+
+    var hFull = LN2PIE + 0.5 * Math.log(al * al / (l1 * l2));
+    var hDiag = LN2PIE + 0.5 * Math.log(d1 * d1 * d2 * d2);
+    var kl = 0.5 * Math.log(C11 * C22 / (l1 * l2));
+    document.getElementById("gS").textContent = s1.toFixed(2) + " , " + s2.toFixed(2);
+    document.getElementById("gH").textContent = hFull.toFixed(2) + " vs " + hDiag.toFixed(2);
+    document.getElementById("gK").textContent = kl.toFixed(3) + " nats";
+  }
+  [sA, sL1, sL2, sT].forEach(function (el) { el.addEventListener("input", drawG); });
+  drawG();
+
+  /* ---------------- Interactive 2: contraction ---------------- */
+  var P = [[.1, .6, .3], [.5, .2, .3], [.3, .3, .4]], R = [1, 0, .5];
+  var cE = document.getElementById("cE"), q = cE.getContext("2d");
+  var sG = document.getElementById("gG");
+  var K = 120;
+
+  function solve(A, b) { // Gaussian elimination with partial pivoting, 3x3
+    var n = b.length, M = A.map(function (row, i) { return row.concat([b[i]]); }), i, j, k;
+    for (i = 0; i < n; i++) {
+      var p = i;
+      for (j = i + 1; j < n; j++) if (Math.abs(M[j][i]) > Math.abs(M[p][i])) p = j;
+      var tmp = M[i]; M[i] = M[p]; M[p] = tmp;
+      for (j = i + 1; j < n; j++) {
+        var f = M[j][i] / M[i][i];
+        for (k = i; k <= n; k++) M[j][k] -= f * M[i][k];
+      }
+    }
+    var x = new Array(n);
+    for (i = n - 1; i >= 0; i--) {
+      var s = M[i][n];
+      for (j = i + 1; j < n; j++) s -= M[i][j] * x[j];
+      x[i] = s / M[i][i];
+    }
+    return x;
+  }
+
+  function drawE() {
+    var gm = +sG.value;
+    document.getElementById("oG").textContent = gm.toFixed(2);
+    var A = P.map(function (row, i) { return row.map(function (v, j) { return (i === j ? 1 : 0) - gm * v; }); });
+    var Qs = solve(A, R);
+    var Qk = [0, 0, 0], errs = [], i, j, k;
+    for (k = 0; k <= K; k++) {
+      var e = 0;
+      for (i = 0; i < 3; i++) e = Math.max(e, Math.abs(Qk[i] - Qs[i]));
+      errs.push(e);
+      var nx = [];
+      for (i = 0; i < 3; i++) { var s = R[i]; for (j = 0; j < 3; j++) s += gm * P[i][j] * Qk[j]; nx.push(s); }
+      Qk = nx;
+    }
+    var W = cE.width, H = cE.height, padL = 54, padR = 12, padT = 14, padB = 30;
+    var top = Math.ceil(Math.log10(errs[0]) + 0.01), bot = top - 9;
+    function X(k) { return padL + (W - padL - padR) * k / K; }
+    function Y(lg) { return padT + (H - padT - padB) * (top - lg) / (top - bot); }
+
+    q.fillStyle = PAPER; q.fillRect(0, 0, W, H);
+    q.strokeStyle = INK; q.lineWidth = 1.5; q.setLineDash([]);
+    q.beginPath(); q.moveTo(padL, padT); q.lineTo(padL, H - padB); q.lineTo(W - padR, H - padB); q.stroke();
+    q.font = "400 14px Oswald, sans-serif"; q.fillStyle = SOFT; q.textAlign = "right"; q.textBaseline = "middle";
+    q.lineWidth = .8;
+    for (var d = bot; d <= top; d += 3) {
+      q.fillText("1e" + d, padL - 8, Y(d));
+      q.setLineDash([1, 4]); q.beginPath(); q.moveTo(padL, Y(d)); q.lineTo(W - padR, Y(d)); q.stroke(); q.setLineDash([]);
+    }
+    q.textAlign = "center"; q.textBaseline = "top";
+    for (var t = 0; t <= K; t += 30) q.fillText(String(t), X(t), H - padB + 6);
+
+    q.save();
+    q.beginPath(); q.rect(padL, padT, W - padL - padR, H - padT - padB); q.clip();
+    // bound
+    q.setLineDash([7, 6]); q.lineWidth = 1.5; q.strokeStyle = INK;
+    q.beginPath();
+    for (k = 0; k <= K; k++) { var yb = Y(Math.log10(errs[0]) + k * Math.log10(gm)); if (k === 0) q.moveTo(X(k), yb); else q.lineTo(X(k), yb); }
+    q.stroke();
+    // actual
+    q.setLineDash([]); q.lineWidth = 2.6;
+    q.beginPath();
+    var started = false;
+    for (k = 0; k <= K; k++) {
+      if (errs[k] <= 0) continue;
+      var y = Y(Math.log10(errs[k]));
+      if (!started) { q.moveTo(X(k), y); started = true; } else q.lineTo(X(k), y);
+    }
+    q.stroke();
+    q.restore();
+
+    document.getElementById("eQ").textContent = "(" + Qs.map(function (v) { return v.toFixed(2); }).join(", ") + ")";
+    document.getElementById("eH").textContent = (1 / (1 - gm)).toFixed(0) + " steps";
+    document.getElementById("eN").textContent = String(Math.ceil(6 * Math.LN10 / -Math.log(gm)));
+  }
+  sG.addEventListener("input", drawE);
+  drawE();
+})();
+</script>
+</body>
+</html>

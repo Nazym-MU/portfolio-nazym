@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nnU-Net: Self-adapting Framework for U-Net-Based Medical Image Segmentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:16px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:1.4em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.sq{aspect-ratio:1 / 1;max-width:360px;margin:0 auto;cursor:pointer;touch-action:manipulation}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ink buttons */
+.btns{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin:.2rem 0 1rem}
+.btns button{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.75rem;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  background:var(--paper);
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.35rem .7rem;
+  cursor:pointer;
+}
+.btns button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.btns button:focus-visible{outline:1px dotted var(--ink);outline-offset:3px}
+
+/* matrix table */
+.mwrap{overflow-x:auto;max-width:100%}
+table.mat{
+  border-collapse:collapse;
+  margin:0 auto;
+  font-family:var(--font-head);
+  font-variant-numeric:tabular-nums;
+  font-size:.82rem;
+  border-left:2px solid var(--ink);
+  border-right:2px solid var(--ink);
+}
+table.mat td{
+  width:2.4em;height:1.9em;
+  text-align:center;
+  padding:0 .1em;
+}
+table.mat td.z{color:var(--ink-soft);opacity:.45}
+table.mat td.nz{border:1px solid var(--ink);background:repeating-linear-gradient(45deg, transparent 0 4px, rgba(27,26,23,.13) 4px 5px)}
+table.vec{border-left:none;border-right:none;margin-top:.6rem}
+table.vec td{border-top:1px solid var(--ink);border-bottom:1px solid var(--ink)}
+.matlabel{
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.75rem;
+  text-align:center;
+  margin:.7rem 0 .3rem;
+  color:var(--ink-soft);
+}
+
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+  table.mat{font-size:.72rem}
+  table.mat td{width:2.1em}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- the U: feature maps shrinking then growing (silhouette) -->
+    <svg class="strip" viewBox="0 0 420 70" fill="currentColor" aria-hidden="true">
+      <rect x="8" y="2" width="16" height="64"/><rect x="40" y="14" width="18" height="40"/>
+      <rect x="74" y="24" width="22" height="22"/><rect x="112" y="30" width="26" height="12"/>
+      <rect x="154" y="33" width="30" height="7"/>
+      <rect x="198" y="34" width="24" height="5"/>
+      <rect x="236" y="33" width="30" height="7"/>
+      <rect x="282" y="30" width="26" height="12"/><rect x="324" y="24" width="22" height="22"/>
+      <rect x="362" y="14" width="18" height="40"/><rect x="396" y="2" width="16" height="64"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; arXiv 2018</p>
+      <h1>nnU-Net</h1>
+    </div>
+    <p class="tagline">Self-adapting Framework for U-Net-Based Medical Image Segmentation</p>
+    <p class="tagline-hand">Fabian Isensee, Jens Petersen, Andre Klein et al. &middot; 2018 &middot;
+    <a href="https://arxiv.org/abs/1809.10486">arXiv:1809.10486</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>Instead of inventing a new network for outlining organs and tumours in 3D scans, this paper takes the plain 2015 U-Net and writes down fixed rules that configure everything around it (patch size, depth, normalisation, loss, augmentation, ensembling) from the dataset's own statistics. With no hand-tuning, it topped a ten-dataset medical segmentation challenge.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: dice vs. accuracy; convolution as a matrix</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">10 datasets, 0 tweaks</span></div>
+    <p class="entry-desc"><em>Segmentation</em> means labelling every voxel (3D pixel) of a scan: liver, tumour, or background. The standard network for it is the <em>U-Net</em>, which shrinks the image step by step to understand it, then grows it back to full size to draw precise outlines. Every year, papers propose new U-Net variants, each tested on one or two datasets.</p>
+    <p class="entry-desc">The <em>Medical Segmentation Decathlon</em> asks for one method that works, fully automatically, on ten very different tasks: brain tumours in MRI (magnetic resonance imaging), livers in CT (X-ray computed tomography), a tiny brain structure called the hippocampus, the prostate, and more. Scans range from 36×50×35 voxels (hippocampus) to 482×512×512 (liver).</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">"no-new-net"</span></div>
+    <p class="entry-desc">The authors bet that the architecture is not the bottleneck; the choices <em>around</em> it are. nnU-Net keeps three plain U-Nets (one working on 2D slices, one on 3D blocks, and a two-stage 3D "cascade" for huge scans). It then derives every other setting by rule from the data: patch size and number of downsamplings from the median image shape, resampling from the median voxel spacing, intensity normalisation from the scan type. Each model is trained five times on different data splits, and the best model or pair of models is picked automatically.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">#1 on 7 tasks</span></div>
+    <p class="entry-desc">Scores are <em>Dice</em> overlaps between predicted and true regions (100 = perfect, defined below). On the seven public tasks' hidden test sets, nnU-Net had the best leaderboard score for every structure except one brain-tumour class: for example, liver 95.24, heart 92.77, hippocampus 90.37 and 88.95 (two sub-regions), pancreas 79.53 and pancreas tumour 52.27. Test scores matched the cross-validation scores, so it hadn't overfitted the development data.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Sparse operators, a projector, a ratio</b></p>
+
+  <p>This is an engineering paper with no theorem. But each of its rules is a statement about a specific linear operator, and the one real equation, the Dice loss, is an inner-product ratio whose geometry explains why it is used. Four objects carry the paper.</p>
+
+  <h3 class="sub">1 · The network is sparse Toeplitz operators and their transposes</h3>
+
+  <p>Flatten a 3D image with \(n\) voxels into \(x\in\mathbb R^{n}\). A 3×3×3 convolution is a linear map \(C\in\mathbb R^{n\times n}\) that replaces each voxel by a fixed weighted sum of its 27 neighbours. So \(C\) is <em>block-Toeplitz</em> (constant along diagonals, because the same kernel is used everywhere) and extremely <em>sparse</em>: 27 nonzeros per row out of \(n\approx 10^6\). The U-Net's encoder (the shrinking half) applies two such convolutions, each followed by a pointwise nonlinearity, then halves the resolution along chosen axes. The decoder (the growing half) uses <em>transposed convolutions</em>: literally \(C_s^{\top}\), where \(C_s\) is a strided convolution (one that keeps only every second output). If \(C_s\) maps fine to coarse, \(C_s^{\top}\) maps coarse back to fine. It is the adjoint, \(\langle C_s x, y\rangle = \langle x, C_s^{\top} y\rangle\), not an inverse. <em>Skip connections</em> copy each encoder level's output across the U and stack it next to the decoder's upsampled features, so fine detail lost in downsampling is available again.</p>
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 190" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1.2"/>
+        </pattern>
+      </defs>
+      <!-- encoder -->
+      <rect x="20" y="14" width="22" height="92"/>
+      <rect x="70" y="56" width="26" height="62"/>
+      <rect x="126" y="96" width="30" height="40"/>
+      <rect x="196" y="128" width="38" height="24" fill="url(#hatch)"/>
+      <!-- decoder -->
+      <rect x="274" y="96" width="30" height="40"/>
+      <rect x="334" y="56" width="26" height="62"/>
+      <rect x="388" y="14" width="22" height="92"/>
+      <!-- down arrows -->
+      <path d="M44 100l24 10M98 116l26 12M158 134l36 8" stroke-width="1.5"/>
+      <!-- up arrows -->
+      <path d="M236 142l36-8M306 128l26-12M362 110l24-10" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <!-- skip connections -->
+      <path d="M44 30H386M98 70H332M158 110H272" stroke-width="1" stroke-dasharray="2 4"/>
+      <!-- output -->
+      <rect x="430" y="14" width="22" height="92" fill="url(#hatch)"/>
+      <path d="M412 60h16" stroke-width="1.5"/>
+      <text x="90" y="176" font-family="Oswald, sans-serif" font-size="12" letter-spacing="2" text-anchor="middle" fill="currentColor" stroke="none">ENCODER: C, THEN HALVE</text>
+      <text x="350" y="176" font-family="Oswald, sans-serif" font-size="12" letter-spacing="2" text-anchor="middle" fill="currentColor" stroke="none">DECODER: C&#7488; (UP)</text>
+      <text x="441" y="124" font-family="Oswald, sans-serif" font-size="11" letter-spacing="1" text-anchor="middle" fill="currentColor" stroke="none">u</text>
+      <text x="236" y="24" font-family="Oswald, sans-serif" font-size="11" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">SKIP: COPY ACROSS</text>
+    </svg>
+    <figcaption>box height ~ spatial size, width ~ number of channels (30 at the top, doubling at each level). dashed arrows are transposes.</figcaption>
+  </figure>
+
+  <p>nnU-Net's contribution here is the <em>shape</em> rule. Take an axis whose patch length is \(s\) voxels. That axis is halved while it is still at least 8 voxels long, up to a cap \(p_{\max}\) (5 halvings in 3D, 6 in 2D):</p>
+  $$p(s)=\min\!\big(p_{\max},\ \lfloor\log_2(s/8)\rfloor+1\big).$$
+  <p>Prostate MRI has thick slices: the patch is 20×192×192, giving \(p=(2,5,5)\). The deepest level is 5×6×6, roughly cubic in physical space, so each deep kernel sees comparable physical extent in every direction. The network depth is different per axis, chosen by the data.</p>
+
+  <h3 class="sub">2 · Normalisation is an orthogonal projector</h3>
+
+  <p>For a patch with values \(x\in\mathbb R^n\), let \(\mathbf 1\) be the all-ones vector and</p>
+  $$H=I-\tfrac1n\mathbf 1\mathbf 1^{\top},\qquad z=\frac{Hx}{\|Hx\|/\sqrt n}.$$
+  <p>\(H\) is the <em>centering matrix</em>: symmetric, idempotent (\(H^2=H\)), eigenvalues \(1\) (multiplicity \(n-1\)) and \(0\) (on \(\mathbf 1\)). It is the orthogonal projector onto \(\mathbf 1^{\perp}\), the vectors with mean zero. Dividing by \(\|Hx\|/\sqrt n\) (the standard deviation) puts \(z\) on the sphere of radius \(\sqrt n\) inside that hyperplane. This is a <em>z-score</em>. nnU-Net applies it to each MRI scan separately, and the network applies the same map to every feature channel of every sample (<em>instance normalisation</em>, used here instead of normalising across a batch).</p>
+  <p>The point: \(z\) is invariant under \(x\mapsto ax+b\mathbf 1\) for \(a&gt;0\), since \(H\mathbf 1=0\) and the scale cancels. MRI intensities are in arbitrary, scanner-dependent units, so this invariance is wanted. CT intensities are physical (Hounsfield units: water 0, air −1000), so throwing away \(a\) and \(b\) per scan would discard real information. For CT, nnU-Net instead clips to the 0.5th–99.5th percentile of foreground intensities across the whole training set and uses one global mean and standard deviation.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>\(x=(1,2,6)\), mean 3. \(Hx=(-2,-1,3)\), \(\|Hx\|^2=14\), standard deviation \(\sqrt{14/3}\approx2.16\), so \(z\approx(-0.93,-0.46,1.39)\).</p>
+    <p>Now take a brighter, higher-contrast scan of the same thing, \(x'=2x+5\mathbf 1=(7,9,17)\). Then \(Hx'=(-4,-2,6)=2Hx\), the standard deviation doubles too, and \(z'=z\). The two scans become identical inputs.</p>
+  </div>
+
+  <h3 class="sub">3 · The Dice loss: an inner product over two \(\ell_1\) norms</h3>
+
+  <p>The network outputs, for each of \(|I|\) voxels and \(|K|\) classes, a probability. Stack them into \(u\in[0,1]^{I\times K}\); each row is a probability vector (the softmax output, rows sum to 1). The ground truth is \(v\in\{0,1\}^{I\times K}\), one-hot: each row is a standard basis vector \(e_k\) marking the true class. Write \(u^k, v^k\) for column \(k\). The paper's loss is</p>
+  $$\mathcal L_{\text{dc}}=-\frac{2}{|K|}\sum_{k\in K}\frac{\sum_i u^k_i v^k_i}{\sum_i u^k_i+\sum_i v^k_i}
+  =-\frac1{|K|}\sum_k\frac{2\langle u^k,v^k\rangle}{\|u^k\|_1+\|v^k\|_1},$$
+  <p>added to the ordinary cross-entropy (the average over voxels of \(-\log\) of the probability given to the true class): \(\mathcal L_{\text{total}}=\mathcal L_{\text{dc}}+\mathcal L_{\text{CE}}\). When \(u\) is also 0/1, each fraction is the <em>Dice coefficient</em> of two sets \(A,B\) of voxels, \(2|A\cap B|/(|A|+|B|)\). That is the harmonic mean of precision (\(|A\cap B|/|A|\)) and recall (\(|A\cap B|/|B|\)), the same thing as the F1 score.</p>
+
+  <div class="callout">
+    <span class="callout-label">Why a ratio: it is blind to how much background there is</span>
+    <p>Pad the image with \(m\) more background voxels the network correctly ignores (\(u^k_i=v^k_i=0\)). Numerator and denominator of the class-\(k\) Dice term don't change. Cross-entropy is a <em>mean</em> over voxels, so a missed 6-voxel lesion costs on the order of \(6/(n+m)\) and vanishes as \(m\) grows. Dice is normalised by the size of the structure itself, so every class, whether a 95%-of-image liver or a 0.01% tumour, has equal weight \(1/|K|\).</p>
+  </div>
+
+  <p>With \(P=\langle u^k,v^k\rangle\) and \(S=\|u^k\|_1+\|v^k\|_1\), the gradient of one Dice term \(D=2P/S\) is</p>
+  $$\frac{\partial D}{\partial u^k_i}=\frac{2\,(v^k_i\,S-P)}{S^2}.$$
+  <p>It takes only two values: a positive push on every true-foreground voxel, and a uniform negative pull on every predicted-but-wrong voxel. The step size is set by the structure's size \(S\), not by the image size.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>Three voxels, one class: \(u=(0.8,\,0.6,\,0.1)\), truth \(v=(1,1,0)\). \(P=1.4\), \(S=1.5+2=3.5\), so \(D=2.8/3.5=0.80\).</p>
+    <p>Gradient: on voxels 1, 2 it is \(2(3.5-1.4)/3.5^2\approx+0.34\); on voxel 3 it is \(2(0-1.4)/12.25\approx-0.23\). Append 1,000 more background voxels with \(u=0\): \(P, S, D\) and these gradients are unchanged.</p>
+  </div>
+
+  <h3 class="sub">4 · Resampling and the cascade are linear maps chosen by the data</h3>
+
+  <p>Scanners record voxels of different physical sizes (<em>spacing</em>, in mm per voxel). A convolution kernel only means the same thing across patients if spacing is equal, so every scan is resampled to its dataset's median spacing. For images this uses cubic-spline interpolation, a linear operator. For label maps it uses nearest-neighbour, because labels are categories: averaging "liver = 1" and "tumour = 2" into 1.5 is meaningless. (Resampling the one-hot \(v\) linearly would be fine; resampling class indices is not.)</p>
+  <p>If the median resampled scan has more than 4× the voxels of one 3D training patch, nnU-Net adds the <em>cascade</em>. Stage 1 is a 3D U-Net run on a copy downsampled by factors of 2 (thin axes first, until spacing is roughly uniform), so it sees a whole organ in context. Its predicted segmentation is upsampled and appended as extra one-hot input channels for stage 2, a full-resolution 3D U-Net that refines the outline. This triggered on heart, liver, lung and pancreas.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive 1<b>Why Dice, not accuracy</b></p>
+
+  <p>An \(n\times n\) slice with a 6-voxel lesion (outlined). Tap cells to toggle the network's prediction (solid = predicted lesion), or use the presets. Predicted cells get probability 0.9 of lesion, unpredicted ones 0.1; cross-entropy uses those probabilities, accuracy and Dice use the hard prediction. The slider adds background around the lesion.</p>
+  <p><strong>Try:</strong> press "miss it", then drag \(n\) from 8 to 48. <strong>Notice:</strong> accuracy climbs towards 100% and the mean cross-entropy falls towards that of a perfect prediction, while Dice stays 0 for a network that never finds the tumour. Then press "hit it" and "hit + 6 false": Dice drops from 1 to 0.67 at every \(n\).</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="nn">n = <output id="nv" for="nn">12</output></label>
+      <input id="nn" type="range" min="8" max="48" value="12" step="2">
+    </div>
+    <div class="btns" id="presets">
+      <button type="button" data-p="miss">miss it</button>
+      <button type="button" data-p="half">half</button>
+      <button type="button" data-p="hit">hit it</button>
+      <button type="button" data-p="over">hit + 6 false</button>
+    </div>
+    <canvas id="cG" class="sq" width="480" height="480" aria-label="Segmentation grid: tap cells to toggle predicted lesion"></canvas>
+    <p class="aside-hand" style="margin:.6rem auto 0">outlined: true lesion &middot; solid: predicted &middot; hatched: predicted but wrong</p>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">voxel accuracy</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gA">–</span></div>
+      <div class="entry"><span class="entry-name">mean cross-entropy</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gC">–</span></div>
+      <div class="entry"><span class="entry-name">… of which from the lesion</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gL">–</span></div>
+      <div class="entry"><span class="entry-name">Dice (lesion class)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gD">–</span></div>
+    </div>
+  </div>
+
+  <p class="regime" style="margin-top:2.6rem">Interactive 2<b>Convolution as a matrix</b></p>
+
+  <p>A 1D signal of length 8 and a kernel \((a,b,c)\), zero-padded at the ends. "Stride 1" shows the 8×8 convolution matrix \(C\). "Stride 2" keeps every other row: the 4×8 downsampling \(C_s\). "Transpose" shows \(C_s^{\top}\) (8×4), the U-Net's upsampling layer. Below each matrix is the matrix times the all-ones vector.</p>
+  <p><strong>Try:</strong> on "transpose", set \(a=c=1, b=1\). <strong>Notice:</strong> constant input comes out as alternating \(b,\ a+c\): a checkerboard. It is flat only when \(b=a+c\) (try \(a=c=0.5, b=1\)). The transposed layer must <em>learn</em> weights that avoid this striping, a known artifact of these layers.</p>
+
+  <div class="bench">
+    <div class="btns" id="modes">
+      <button type="button" data-m="s1">stride 1</button>
+      <button type="button" data-m="s2">stride 2</button>
+      <button type="button" data-m="tr" aria-pressed="true">transpose</button>
+    </div>
+    <div class="dial"><label for="ka">a = <output id="kav" for="ka">1</output></label><input id="ka" type="range" min="-2" max="2" step="0.5" value="1"></div>
+    <div class="dial"><label for="kb">b = <output id="kbv" for="kb">1</output></label><input id="kb" type="range" min="-2" max="2" step="0.5" value="1"></div>
+    <div class="dial"><label for="kc">c = <output id="kcv" for="kc">1</output></label><input id="kc" type="range" min="-2" max="2" step="0.5" value="1"></div>
+    <p class="matlabel" id="mL">matrix</p>
+    <div class="mwrap"><table class="mat" id="mT"></table></div>
+    <p class="matlabel">times the all-ones vector</p>
+    <div class="mwrap"><table class="mat vec" id="mV"></table></div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>From the paper</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Mirror averaging is a group projection</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\((\mathbb Z_2)^3\)</span></div>
+    <p class="entry-desc">At test time each patch is also run flipped along every valid axis. The flips are permutation matrices \(g\) with \(g=g^{-1}=g^{\top}\), and in 3D they form a group of \(2^3=8\) elements. Averaging the network \(f\) over them,</p>
+    $$\bar f(x)=\frac18\sum_{g}g\,f(gx),$$
+    <p class="entry-desc">gives an exactly flip-equivariant predictor: \(\bar f(hx)=h\bar f(x)\) for every flip \(h\), by reindexing \(g\mapsto gh\). The map \(f\mapsto\bar f\) is a projection onto equivariant functions, the same averaging trick as symmetrising a tensor or the Reynolds operator in invariant theory.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Where "up to 64 predictions" comes from</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(2^3\times 2^3\)</span></div>
+    <p class="entry-desc">Patches overlap by half a patch along each axis, so a voxel in the middle of a scan lies in \(2\) patches per axis, \(2^3=8\) in total. Each is evaluated under 8 flips: \(8\times8=64\) predictions per voxel, averaged with weights that favour patch centres, where the network sees the most context. Then the five cross-validation networks are averaged again. Convex combinations of probability vectors are still probability vectors, so all this averaging stays on the simplex.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Generalisation, honestly measured</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1 submission</span></div>
+    <p class="entry-desc">The leaderboard allowed repeated test submissions; the authors submitted once. Cross-validation predicted the test score well: liver 94.3 → 95.2, heart 92.7 → 92.8, pancreas 79.3 → 79.5. The only big drop was brain tumour (e.g. 80.7 → 67.7 on one class), a dataset known for a shift between training and test scans.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Topology as postprocessing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\beta_0=1\)</span></div>
+    <p class="entry-desc">If a class is a single connected blob in every training label (a liver has one component), that is taken as a property of the dataset, and at test time all but the largest predicted component is deleted. This is a learned constraint on the zeroth Betti number (component count), enforced combinatorially rather than inside the network.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>A plain U-Net, with its patch shape, depth, intensity normalisation and loss derived by rule from each dataset's statistics, beat specialised architectures across seven different medical tasks. The settings around a network mattered more than changes to the network itself.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>nnU-Net: Self-adapting Framework for U-Net-Based Medical Image Segmentation</strong>, by Fabian Isensee, Jens Petersen, Andre Klein, David Zimmerer, Paul F. Jaeger, Simon Kohl, Jakob Wasserthal, Gregor Köhler, Tobias Norajitra, Sebastian Wirkert and Klaus H. Maier-Hein (German Cancer Research Center, Heidelberg), 2018.
+  <a href="https://arxiv.org/abs/1809.10486">arxiv.org/abs/1809.10486</a></p>
+  <p class="signoff">Written from the full text (arXiv v1). Scores are from the paper's Table 2. The operator views (Toeplitz, projector, group averaging) and the pooling formula are my framing of the paper's rules, and the interactives use toy data.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3";
+
+  /* ---------- Interactive 1: Dice vs accuracy ---------- */
+  var cG = document.getElementById("cG"), ctx = cG.getContext("2d");
+  var slider = document.getElementById("nn");
+  // lesion: 2x3 block, stored as offsets from the grid's centre
+  var LES = [[0,-1],[0,0],[0,1],[1,-1],[1,0],[1,1]];
+  var PRE = {
+    miss: [],
+    half: [[0,-1],[0,0],[0,1]],
+    hit: LES.slice(),
+    over: LES.concat([[-1,-1],[-1,0],[-1,1],[2,-1],[2,0],[2,1]])
+  };
+  var pred = {};
+  function key(d) { return d[0] + "," + d[1]; }
+  function setPred(list) { pred = {}; list.forEach(function (d) { pred[key(d)] = true; }); }
+  setPred(PRE.half);
+  var lesSet = {}; LES.forEach(function (d) { lesSet[key(d)] = true; });
+
+  var pat = (function () {
+    var t = document.createElement("canvas"); t.width = 6; t.height = 6;
+    var h = t.getContext("2d"); h.strokeStyle = INK; h.lineWidth = 1.3;
+    h.beginPath(); h.moveTo(-1, 1); h.lineTo(1, -1); h.moveTo(0, 6); h.lineTo(6, 0); h.moveTo(5, 7); h.lineTo(7, 5); h.stroke();
+    return ctx.createPattern(t, "repeat");
+  })();
+
+  function drawGrid() {
+    var n = +slider.value, W = cG.width, cell = W / n, c0 = Math.floor(n / 2) - 1;
+    document.getElementById("nv").textContent = n;
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, W);
+    ctx.strokeStyle = INK; ctx.globalAlpha = 0.18; ctx.lineWidth = 1;
+    for (var i = 0; i <= n; i++) {
+      ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, W); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i * cell); ctx.lineTo(W, i * cell); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    var tp = 0, fp = 0, fn = 0, ce = 0, ceL = 0, N = n * n, q;
+    for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) {
+      var k = (r - c0) + "," + (c - c0 - 1 + 1);
+      var dk = (r - c0) + "," + (c - c0);
+      var isL = !!lesSet[dk], isP = !!pred[dk];
+      q = isP ? 0.9 : 0.1;
+      var loss = isL ? -Math.log(q) : -Math.log(1 - q);
+      ce += loss; if (isL) ceL += loss;
+      if (isL && isP) tp++; else if (isP) fp++; else if (isL) fn++;
+      if (isP) {
+        ctx.fillStyle = isL ? INK : pat;
+        ctx.fillRect(c * cell + 1, r * cell + 1, cell - 2, cell - 2);
+      }
+      if (isL) {
+        ctx.lineWidth = Math.max(1.5, cell * 0.08);
+        ctx.strokeStyle = INK;
+        ctx.strokeRect(c * cell + 1.5, r * cell + 1.5, cell - 3, cell - 3);
+      }
+    }
+    var acc = (N - fp - fn) / N;
+    var dice = (2 * tp + fp + fn) === 0 ? 1 : 2 * tp / (2 * tp + fp + fn);
+    document.getElementById("gA").textContent = (100 * acc).toFixed(2) + "%";
+    document.getElementById("gC").textContent = (ce / N).toFixed(4);
+    document.getElementById("gL").textContent = (ceL / N).toFixed(4);
+    document.getElementById("gD").textContent = dice.toFixed(2);
+  }
+
+  cG.addEventListener("click", function (e) {
+    var n = +slider.value, rect = cG.getBoundingClientRect();
+    var c = Math.floor((e.clientX - rect.left) / rect.width * n);
+    var r = Math.floor((e.clientY - rect.top) / rect.height * n);
+    if (r < 0 || c < 0 || r >= n || c >= n) return;
+    var c0 = Math.floor(n / 2) - 1, k = (r - c0) + "," + (c - c0);
+    if (pred[k]) delete pred[k]; else pred[k] = true;
+    drawGrid();
+  });
+  slider.addEventListener("input", drawGrid);
+  Array.prototype.forEach.call(document.querySelectorAll("#presets button"), function (b) {
+    b.addEventListener("click", function () { setPred(PRE[b.getAttribute("data-p")]); drawGrid(); });
+  });
+  drawGrid();
+
+  /* ---------- Interactive 2: convolution matrices ---------- */
+  var mode = "tr";
+  var ka = document.getElementById("ka"), kb = document.getElementById("kb"), kc = document.getElementById("kc");
+  function fmt(v) { return (Math.round(v * 100) / 100).toString(); }
+  function buildC(stride) {
+    // rows: output positions centred at 0, stride, 2*stride...; kernel (a,b,c) at cols centre-1..centre+1
+    var a = +ka.value, b = +kb.value, c = +kc.value, rows = [], N = 8;
+    for (var j = 0; j * stride < N; j++) {
+      var row = [], ctr = j * stride;
+      for (var i = 0; i < N; i++) row.push(i === ctr - 1 ? a : i === ctr ? b : i === ctr + 1 ? c : 0);
+      rows.push(row);
+    }
+    return rows;
+  }
+  function transpose(M) {
+    return M[0].map(function (_, j) { return M.map(function (row) { return row[j]; }); });
+  }
+  function nzMask(M, stride, tr) {
+    // structural nonzeros (positions where a kernel tap lands), independent of the tap's value
+    var R = M.length, C = M[0].length, out = [];
+    for (var r = 0; r < R; r++) {
+      out.push([]);
+      for (var c = 0; c < C; c++) {
+        var row = tr ? c : r, col = tr ? r : c, ctr = row * stride;
+        out[r].push(Math.abs(col - ctr) <= 1);
+      }
+    }
+    return out;
+  }
+  function renderTable(el, M, mask) {
+    el.innerHTML = "";
+    M.forEach(function (row, r) {
+      var tr = document.createElement("tr");
+      row.forEach(function (v, c) {
+        var td = document.createElement("td");
+        var on = mask ? mask[r][c] : true;
+        td.className = on ? "nz" : "z";
+        td.textContent = on ? fmt(v) : "·";
+        tr.appendChild(td);
+      });
+      el.appendChild(tr);
+    });
+  }
+  function drawMat() {
+    document.getElementById("kav").textContent = ka.value;
+    document.getElementById("kbv").textContent = kb.value;
+    document.getElementById("kcv").textContent = kc.value;
+    var stride = mode === "s1" ? 1 : 2, M = buildC(stride), tr = mode === "tr";
+    if (tr) M = transpose(M);
+    renderTable(document.getElementById("mT"), M, nzMask(M, stride, tr));
+    var ones = M.map(function (row) { return [row.reduce(function (s, x) { return s + x; }, 0)]; });
+    renderTable(document.getElementById("mV"), [ones.map(function (r) { return r[0]; })], null);
+    document.getElementById("mL").textContent =
+      mode === "s1" ? "C: 8 × 8 convolution" : mode === "s2" ? "C_s: 4 × 8 strided convolution (downsample)" : "C_sᵀ: 8 × 4 transposed convolution (upsample)";
+    Array.prototype.forEach.call(document.querySelectorAll("#modes button"), function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-m") === mode ? "true" : "false");
+    });
+  }
+  [ka, kb, kc].forEach(function (s) { s.addEventListener("input", drawMat); });
+  Array.prototype.forEach.call(document.querySelectorAll("#modes button"), function (b) {
+    b.addEventListener("click", function () { mode = b.getAttribute("data-m"); drawMat(); });
+  });
+  drawMat();
+})();
+</script>
+</body>
+</html>

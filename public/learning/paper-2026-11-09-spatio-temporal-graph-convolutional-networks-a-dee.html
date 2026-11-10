@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STGCN: Spatio-Temporal Graph Convolutional Networks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:16px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:1.4em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.toggle{display:flex;gap:.6rem;flex-wrap:wrap;margin:0 0 .9rem}
+.toggle button{
+  font-family:var(--font-head);
+  font-weight:500;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.78rem;
+  background:var(--paper);
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.35em .9em;
+  cursor:pointer;
+}
+.toggle button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.toggle button:focus-visible{outline:1px dotted var(--ink);outline-offset:3px}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.graph{aspect-ratio:640 / 410;cursor:pointer;touch-action:manipulation}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- road graph silhouette -->
+    <svg class="strip" viewBox="0 0 420 60" fill="currentColor" stroke="currentColor" aria-hidden="true">
+      <path d="M14 44 62 16 116 38 168 12 222 40 276 18 330 42 378 14 408 34M62 16 70 52M168 12 176 50M276 18 268 52M116 38 176 50 222 40M268 52 330 42" fill="none" stroke-width="2.5"/>
+      <circle cx="14" cy="44" r="6"/><circle cx="62" cy="16" r="7"/><circle cx="116" cy="38" r="6"/>
+      <circle cx="168" cy="12" r="7"/><circle cx="222" cy="40" r="6"/><circle cx="276" cy="18" r="7"/>
+      <circle cx="330" cy="42" r="6"/><circle cx="378" cy="14" r="7"/><circle cx="408" cy="34" r="5"/>
+      <circle cx="70" cy="52" r="5"/><circle cx="176" cy="50" r="5"/><circle cx="268" cy="52" r="5"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; IJCAI 2018</p>
+      <h1>STGCN</h1>
+    </div>
+    <p class="tagline">Spatio-Temporal Graph Convolutional Networks: A Deep Learning Framework for Traffic Forecasting</p>
+    <p class="tagline-hand">Bing Yu, Haoteng Yin, Zhanxing Zhu &middot; 2017 &middot;
+    <a href="https://arxiv.org/abs/1709.04875">arXiv:1709.04875</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>The paper forecasts traffic speed at hundreds of road sensors by treating each moment's readings as a signal on the road network, filtering it with polynomials of the network's Laplacian matrix in space and with plain convolutions in time, so the whole model trains in parallel instead of step by step.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: frequencies and reach</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1 hour in, 45 min out</span></div>
+    <p class="entry-desc">Sensors along highways report the average speed of passing cars every 5 minutes. Given the last hour of readings (12 per sensor) at every sensor, predict the speeds 15, 30 and 45 minutes ahead. Nearby sensors are coupled through the roads: a jam spreads back along the road that feeds it, not across empty space.</p>
+    <p class="entry-desc">Image-style convolutions need the data on a regular grid, and sensors are not on one. The usual alternative for time series, recurrent networks, read the sequence one step at a time: slow to train, because the steps can't be computed in parallel.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">all convolution</span></div>
+    <p class="entry-desc">Make the sensors the nodes of a weighted graph, so one 5-minute snapshot is a vector with one entry per sensor. For space, filter that vector with a <em>polynomial in the graph Laplacian</em>, a matrix built from the road graph; such a filter mixes each sensor only with sensors a few road hops away. For time, slide an ordinary short convolution along each sensor's history.</p>
+    <p class="entry-desc">Stack these as time&nbsp;→&nbsp;graph&nbsp;→&nbsp;time “sandwich” blocks. Nothing is recurrent, so every time step is processed at once.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">14× faster training</span></div>
+    <p class="entry-desc">On 228 Los Angeles-area highway sensors, the average absolute error of the 45-minute forecast is 3.57 (speeds in the data run from about 20 to 70), against 4.01 for the best earlier graph model, which pairs graph filters with a recurrent network, and 4.16 for a standard recurrent network that ignores the graph.</p>
+    <p class="entry-desc">It trains in 272 seconds instead of 3,824, with about two-thirds as many learned numbers (454,000).</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Polynomials of the Laplacian</b></p>
+
+  <h3 class="sub">The objects</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(v_t\in\mathbb R^{n}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">a graph signal</span></div>
+    <p class="entry-desc">The speeds at all \(n\) sensors at time step \(t\): one number per node of the graph. The model sees \(M=12\) consecutive snapshots and predicts \(H = 3, 6\) or \(9\) steps ahead.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(W\in\mathbb R^{n\times n}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">symmetric, sparse, ≥ 0</span></div>
+    <p class="entry-desc">The weighted adjacency matrix: \(w_{ij}\) is how strongly sensors \(i\) and \(j\) are linked. For the California data it comes from road distance \(d_{ij}\) through a Gaussian, cut off below a threshold \(\epsilon\):</p>
+    $$w_{ij}=\begin{cases}e^{-d_{ij}^2/\sigma^2} & i\ne j,\ e^{-d_{ij}^2/\sigma^2}\ge\epsilon\\[2pt] 0&\text{otherwise,}\end{cases}\qquad \sigma^2=10,\ \epsilon=0.5 .$$
+    <p class="entry-desc">So \(W\) is symmetric, nonnegative, zero on the diagonal, and sparse: distant pairs are exactly 0. (The Beijing dataset uses a <em>directed</em> graph, where \(W\) isn't symmetric and the spectral story below doesn't strictly apply; the paper doesn't address this.)</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(D=\operatorname{diag}(d_i),\ d_i=\sum_j w_{ij}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">degrees</span></div>
+    <p class="entry-desc">Each sensor's total link weight, on a diagonal.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(L=I_n-D^{-1/2}WD^{-1/2}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">symmetric PSD, spectrum ⊂ [0,2]</span></div>
+    <p class="entry-desc">The normalized graph Laplacian (\(I_n\) is the identity). It has the same sparsity pattern as \(W\) plus the diagonal. Its quadratic form measures how much a signal changes across edges:</p>
+    $$x^{\top}Lx=\tfrac12\sum_{i,j}w_{ij}\Big(\tfrac{x_i}{\sqrt{d_i}}-\tfrac{x_j}{\sqrt{d_j}}\Big)^2\ \ge 0 .$$
+    <p class="entry-desc">So \(L\) is positive semidefinite. Applying \((a-b)^2\le 2a^2+2b^2\) to each term gives \(x^\top Lx\le 2\|x\|^2\), so every eigenvalue lies in \([0,2]\). The eigenvalue 0 has eigenvector \(D^{1/2}\mathbf 1\) (once per connected piece of the graph).</p>
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">The spectral definition of a graph convolution</span>
+    <p>By the spectral theorem, \(L=U\Lambda U^{\top}\) with \(U\) orthogonal (columns are orthonormal eigenvectors) and \(\Lambda=\operatorname{diag}(\lambda_1\le\dots\le\lambda_n)\). By the quadratic form above, eigenvectors with small \(\lambda\) vary little across edges and those near 2 flip sign across them, so the \(\lambda_k\) play the role of frequencies. \(U^{\top}x\) is the <em>graph Fourier transform</em> of \(x\). A convolution is then defined as multiplying each frequency by its own gain, a diagonal filter \(\Theta(\Lambda)\):</p>
+    $$\Theta *_{\mathcal G} x \;=\; U\,\Theta(\Lambda)\,U^{\top}x .$$
+    <p>Taken literally, this is unusable at scale. Computing \(U\) costs \(O(n^3)\); \(U\) is dense, so each filter application costs \(O(n^2)\); the filter has \(n\) free gains; and a generic choice of gains mixes every sensor with every other one.</p>
+  </div>
+
+  <h3 class="sub">The fact that does the work: restrict \(\Theta\) to polynomials</h3>
+
+  <p>If the gain is a polynomial in the eigenvalue, \(\Theta(\lambda)=\sum_{k=0}^{K-1}\theta_k\lambda^k\), then because \(U^{\top}U=I\),</p>
+  $$U\,\Theta(\Lambda)\,U^{\top}=\sum_{k=0}^{K-1}\theta_k\,U\Lambda^kU^{\top}=\sum_{k=0}^{K-1}\theta_k\,L^k .$$
+  <p>The eigenvectors drop out. The spectral filter is a polynomial in the sparse matrix \(L\), applied by repeated sparse matrix–vector products and never by diagonalising. Three consequences:</p>
+  <p><strong>Localised.</strong> \((L^k)_{ij}=0\) whenever \(i\) and \(j\) are more than \(k\) edges apart, since every term of the product is a walk of length \(k\). A degree-\((K-1)\) filter mixes each sensor only with its \((K-1)\)-hop neighbourhood. \(K\) is the filter's “kernel size”.</p>
+  <p><strong>Cheap.</strong> \(K\) learned numbers per filter, and \(O(K|\mathcal E|)\) work, where \(|\mathcal E|\) is the number of edges.</p>
+  <p><strong>Still spectral.</strong> It is exactly the filter with gain \(\Theta(\lambda)\) at frequency \(\lambda\), so the Fourier picture still describes what it does.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: a 3-sensor road</span>
+    <p>Path graph 1–2–3 with unit weights: \(D=\operatorname{diag}(1,2,1)\) and</p>
+    $$L=\begin{pmatrix}1&-\tfrac1{\sqrt2}&0\\-\tfrac1{\sqrt2}&1&-\tfrac1{\sqrt2}\\0&-\tfrac1{\sqrt2}&1\end{pmatrix},\quad \lambda=0,\,1,\,2,\quad u=\tfrac12\!\begin{pmatrix}1\\\sqrt2\\1\end{pmatrix}\!,\ \tfrac1{\sqrt2}\!\begin{pmatrix}1\\0\\-1\end{pmatrix}\!,\ \tfrac12\!\begin{pmatrix}1\\-\sqrt2\\1\end{pmatrix}\!.$$
+    <p>The smoothest mode has one sign everywhere, the middle one changes sign once, and the top one alternates. \(\lambda_{\max}=2\) exactly because a path is bipartite.</p>
+    <p>Put a spike at sensor 1, \(e_1=(1,0,0)^\top\). Then \(Le_1=(1,-\tfrac1{\sqrt2},0)^\top\) reaches only its neighbour, and \(L^2e_1=(\tfrac32,-\sqrt2,\tfrac12)^\top\) first reaches sensor 3, two hops away.</p>
+  </div>
+
+  <h3 class="sub">Chebyshev basis, then first order</h3>
+
+  <p>Monomials \(L^k\) are a badly conditioned basis. The paper uses Chebyshev polynomials \(T_k\), defined by \(T_0=1,\ T_1(x)=x,\ T_k=2xT_{k-1}-T_{k-2}\), with \(|T_k|\le1\) on \([-1,1]\). To use them, it first shifts the spectrum into \([-1,1]\) with \(\tilde L=2L/\lambda_{\max}-I_n\), where \(\lambda_{\max}\) is \(L\)'s largest eigenvalue:</p>
+  $$\Theta *_{\mathcal G} x\approx\sum_{k=0}^{K-1}\theta_k\,T_k(\tilde L)\,x,\qquad \bar x_k=2\tilde L\,\bar x_{k-1}-\bar x_{k-2}.$$
+  <p>Here \(\bar x_k=T_k(\tilde L)x\), so each new term costs one sparse product. The paper's main model, STGCN(Cheb), uses \(K=3\): two hops.</p>
+
+  <p>The cheaper variant, STGCN(1st), keeps \(K=2\) and assumes \(\lambda_{\max}\approx2\), so \(\tilde L\approx L-I=-D^{-1/2}WD^{-1/2}\). Tying the two coefficients as \(\theta=\theta_0=-\theta_1\) leaves one number per filter:</p>
+  $$\Theta *_{\mathcal G} x\approx\theta\,\big(I_n+D^{-1/2}WD^{-1/2}\big)x\ \ \leadsto\ \ \theta\,\tilde D^{-1/2}\tilde W\tilde D^{-1/2}x,\qquad \tilde W=W+I_n,\ \tilde D_{ii}=\textstyle\sum_j\tilde W_{ij}.$$
+  <p>The paper writes the last step as “=”, but it is a <em>replacement</em>, the “renormalisation trick” of Kipf and Welling: add a self-loop to every node, then normalise. The reason is spectral. \(I+D^{-1/2}WD^{-1/2}=2I-L\) has eigenvalues \(2-\lambda\in[0,2]\). Stacking these layers multiplies such matrices, so components with eigenvalue near 2 grow like \(2^{\text{layers}}\). The renormalised matrix has spectrum in \((-1,1]\), so its powers stay bounded. Each layer reaches one hop, so stacking layers buys the reach.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: the same path, before and after</span>
+    <p>\(I+D^{-1/2}WD^{-1/2}\) has eigenvalues \(2,1,0\). With self-loops, \(\tilde D=\operatorname{diag}(2,3,2)\) and</p>
+    $$\tilde D^{-1/2}\tilde W\tilde D^{-1/2}=\begin{pmatrix}\tfrac12&\tfrac1{\sqrt6}&0\\\tfrac1{\sqrt6}&\tfrac13&\tfrac1{\sqrt6}\\0&\tfrac1{\sqrt6}&\tfrac12\end{pmatrix},\quad\text{eigenvalues } 1,\ \tfrac12,\ -\tfrac16 .$$
+    <p>Eigenvectors: \((\sqrt2,\sqrt3,\sqrt2)\), \((1,0,-1)\) and \((\sqrt3,-2\sqrt2,\sqrt3)\). Check the last: the trace is \(\tfrac43=1+\tfrac12-\tfrac16\). Ten stacked layers scale the top component by \(2^{10}=1024\) before the trick and by \(1\) after.</p>
+  </div>
+
+  <h3 class="sub">Many channels, many time steps: a Kronecker structure</h3>
+
+  <p>Inside the network each sensor carries \(C_i\) features (“channels”), so a snapshot is \(X\in\mathbb R^{n\times C_i}\), and a layer outputs \(C_o\) channels. The paper's channel-wise formula \(y_j=\sum_i\Theta_{i,j}(L)x_i\) is, in matrix form,</p>
+  $$Y=\sum_{k=0}^{K-1}T_k(\tilde L)\,X\,\Theta_k,\qquad \operatorname{vec}(Y)=\sum_{k}\big(\Theta_k^{\top}\otimes T_k(\tilde L)\big)\operatorname{vec}(X),$$
+  <p>with learned \(\Theta_k\in\mathbb R^{C_i\times C_o}\). The graph polynomial multiplies on the left, across sensors; the channel mixing multiplies on the right. The same \(\Theta_k\) is applied to every one of the 12 time steps.</p>
+  <p>Time is handled symmetrically. Along each sensor's history the model applies a 1-D convolution of width \(K_t=3\) without padding, which is a banded Toeplitz matrix acting on the time axis, shared across all sensors. It produces \(2C_o\) channels, split into halves \(P\) and \(Q\), and outputs \(P\odot\sigma(Q)\), where \(\sigma\) is the logistic sigmoid and \(\odot\) is entrywise product. This is a gated linear unit: \(\sigma(Q)\in(0,1)\) acts as a learned, data-dependent mask on \(P\). Each such layer shortens the sequence by \(K_t-1=2\).</p>
+
+  <p>One block is time, then graph, then time, with \(\mathrm{ReLU}(z)=\max(z,0)\) after the graph step:</p>
+  $$v^{l+1}=\Gamma_1^{l} *_{\mathcal T}\mathrm{ReLU}\big(\Theta^{l} *_{\mathcal G}(\Gamma_0^{l} *_{\mathcal T} v^{l})\big),\qquad v^{l}\in\mathbb R^{M\times n\times C}.$$
+  <p>Here \(\Gamma_0^l,\Gamma_1^l\) are the two time kernels of block \(l\) and \(\Theta^l\) its graph kernel. The linear parts act on different axes of the tensor (time, sensors, channels), so they commute; only the gates and ReLU couple them. A general linear map on one 12-step, 228-sensor input would have \((12\cdot228)^2\approx7.5\) million entries per channel pair. The factored version needs \(K\) graph coefficients and \(K_t\) time coefficients.</p>
+
+  <figure class="wide">
+    <svg viewBox="0 0 520 200" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1.2"/>
+        </pattern>
+      </defs>
+      <g font-family="Oswald, sans-serif" font-size="11" letter-spacing="1.2" fill="currentColor" stroke="none" text-anchor="middle">
+        <text x="40" y="190">12 × n × 1</text>
+        <text x="150" y="190">10 × n × 64</text>
+        <text x="260" y="190">10 × n × 16</text>
+        <text x="370" y="190">8 × n × 64</text>
+        <text x="480" y="190">… → n</text>
+        <text x="95" y="28">TIME</text>
+        <text x="205" y="28">GRAPH</text>
+        <text x="315" y="28">TIME</text>
+        <text x="425" y="28">BLOCK 2, OUTPUT</text>
+      </g>
+      <!-- tensors as slabs: height ~ time, width ~ channels -->
+      <rect x="32" y="60" width="16" height="108"/>
+      <rect x="126" y="70" width="48" height="90" fill="url(#hatch)"/>
+      <rect x="248" y="70" width="24" height="90"/>
+      <rect x="346" y="80" width="48" height="72" fill="url(#hatch)"/>
+      <rect x="470" y="108" width="20" height="16"/>
+      <!-- arrows -->
+      <path d="M56 114h60M110 108l6 6-6 6M182 114h56M232 108l6 6-6 6M280 114h56M330 108l6 6-6 6M402 114h58M454 108l6 6-6 6"/>
+      <!-- operator glyphs -->
+      <path d="M78 44v10M88 40v14M98 44v10" stroke-width="1.5"/>
+      <circle cx="196" cy="46" r="4"/><circle cx="214" cy="40" r="4"/><circle cx="214" cy="54" r="4"/><path d="M200 45l10-4M200 47l10 5" stroke-width="1.2"/>
+      <path d="M298 44v10M308 40v14M318 44v10" stroke-width="1.5"/>
+    </svg>
+    <figcaption>one block: time shrinks 12 → 10 → 8 while channels go 64 → 16 → 64 (a bottleneck). a second block takes it to 4 steps; an output layer collapses those to one forecast per sensor.</figcaption>
+  </figure>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive<b>A 14-sensor road graph</b></p>
+
+  <p>Both panels use the same made-up road network: 14 sensors, edge weight \(e^{-(d/150)^2}\) for road length \(d\) in pixels, and its normalized Laplacian \(L\), diagonalised in your browser.</p>
+
+  <h3 class="sub">1 &middot; The graph's frequencies</h3>
+  <p><strong>Try:</strong> drag \(k\) from 1 to 14 to step through \(L\)'s eigenvectors \(u_k\). Circle size is \(|u_k|\) at that sensor; solid is positive, hatched is negative. <strong>Notice:</strong> \(u_1\) has one sign everywhere (it is \(D^{1/2}\mathbf 1\), normalised). As \(\lambda_k\) rises, more edges join sensors of opposite sign, until near \(\lambda=2\) almost every edge does. The eigenvalue is the edge-weighted amount of sign-flipping.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="mk">k = <output id="mkv" for="mk">1</output></label>
+      <input id="mk" type="range" min="1" max="14" value="1" step="1">
+    </div>
+    <canvas id="cMode" class="graph" width="640" height="410"></canvas>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">eigenvalue \(\lambda_k\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="mL">–</span></div>
+      <div class="entry"><span class="entry-name">edges whose ends differ in sign</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="mF">–</span></div>
+    </div>
+  </div>
+
+  <h3 class="sub">2 &middot; How far does one filter reach?</h3>
+  <p>A unit spike sits at one sensor (tap any sensor to move it). Then a filter is applied. <strong>Polynomial</strong> is the paper's filter, \(\sum_{k<K}\theta_kT_k(\tilde L)\) with fixed nonzero \(\theta_k\). <strong>Ideal low-pass</strong> is a generic spectral filter: it keeps the \(K\) lowest frequencies and zeroes the rest, \(U\,\mathrm{diag}(1,\dots,1,0,\dots,0)\,U^\top\).</p>
+  <p><strong>Try:</strong> step \(K\) from 1 to 6 with the polynomial, then switch to low-pass. <strong>Notice:</strong> the polynomial's output grows outward one hop per term, exactly as \((L^k)_{ij}=0\) beyond \(k\) hops predicts. Low-pass reaches all 14 sensors even at \(K=2\): its gains as a function of \(\lambda\) are not a low-degree polynomial, so it isn't local.</p>
+
+  <div class="bench">
+    <div class="toggle" role="group" aria-label="Filter type">
+      <button type="button" id="bPoly" aria-pressed="true">Polynomial</button>
+      <button type="button" id="bLow" aria-pressed="false">Ideal low-pass</button>
+    </div>
+    <div class="dial">
+      <label for="fk">K = <output id="fkv" for="fk">2</output></label>
+      <input id="fk" type="range" min="1" max="6" value="2" step="1">
+    </div>
+    <canvas id="cFilt" class="graph" width="640" height="410"></canvas>
+    <p class="aside-hand" style="margin:.6rem auto 0">ringed: the spike &middot; solid +, hatched − &middot; small empty circle: exactly zero</p>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">sensors reached</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="fR">–</span></div>
+      <div class="entry"><span class="entry-name">farthest reached, in hops</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="fH">–</span></div>
+      <div class="entry"><span class="entry-name">what it costs</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="fC">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>And connections</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">On a ring road, graph Fourier is Fourier</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">circulant</span></div>
+    <p class="entry-desc">For a cycle of \(n\) sensors, \(L=I-\tfrac12W\) is circulant, so the discrete Fourier basis diagonalises it, with \(\lambda_k=1-\cos(2\pi k/n)\). A degree-\((K-1)\) polynomial in \(L\) is then a symmetric 1-D convolution kernel of width \(2K-1\). The graph construction contains ordinary convolution as a special case.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The filter lives in a Krylov subspace</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\mathcal K_K(\tilde L,x)\)</span></div>
+    <p class="entry-desc">\(\sum_k\theta_kT_k(\tilde L)x\in\operatorname{span}\{x,\tilde Lx,\dots,\tilde L^{K-1}x\}\), the same space conjugate gradient and Lanczos search. Those methods choose the combination to solve a system or find eigenvalues; here the coefficients are learned by gradient descent to predict traffic.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">No recurrence, ten times less training time</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">272 s vs 3,824 s</span></div>
+    <p class="entry-desc">On the 1,026-sensor graph, training took 1,927 s for STGCN against 19,512 s for the graph-plus-recurrent baseline (GCGRU). The baseline also had to halve its batch size to fit on one GPU. STGCN uses about 95% fewer learned numbers than a plain recurrent network (FC-LSTM).</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">One coefficient per filter barely hurts</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">3.57 vs 3.79</span></div>
+    <p class="entry-desc">The first-order model (one \(\theta\) per channel pair, one hop per layer) has a 45-minute error of 3.79 against 3.57 for the two-hop Chebyshev model, and trains about 20% faster on the large graph (1,554 s vs 1,927 s).</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>A spectral filter \(U\Theta(\Lambda)U^\top\) whose gain is a degree-\((K-1)\) polynomial equals that polynomial in the sparse Laplacian \(L\), so it needs no eigenvectors, has \(K\) parameters, and mixes each sensor only with sensors within \(K-1\) road hops. That identity is what makes convolution on a road network practical.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Spatio-Temporal Graph Convolutional Networks: A Deep Learning Framework for Traffic Forecasting</strong>, by Bing Yu, Haoteng Yin and Zhanxing Zhu (Peking University), 2017; IJCAI 2018.
+  <a href="https://arxiv.org/abs/1709.04875">arxiv.org/abs/1709.04875</a></p>
+  <p class="signoff">Written from the full text (arXiv v4). All results are from the paper's tables. The interactives use a made-up 14-sensor graph, not the paper's data.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  // ---------- the toy road graph ----------
+  var P = [[70,70],[200,55],[330,80],[460,60],[570,150],
+           [100,190],[230,175],[360,200],[490,250],
+           [55,330],[180,315],[310,340],[440,360],[580,345]];
+  var E = [[0,1],[1,2],[2,3],[3,4],[0,5],[1,6],[2,7],[4,8],[5,6],[6,7],[7,8],
+           [5,9],[9,10],[10,11],[11,12],[12,13],[8,13],[6,10],[7,11],[8,12]];
+  var N = P.length, i, j, k;
+
+  var W = [];
+  for (i = 0; i < N; i++) { W.push([]); for (j = 0; j < N; j++) W[i].push(0); }
+  E.forEach(function (e) {
+    var dx = P[e[0]][0] - P[e[1]][0], dy = P[e[0]][1] - P[e[1]][1];
+    var w = Math.exp(-(dx * dx + dy * dy) / (150 * 150));
+    W[e[0]][e[1]] = w; W[e[1]][e[0]] = w;
+  });
+  var deg = W.map(function (r) { return r.reduce(function (a, b) { return a + b; }, 0); });
+  var L = [];
+  for (i = 0; i < N; i++) {
+    L.push([]);
+    for (j = 0; j < N; j++) L[i].push((i === j ? 1 : 0) - W[i][j] / Math.sqrt(deg[i] * deg[j]));
+  }
+
+  // ---------- Jacobi eigen-decomposition for symmetric matrices ----------
+  function eigSym(A0) {
+    var n = A0.length, a = A0.map(function (r) { return r.slice(); }), V = [], p, q, r;
+    for (p = 0; p < n; p++) { V.push([]); for (q = 0; q < n; q++) V[p].push(p === q ? 1 : 0); }
+    for (var sweep = 0; sweep < 100; sweep++) {
+      var off = 0;
+      for (p = 0; p < n; p++) for (q = p + 1; q < n; q++) off += a[p][q] * a[p][q];
+      if (off < 1e-24) break;
+      for (p = 0; p < n - 1; p++) for (q = p + 1; q < n; q++) {
+        if (Math.abs(a[p][q]) < 1e-15) continue;
+        var th = (a[q][q] - a[p][p]) / (2 * a[p][q]);
+        var t = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th * th + 1));
+        var c = 1 / Math.sqrt(t * t + 1), s = t * c, x, y;
+        for (r = 0; r < n; r++) { x = a[r][p]; y = a[r][q]; a[r][p] = c * x - s * y; a[r][q] = s * x + c * y; }
+        for (r = 0; r < n; r++) { x = a[p][r]; y = a[q][r]; a[p][r] = c * x - s * y; a[q][r] = s * x + c * y; }
+        for (r = 0; r < n; r++) { x = V[r][p]; y = V[r][q]; V[r][p] = c * x - s * y; V[r][q] = s * x + c * y; }
+      }
+    }
+    var out = [];
+    for (p = 0; p < n; p++) {
+      var v = V.map(function (row) { return row[p]; });
+      var big = 0;
+      for (r = 0; r < n; r++) if (Math.abs(v[r]) > Math.abs(v[big]) + 1e-12) big = r;
+      if (v[big] < 0) v = v.map(function (z) { return -z; });
+      out.push({ l: a[p][p], u: v });
+    }
+    out.sort(function (A, B) { return A.l - B.l; });
+    return out;
+  }
+  var eig = eigSym(L);
+  var lmax = eig[N - 1].l;
+
+  function matvec(M, x) {
+    return M.map(function (row) { var s = 0; for (var q = 0; q < N; q++) s += row[q] * x[q]; return s; });
+  }
+  var Lt = L.map(function (row, a) { return row.map(function (z, b) { return 2 * z / lmax - (a === b ? 1 : 0); }); });
+
+  // hop distances by BFS
+  var adj = [];
+  for (i = 0; i < N; i++) adj.push([]);
+  E.forEach(function (e) { adj[e[0]].push(e[1]); adj[e[1]].push(e[0]); });
+  function hops(s) {
+    var d = []; for (i = 0; i < N; i++) d.push(-1);
+    d[s] = 0; var Q = [s];
+    while (Q.length) { var a = Q.shift(); adj[a].forEach(function (b) { if (d[b] < 0) { d[b] = d[a] + 1; Q.push(b); } }); }
+    return d;
+  }
+
+  // ---------- drawing ----------
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3";
+  function hatchPat(ctx) {
+    var t = document.createElement("canvas"); t.width = 6; t.height = 6;
+    var h = t.getContext("2d"); h.strokeStyle = INK; h.lineWidth = 1.4;
+    h.beginPath(); h.moveTo(-1, 1); h.lineTo(1, -1); h.moveTo(0, 6); h.lineTo(6, 0); h.moveTo(5, 7); h.lineTo(7, 5); h.stroke();
+    return ctx.createPattern(t, "repeat");
+  }
+
+  function drawGraph(canvas, vals, opts) {
+    var ctx = canvas.getContext("2d");
+    if (!canvas._pat) canvas._pat = hatchPat(ctx);
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = INK; ctx.lineCap = "round";
+    E.forEach(function (e) {
+      var w = W[e[0]][e[1]];
+      ctx.lineWidth = 0.8 + 3 * w;
+      ctx.setLineDash(opts.flips && vals[e[0]] * vals[e[1]] < 0 ? [6, 6] : []);
+      ctx.beginPath(); ctx.moveTo(P[e[0]][0], P[e[0]][1]); ctx.lineTo(P[e[1]][0], P[e[1]][1]); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    var mx = 0; vals.forEach(function (v) { mx = Math.max(mx, Math.abs(v)); });
+    for (i = 0; i < N; i++) {
+      var v = vals[i], x = P[i][0], y = P[i][1];
+      var zero = Math.abs(v) <= 1e-9 * (mx || 1);
+      // paper backing so edges don't show through
+      ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(x, y, 26, 0, 2 * Math.PI); ctx.fill();
+      ctx.lineWidth = 1.5;
+      if (zero) {
+        ctx.beginPath(); ctx.arc(x, y, 6, 0, 2 * Math.PI); ctx.stroke();
+      } else {
+        var r = 6 + 18 * Math.abs(v) / mx;
+        ctx.fillStyle = v > 0 ? INK : canvas._pat;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+      }
+      if (opts.ring === i) {
+        ctx.lineWidth = 1.5; ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.arc(x, y, 30, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
+      }
+    }
+  }
+
+  // ---------- interactive 1: eigenvectors ----------
+  var mk = document.getElementById("mk"), cMode = document.getElementById("cMode");
+  function updMode() {
+    var kk = +mk.value, ev = eig[kk - 1], f = 0;
+    E.forEach(function (e) { if (ev.u[e[0]] * ev.u[e[1]] < 0) f++; });
+    document.getElementById("mkv").textContent = kk;
+    document.getElementById("mL").textContent = Math.max(0, ev.l).toFixed(3);
+    document.getElementById("mF").textContent = f + " / " + E.length;
+    drawGraph(cMode, ev.u, { flips: true });
+  }
+  mk.addEventListener("input", updMode);
+
+  // ---------- interactive 2: filter reach ----------
+  var fk = document.getElementById("fk"), cFilt = document.getElementById("cFilt");
+  var bPoly = document.getElementById("bPoly"), bLow = document.getElementById("bLow");
+  var mode = "poly", spike = 6;
+  var theta = [1, 0.8, 0.6, 0.45, 0.3, 0.2];
+
+  function filtered(K) {
+    var e = []; for (i = 0; i < N; i++) e.push(i === spike ? 1 : 0);
+    var y = e.map(function () { return 0; });
+    if (mode === "poly") {
+      var t0 = e, t1 = matvec(Lt, e);
+      for (i = 0; i < N; i++) y[i] += theta[0] * t0[i];
+      if (K > 1) for (i = 0; i < N; i++) y[i] += theta[1] * t1[i];
+      for (k = 2; k < K; k++) {
+        var Lt1 = matvec(Lt, t1), t2 = [];
+        for (i = 0; i < N; i++) t2.push(2 * Lt1[i] - t0[i]);
+        for (i = 0; i < N; i++) y[i] += theta[k] * t2[i];
+        t0 = t1; t1 = t2;
+      }
+    } else {
+      for (k = 0; k < K; k++) {
+        var c = eig[k].u[spike];
+        for (i = 0; i < N; i++) y[i] += c * eig[k].u[i];
+      }
+    }
+    return y;
+  }
+
+  function updFilt() {
+    var K = +fk.value, y = filtered(K), d = hops(spike), mx = 0, reached = 0, far = 0;
+    y.forEach(function (v) { mx = Math.max(mx, Math.abs(v)); });
+    for (i = 0; i < N; i++) if (Math.abs(y[i]) > 1e-9 * mx) { reached++; far = Math.max(far, d[i]); }
+    document.getElementById("fkv").textContent = K;
+    document.getElementById("fR").textContent = reached + " / " + N;
+    document.getElementById("fH").textContent = far;
+    document.getElementById("fC").textContent = mode === "poly"
+      ? (K - 1) + " sparse products"
+      : "full eigendecomposition";
+    drawGraph(cFilt, y, { ring: spike });
+  }
+
+  function setMode(m) {
+    mode = m;
+    bPoly.setAttribute("aria-pressed", m === "poly");
+    bLow.setAttribute("aria-pressed", m === "low");
+    updFilt();
+  }
+  bPoly.addEventListener("click", function () { setMode("poly"); });
+  bLow.addEventListener("click", function () { setMode("low"); });
+  fk.addEventListener("input", updFilt);
+  cFilt.addEventListener("click", function (ev) {
+    var rect = cFilt.getBoundingClientRect();
+    var x = (ev.clientX - rect.left) * cFilt.width / rect.width;
+    var y = (ev.clientY - rect.top) * cFilt.height / rect.height;
+    var best = -1, bd = 45 * 45;
+    for (i = 0; i < N; i++) {
+      var dx = P[i][0] - x, dy = P[i][1] - y;
+      if (dx * dx + dy * dy < bd) { bd = dx * dx + dy * dy; best = i; }
+    }
+    if (best >= 0) { spike = best; updFilt(); }
+  });
+
+  updMode();
+  updFilt();
+})();
+</script>
+</body>
+</html>

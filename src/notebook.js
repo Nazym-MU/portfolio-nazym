@@ -30,6 +30,41 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-10-lora-low-rank-adaptation-of-large-language-models.html",
         date: "2026-11-10",
     },
+    {
+        title: "Soft Actor-Critic",
+        blurb: "A robot-learning method rewards the agent for keeping its actions as random as it can while still succeeding, and that makes learning from saved past experience both fast and reliable.",
+        tags: ["paper of the day", "reinforcement-learning"],
+        file: "learning/paper-2026-11-02-soft-actor-critic-off-policy-maximum-entropy-deep.html",
+        date: "2026-11-02",
+    },
+    {
+        title: "nnU-Net",
+        blurb: "Instead of hand-designing a network for every medical image segmentation task, nnU-Net reads a dataset's properties and configures a standard U-Net pipeline by itself, and it won most of the benchmarks it entered.",
+        tags: ["paper of the day", "medical imaging"],
+        file: "learning/paper-2026-11-04-nnu-net-self-adapting-framework-for-u-net-based-me.html",
+        date: "2026-11-04",
+    },
+    {
+        title: "A3C: Asynchronous Methods for Deep RL",
+        blurb: "Running sixteen game-playing agents in parallel on one CPU, all updating one shared neural network, makes their training data varied enough to learn stably without storing past experience, and beat GPU-trained agents on Atari games in half the time.",
+        tags: ["paper of the day", "reinforcement-learning"],
+        file: "learning/paper-2026-11-05-asynchronous-methods-for-deep-reinforcement-learni.html",
+        date: "2026-11-05",
+    },
+    {
+        title: "Mean Teacher",
+        blurb: "For semi-supervised learning, a 'teacher' network whose weights are a running average of the student's supplies the targets on unlabeled images, beating the previous best while using a fraction of the labels.",
+        tags: ["paper of the day", "semi-supervised"],
+        file: "learning/paper-2026-11-08-weight-averaged-consistency-targets-improve-semi-s.html",
+        date: "2026-11-08",
+    },
+    {
+        title: "STGCN: Traffic Forecasting on Road Graphs",
+        blurb: "Treating highway sensors as points on a road network and filtering their readings with simple matrix polynomials lets a model predict traffic speeds 45 minutes ahead more accurately than earlier methods, and train about 14 times faster.",
+        tags: ["paper of the day", "graphs"],
+        file: "learning/paper-2026-11-09-spatio-temporal-graph-convolutional-networks-a-dee.html",
+        date: "2026-11-09",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
