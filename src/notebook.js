@@ -20,6 +20,12 @@ export const NOTEBOOK_ENTRIES = [
         tags: ["geometry", "discrete diff geo"],
         file: "learning/combinatorial-surfaces.html",
     },
+    {
+        title: "LoRA: Low-Rank Adaptation",
+        blurb: "Freeze GPT-3 and learn only a rank-r update ΔW = BA (r as small as 1) that matches full fine-tuning with 10,000× fewer trainable parameters.",
+        tags: ["paper of the day", "fine-tuning"],
+        file: "learning/paper-2026-11-10-lora-low-rank-adaptation-of-large-language-models.html",
+    },
 ];
 
 function escapeHtml(str) {
