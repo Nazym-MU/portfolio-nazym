@@ -65,6 +65,20 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-09-spatio-temporal-graph-convolutional-networks-a-dee.html",
         date: "2026-11-09",
     },
+    {
+        title: "Training image classifiers to resist adversarial attacks",
+        blurb: "Image classifiers can be fooled by pixel changes too small to see, and this paper makes them much harder to fool by training them on the most damaging small change it can find for each training image.",
+        tags: ["paper of the day", "robustness"],
+        file: "learning/paper-2026-11-01-towards-deep-learning-models-resistant-to-adversar.html",
+        date: "2026-11-01",
+    },
+    {
+        title: "Deep learning reads diabetic eye photos",
+        blurb: "A neural network trained on 128,000 photos of the back of the eye, each graded by ophthalmologists, picked out diabetic patients who need a specialist almost as reliably as a panel of those doctors.",
+        tags: ["paper of the day", "medical-imaging"],
+        file: "learning/paper-2026-11-07-development-and-validation-of-a-deep-learning-algo.html",
+        date: "2026-11-07",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));

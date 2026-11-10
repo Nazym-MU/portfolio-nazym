@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Learning for Diabetic Retinopathy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 .8rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial label sub{text-transform:none}
+.dial output{display:inline-block;min-width:3.2em;text-align:left;font-variant-numeric:tabular-nums}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.presets{display:flex;flex-wrap:wrap;gap:.5rem;margin:.2rem 0 1rem}
+.presets button{
+  font-family:var(--font-head);
+  font-weight:500;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.78rem;
+  background:var(--paper);
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.3em .8em;
+  cursor:pointer;
+}
+.presets button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.presets button:focus-visible{outline:1px dotted var(--ink);outline-offset:3px}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench figure{margin:1rem auto 0}
+.bench figure.sqwrap{max-width:340px}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+  max-width:var(--measure);
+  margin-left:auto;margin-right:auto;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+  .dial{gap:.6rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- a fundus: the eye's back wall, optic disc, branching vessels -->
+    <svg class="strip" viewBox="0 0 420 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <circle cx="210" cy="60" r="56"/>
+      <circle cx="210" cy="60" r="51" stroke-width="1" stroke-dasharray="2 4"/>
+      <circle cx="238" cy="58" r="9" fill="currentColor"/>
+      <path d="M232 52c-14-10-30-14-52-12M180 40c-8 0-14 4-20 10M196 41c-4-8-10-12-18-14"/>
+      <path d="M232 64c-14 10-30 16-52 14M180 78c-8 1-14-2-20-8M198 76c-2 8-8 14-16 18"/>
+      <path d="M247 54c8-8 10-16 8-26M247 63c8 8 9 16 6 26" stroke-width="1.5"/>
+      <circle cx="196" cy="60" r="3"/>
+      <path d="M40 60h100M280 60h100" stroke-width="1"/>
+      <path d="M140 60l-6-4M140 60l-6 4M280 60l6-4M280 60l6 4" stroke-width="1"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; JAMA 2016 &middot; 7,371 citations</p>
+      <h1>Reading the Retina</h1>
+    </div>
+    <p class="tagline">Development and Validation of a Deep Learning Algorithm for Detection of Diabetic Retinopathy in Retinal Fundus Photographs</p>
+    <p class="tagline-hand">Varun Gulshan, L. Peng, M. Coram et al. &middot; 2016 &middot;
+    <a href="https://doi.org/10.1001/jama.2016.17216">doi:10.1001/jama.2016.17216</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>Google researchers trained a neural network on about 128,000 photographs of the back of the eye, each graded by eye doctors, and showed on two separate test sets that it can tell which diabetic patients need to see a specialist almost as reliably as a panel of those specialists.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: a filter and its spectrum; a threshold</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">too few graders</span></div>
+    <p class="entry-desc">Diabetes slowly damages the tiny blood vessels of the retina, the light-sensitive layer at the back of the eye. This <em>diabetic retinopathy</em> is a leading cause of blindness in working-age adults, and it is treatable if caught early. So diabetic patients are screened with a <em>fundus photograph</em>: a colour photo of the back of the eye, taken through the pupil. A trained reader grades it for small bleeds, leaks and swelling.</p>
+    <p class="entry-desc">The question is whether the eye is <em>referable</em>: moderate or worse retinopathy, or swelling of the macula (the centre of the retina, which gives sharp vision). Either means the patient should see an ophthalmologist. There are far more photos than qualified readers, and readers often disagree with each other.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">128,175 graded photos</span></div>
+    <p class="entry-desc">Train a <em>convolutional neural network</em> on graded photos. This is a stack of layers, each a structured linear map followed by a simple pointwise nonlinearity. They used Google's off-the-shelf Inception-v3 design, starting from weights already trained to recognise everyday objects. It never sees hand-drawn lesion outlines, only the photo and its grade.</p>
+    <p class="entry-desc">The 128,175 training photos were each graded 3 to 7 times by a pool of 54 US ophthalmologists and senior ophthalmology residents. The majority grade became the label. The network outputs a score between 0 and 1, and a chosen threshold turns that score into "refer" or "don't refer".</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">AUC 0.991</span></div>
+    <p class="entry-desc">It was tested on two sets it never trained on: EyePACS-1 (9,963 photos of 4,997 patients from a US screening programme) and Messidor-2 (1,748 photos of 874 patients from France). Each photo was graded by at least 7 board-certified ophthalmologists.</p>
+    <p class="entry-desc">Two terms: <em>sensitivity</em> is the fraction of referable eyes the network flags, and <em>specificity</em> is the fraction of healthy eyes it correctly lets go. The <em>AUC</em> (area under the curve) summarises the trade-off across every threshold; 1 is perfect and 0.5 is a coin flip. The AUC was 0.991 on EyePACS-1 and 0.990 on Messidor-2.</p>
+    <p class="entry-desc">At a threshold tuned for few false alarms, sensitivity / specificity were 90.3% / 98.1% (EyePACS-1) and 87.0% / 98.5% (Messidor-2). At a threshold tuned to miss little, they were 97.5% / 93.4% and 96.1% / 93.9%.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Convolution is circulant; Fourier diagonalises it</b></p>
+
+  <p>The paper is a clinical validation study, so it proves no theorems. The linear algebra is in the network it uses, and the core object is the convolution matrix.</p>
+
+  <h3 class="sub">The objects</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(x\in\mathbb R^{299\cdot299\cdot3}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">the photo</span></div>
+    <p class="entry-desc">A fundus photo, resized so the eye is 299 pixels across, with three colour channels: a vector of 268,203 numbers.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(x\mapsto \sigma(Cx+b)\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">one layer</span></div>
+    <p class="entry-desc">\(C\) is a learned matrix, \(b\) a learned offset vector, and \(\sigma(t)=\max(0,t)\) applied entrywise. The network composes dozens of these, then pools to a single score.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(C\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">sparse, weight-shared</span></div>
+    <p class="entry-desc">Each output pixel depends only on a 3×3 patch of the input around it, through the same small set of weights (the <em>kernel</em>) at every location. Take an early Inception-v3 layer on a 147×147 grid, mapping 64 channels to 64. Written as a dense matrix, \(C\) would have \((147^2\cdot64)^2\approx1.9\times10^{12}\) entries. It has only \(3\cdot3\cdot64\cdot64=36{,}864\) free numbers.</p>
+  </div>
+
+  <h3 class="sub">One dimension, one channel: \(C\) is circulant</h3>
+
+  <p>Strip it down to a signal \(x\in\mathbb R^n\) on a ring (indices mod \(n\)) and a kernel of three weights \(w_{-1},w_0,w_1\):</p>
+  $$y_i = w_{-1}x_{i-1}+w_0x_i+w_1x_{i+1},\qquad C=w_{-1}S^{-1}+w_0I+w_1S,$$
+  <p>where \(S\) is the cyclic shift, \((Sx)_i=x_{i+1}\), a permutation matrix and hence orthogonal. \(C\) is <em>circulant</em>: each row is the row above shifted one place right. It is symmetric exactly when \(w_{-1}=w_1\).</p>
+
+  <div class="callout">
+    <span class="callout-label">The spectral fact doing the work</span>
+    <p>Let \(\omega=e^{2\pi i/n}\) and \(f_k=(1,\omega^k,\omega^{2k},\dots,\omega^{(n-1)k})\), the discrete Fourier mode of frequency \(k\). Since \(Sf_k=\omega^kf_k\), every polynomial in \(S\) shares these eigenvectors:</p>
+    $$Cf_k=\lambda_kf_k,\quad \lambda_k=w_0+w_1\omega^{k}+w_{-1}\omega^{-k},\qquad C=F\Lambda F^{*}.$$
+    <p>Here \(F\) is the unitary matrix with columns \(f_k/\sqrt n\), and \(\Lambda=\operatorname{diag}(\lambda_0,\dots,\lambda_{n-1})\). The eigenvalues are the kernel's discrete Fourier transform. So every convolution acts as a <em>frequency filter</em>: it scales each Fourier mode by \(\lambda_k\) independently. Because \(F\) is unitary, \(C\) is normal, and its singular values are \(|\lambda_k|\).</p>
+    <p>The converse is why the structure matters: a matrix commutes with \(S\) iff it is a polynomial in \(S\) (the eigenvalues \(\omega^k\) of \(S\) are distinct), iff it is circulant. "Commutes with shifts" means a lesion is detected the same way wherever it sits in the photo. That is exactly what convolution, and nothing else linear, guarantees.</p>
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: a blur on 4 pixels</span>
+    <p>Kernel \((w_{-1},w_0,w_1)=(\tfrac14,\tfrac12,\tfrac14)\), \(n=4\), so \(\omega=i\):</p>
+    $$C=\tfrac14\begin{pmatrix}2&1&0&1\\1&2&1&0\\0&1&2&1\\1&0&1&2\end{pmatrix},\qquad \lambda_k=\tfrac12+\tfrac12\cos\tfrac{\pi k}{2}=1,\ \tfrac12,\ 0,\ \tfrac12 .$$
+    <p>Check: \(C(1,1,1,1)^\top=(1,1,1,1)^\top\), since a blur keeps constants. \(C(1,-1,1,-1)^\top=0\): row 1 gives \((2-1+0-1)/4=0\). The blur annihilates the fastest alternation, so \(C\) is singular. The trace is \(2=1+\tfrac12+0+\tfrac12\). It is symmetric, so the eigenvalues are real.</p>
+  </div>
+
+  <h3 class="sub">Images, channels, and tensor products</h3>
+  <p>On an \(n\times n\) image, shifts go two ways, and the 2-D convolution matrix is <em>doubly block circulant</em>. It is diagonalised by \(F\otimes F\), the Kronecker (tensor) product of two 1-D Fourier matrices. This is the same structure as a product unitary acting on two independent subsystems: the 2-D Fourier mode \(f_k\otimes f_\ell\) is a product state of a row frequency and a column frequency.</p>
+  <p>With \(c_{\text{in}}\) input and \(c_{\text{out}}\) output channels, \(C\) is a \(c_{\text{out}}\times c_{\text{in}}\) grid of such blocks. Conjugating by \(I\otimes F\otimes F\) turns it <em>block diagonal</em>, with one small \(c_{\text{out}}\times c_{\text{in}}\) matrix \(\hat W(k,\ell)\) per frequency. So the trillion-entry layer's singular values are the union of the singular values of \(n^2\) little matrices, and its operator norm is</p>
+  $$\|C\|_2=\max_{k,\ell}\ \|\hat W(k,\ell)\|_2 .$$
+  <p>Real layers pad the image border with zeros instead of wrapping around, so \(C\) is <em>Toeplitz</em> (constant along diagonals, no wrap). The Fourier picture is then exact in the interior and only approximate near the edges.</p>
+
+  <h3 class="sub">Separable kernels are rank one</h3>
+  <p>A 2-D kernel is itself a small matrix \(K\). If \(K=uv^\top\) has rank one, convolving with \(K\) equals convolving with the column \(u\) and then the row \(v\). That costs \(2k\) weights instead of \(k^2\).</p>
+  <figure>
+    <svg viewBox="0 0 440 130" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+      <g font-family="Oswald, sans-serif" font-size="15" text-anchor="middle" fill="currentColor" stroke="none">
+        <text x="40" y="35">1</text><text x="40" y="67">2</text><text x="40" y="99">1</text>
+        <text x="110" y="35">1</text><text x="142" y="35">0</text><text x="174" y="35">&#8722;1</text>
+        <text x="260" y="35">1</text><text x="292" y="35">0</text><text x="324" y="35">&#8722;1</text>
+        <text x="260" y="67">2</text><text x="292" y="67">0</text><text x="324" y="67">&#8722;2</text>
+        <text x="260" y="99">1</text><text x="292" y="99">0</text><text x="324" y="99">&#8722;1</text>
+        <text x="78" y="68">&#215;</text><text x="216" y="68">=</text>
+        <text x="390" y="72" font-size="12" letter-spacing="1.5">RANK 1</text>
+      </g>
+      <rect x="24" y="12" width="32" height="96"/>
+      <rect x="94" y="12" width="96" height="32"/>
+      <rect x="244" y="12" width="96" height="96"/>
+      <path d="M244 44h96M244 76h96M276 12v96M308 12v96" stroke-width="1"/>
+      <path d="M356 60h12" stroke-width="1"/>
+    </svg>
+    <figcaption>the Sobel edge detector is a column times a row: smooth vertically, difference horizontally.</figcaption>
+  </figure>
+  <p>Inception-v3 builds this in: it replaces \(7\times7\) convolutions with a \(1\times7\) followed by a \(7\times1\). Without the nonlinearity between them, the pair would be exactly a rank-one \(7\times7\) kernel (14 weights instead of 49). With the nonlinearity, it is strictly richer, at the same cost.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive 1<b>A kernel, its matrix, its spectrum</b></p>
+
+  <p>Below is the \(8\times8\) circulant matrix \(C\) of a three-weight kernel on a ring of 8 pixels, together with its eigenvalues \(\lambda_0,\dots,\lambda_7\) (bar heights are \(|\lambda_k|\)). Pick a preset or drag the weights.</p>
+  <p><strong>Try:</strong> <em>blur</em>, then <em>edge</em>, then <em>sharpen</em>. <strong>Notice:</strong> blur sends \(\lambda_4\) (the \(+,-,+,-\) pattern) to 0. Edge sends \(\lambda_0\) to 0, because constants have no edges, and its matrix is skew-symmetric, so every eigenvalue is purely imaginary. Sharpen amplifies high frequencies: \(\lambda_4=3\). Then make \(w_{-1}\ne w_1\) and watch the symmetry, and with it the real spectrum, disappear. The matrix always has 64 entries but at most 3 free numbers.</p>
+
+  <div class="bench">
+    <div class="presets" role="group" aria-label="Kernel presets">
+      <button type="button" data-k="0.25,0.5,0.25">blur</button>
+      <button type="button" data-k="-0.5,0,0.5">edge</button>
+      <button type="button" data-k="-0.5,2,-0.5">sharpen</button>
+      <button type="button" data-k="0,1,0">identity</button>
+    </div>
+    <div class="dial"><label for="wm">w<sub>&#8722;1</sub> = <output id="wmv" for="wm"></output></label><input id="wm" type="range" min="-1" max="2" step="0.05" value="0.25"></div>
+    <div class="dial"><label for="wz">w<sub>0</sub> = <output id="wzv" for="wz"></output></label><input id="wz" type="range" min="-1" max="2" step="0.05" value="0.5"></div>
+    <div class="dial"><label for="wp">w<sub>+1</sub> = <output id="wpv" for="wp"></output></label><input id="wp" type="range" min="-1" max="2" step="0.05" value="0.25"></div>
+    <figure class="sqwrap"><canvas id="cC" width="320" height="320"></canvas><figcaption>\(C\): solid ink positive, hatched negative, blank zero</figcaption></figure>
+    <figure><canvas id="cL" width="640" height="170"></canvas><figcaption>\(|\lambda_k|\), \(k=0\dots7\): solid real &gt; 0 &middot; hatched real &lt; 0 &middot; outlined complex</figcaption></figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">symmetry</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lSym">–</span></div>
+      <div class="entry"><span class="entry-name">nonzero entries of \(C\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lNz">–</span></div>
+      <div class="entry"><span class="entry-name">\(\lambda_0\) = sum of weights</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lL0">–</span></div>
+      <div class="entry"><span class="entry-name">smallest \(|\lambda_k|\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lMin">–</span></div>
+    </div>
+  </div>
+
+  <p class="regime" style="margin-top:2.6rem">Interactive 2<b>Where to cut the score</b></p>
+  <p>The network gives each photo a score, and a threshold turns scores into referrals. Here the scores are modelled as two bell curves of equal width: healthy eyes centred at 0, referable eyes at 3.35. That separation gives AUC = 0.991, the paper's EyePACS-1 figure. This is a toy model fitted to that one number, not the paper's data.</p>
+  <p><strong>Try:</strong> drag the threshold between the paper's two operating points, marked as open circles on the curve. <strong>Notice:</strong> one network, two very different screening policies. Watch the last line too: even at 98% specificity, about one in five flagged eyes is a false alarm, because referable eyes are only about 8% of those screened.</p>
+
+  <div class="bench">
+    <div class="dial"><label for="th">threshold = <output id="thv" for="th"></output></label><input id="th" type="range" min="-1" max="5" step="0.01" value="2.07"></div>
+    <figure><canvas id="cD" width="640" height="200"></canvas><figcaption>left curve healthy, right curve referable &middot; solid: false alarms &middot; hatched: missed</figcaption></figure>
+    <figure class="sqwrap"><canvas id="cR" width="320" height="320"></canvas><figcaption>the curve whose area is the AUC (zoomed): filled dot is you, open circles the paper</figcaption></figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">sensitivity</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="rSe">–</span></div>
+      <div class="entry"><span class="entry-name">specificity</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="rSp">–</span></div>
+      <div class="entry"><span class="entry-name">per 1,000 screened: caught / missed</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="rCM">–</span></div>
+      <div class="entry"><span class="entry-name">per 1,000: false alarms</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="rFA">–</span></div>
+      <div class="entry"><span class="entry-name">flagged eyes truly referable</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="rPPV">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The AUC is a probability</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">0.991</span></div>
+    <p class="entry-desc">Pick one referable photo and one healthy photo at random. The AUC is exactly the probability that the network scores the referable one higher. This is the Mann–Whitney identity, and it needs no threshold. For two unit-variance Gaussians whose means are \(d\) apart, \(\text{AUC}=\Phi(d/\sqrt2)\), with \(\Phi\) the standard normal CDF. That is how Interactive 2 gets its \(d\approx3.35\).</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">98% specific, still 1 in 5 wrong flags</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">Bayes</span></div>
+    <p class="entry-desc">Of 1,000 screened eyes with about 8% referable, 90.3% sensitivity catches about 72 of 80. And 1.9% of 920 healthy eyes gives about 17 false alarms. So only \(72/89\approx 80\%\) of flags are real. Rare conditions punish false positives, which is why the paper reports a second, high-sensitivity threshold rather than one "accuracy".</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Ten networks, averaged</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">ensemble</span></div>
+    <p class="entry-desc">The final score is the plain average of 10 copies of the network trained on the same data. If their errors were independent with variance \(s^2\), the average's variance would be \(s^2/10\). They are correlated, so the gain is smaller, but averaging is a cheap, linear way to reduce variance.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The labels are a vote</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">3–7 graders</span></div>
+    <p class="entry-desc">The "truth" the network learns is the majority opinion of several ophthalmologists, because single graders disagree. A model trained on noisy majority labels can end up scoring near the consensus, more consistently than a typical individual on the panel.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>A convolutional layer is a huge, sparse, weight-shared matrix that commutes with shifts, so the Fourier basis diagonalises it into a bank of frequency filters. Stacks of such filters, trained on 128,000 graded eye photos, picked out patients who need a specialist with AUC 0.99.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 33c20-26 84-26 104 0c-20 26-84 26-104 0z"/><circle cx="60" cy="33" r="13"/><circle cx="60" cy="33" r="5" fill="currentColor"/></svg>
+  <p class="cite"><strong>Development and Validation of a Deep Learning Algorithm for Detection of Diabetic Retinopathy in Retinal Fundus Photographs</strong>, by Varun Gulshan, L. Peng, M. Coram, Martin C. Stumpe, Derek J. Wu, Arunachalam Narayanaswamy, Subhashini Venugopalan, Kasumi Widner, T. Madams, Jorge A. Cuadros, R. Kim, R. Raman, Philip Nelson, J. Mega and D. Webster. <em>JAMA</em>, 2016.
+  <a href="https://doi.org/10.1001/jama.2016.17216">doi.org/10.1001/jama.2016.17216</a></p>
+  <p class="signoff">No PDF was available, and the abstract was withheld by the publisher in the record I received. This page was written from the paper's bibliographic record and the figures from its published abstract, so check the numbers against the paper. The linear algebra describes the convolutional network (Inception-v3) the paper uses; the paper itself derives none of it. Both interactives are toy models.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3";
+
+  var patterns = [];
+  function hatchFor(ctx) {
+    for (var n = 0; n < patterns.length; n++) if (patterns[n].ctx === ctx) return patterns[n].p;
+    var t = document.createElement("canvas");
+    t.width = 6; t.height = 6;
+    var h = t.getContext("2d");
+    h.strokeStyle = INK; h.lineWidth = 1.4;
+    h.beginPath();
+    h.moveTo(-1, 1); h.lineTo(1, -1);
+    h.moveTo(0, 6); h.lineTo(6, 0);
+    h.moveTo(5, 7); h.lineTo(7, 5);
+    h.stroke();
+    var p = ctx.createPattern(t, "repeat");
+    patterns.push({ ctx: ctx, p: p });
+    return p;
+  }
+  function clear(ctx, W, H) {
+    ctx.globalAlpha = 1; ctx.setLineDash([]);
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+  }
+
+  /* ============ Interactive 1: circulant matrix and its spectrum ============ */
+  (function () {
+    var n = 8;
+    var sm = document.getElementById("wm"), sz = document.getElementById("wz"), sp = document.getElementById("wp");
+    var cC = document.getElementById("cC"), cL = document.getElementById("cL");
+    var buttons = document.querySelectorAll(".presets button");
+
+    function fmt(v) { var s = (Math.abs(v) < 1e-9 ? 0 : v).toFixed(2); return s.replace("-", "\u2212"); }
+
+    function draw() {
+      var wm = +sm.value, wz = +sz.value, wp = +sp.value;
+      document.getElementById("wmv").textContent = fmt(wm);
+      document.getElementById("wzv").textContent = fmt(wz);
+      document.getElementById("wpv").textContent = fmt(wp);
+
+      // highlight a matching preset
+      for (var b = 0; b < buttons.length; b++) {
+        var k = buttons[b].getAttribute("data-k").split(",").map(Number);
+        var on = Math.abs(k[0] - wm) < 1e-9 && Math.abs(k[1] - wz) < 1e-9 && Math.abs(k[2] - wp) < 1e-9;
+        buttons[b].setAttribute("aria-pressed", on ? "true" : "false");
+      }
+
+      // matrix
+      var ctx = cC.getContext("2d"), W = cC.width, cell = W / n, pat = hatchFor(ctx);
+      clear(ctx, W, W);
+      var mx = Math.max(Math.abs(wm), Math.abs(wz), Math.abs(wp), 1e-9);
+      for (var i = 0; i < n; i++) for (var j = 0; j < n; j++) {
+        var v = 0;
+        if (j === i) v += wz;
+        if (j === (i + 1) % n) v += wp;
+        if (j === (i - 1 + n) % n) v += wm;
+        if (Math.abs(v) < 1e-9) continue;
+        ctx.globalAlpha = Math.max(0.15, Math.min(1, Math.abs(v) / mx));
+        ctx.fillStyle = v > 0 ? INK : pat;
+        ctx.fillRect(j * cell + 1, i * cell + 1, cell - 2, cell - 2);
+      }
+      ctx.globalAlpha = 0.25; ctx.strokeStyle = INK; ctx.lineWidth = 1;
+      for (i = 1; i < n; i++) {
+        ctx.beginPath(); ctx.moveTo(i * cell + .5, 0); ctx.lineTo(i * cell + .5, W); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, i * cell + .5); ctx.lineTo(W, i * cell + .5); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // spectrum: lambda_k = w0 + w1 w^k + w_{-1} w^{-k}
+      var lam = [], minAbs = Infinity;
+      for (var q = 0; q < n; q++) {
+        var th = 2 * Math.PI * q / n;
+        var re = wz + (wp + wm) * Math.cos(th), im = (wp - wm) * Math.sin(th);
+        if (Math.abs(re) < 1e-9) re = 0;
+        if (Math.abs(im) < 1e-9) im = 0;
+        var a = Math.hypot(re, im);
+        lam.push({ re: re, im: im, a: a });
+        minAbs = Math.min(minAbs, a);
+      }
+      var c2 = cL.getContext("2d"), LW = cL.width, LH = cL.height, p2 = hatchFor(c2);
+      clear(c2, LW, LH);
+      var pad = 14, base = LH - 30, bw = (LW - 2 * pad) / n;
+      var bound = Math.max(Math.abs(wm) + Math.abs(wz) + Math.abs(wp), 1e-9);
+      c2.strokeStyle = INK; c2.lineWidth = 1.5;
+      c2.beginPath(); c2.moveTo(pad, base + .5); c2.lineTo(LW - pad, base + .5); c2.stroke();
+      c2.font = "15px Oswald, sans-serif"; c2.textAlign = "center"; c2.fillStyle = INK;
+      for (q = 0; q < n; q++) {
+        var h = (base - 10) * lam[q].a / bound;
+        var x = pad + q * bw + bw * 0.18, w = bw * 0.64;
+        if (h > 0.5) {
+          if (lam[q].im === 0) {
+            c2.fillStyle = lam[q].re > 0 ? INK : p2;
+            c2.fillRect(x, base - h, w, h);
+            c2.strokeRect(x + .75, base - h + .75, w - 1.5, h - 1.5);
+          } else {
+            c2.strokeRect(x + .75, base - h + .75, w - 1.5, h - 1.5);
+          }
+        } else {
+          c2.beginPath(); c2.arc(x + w / 2, base - 5, 3, 0, 2 * Math.PI); c2.stroke();
+        }
+        c2.fillStyle = INK;
+        c2.fillText("\u03bb" + q, x + w / 2, LH - 9);
+      }
+
+      var sym;
+      if (Math.abs(wm - wp) < 1e-9) sym = "symmetric \u00b7 real \u03bb";
+      else if (Math.abs(wm + wp) < 1e-9 && Math.abs(wz) < 1e-9) sym = "skew \u00b7 imaginary \u03bb";
+      else sym = "neither \u00b7 complex \u03bb";
+      document.getElementById("lSym").textContent = sym;
+      var nz = (Math.abs(wm) > 1e-9) + (Math.abs(wz) > 1e-9) + (Math.abs(wp) > 1e-9);
+      document.getElementById("lNz").textContent = (nz * n) + " / 64";
+      document.getElementById("lL0").textContent = fmt(wm + wz + wp);
+      document.getElementById("lMin").textContent = minAbs < 1e-6 ? "0 \u00b7 singular" : minAbs.toFixed(3);
+    }
+
+    for (var b = 0; b < buttons.length; b++) {
+      buttons[b].addEventListener("click", function () {
+        var k = this.getAttribute("data-k").split(",");
+        sm.value = k[0]; sz.value = k[1]; sp.value = k[2];
+        draw();
+      });
+    }
+    [sm, sz, sp].forEach(function (s) { s.addEventListener("input", draw); });
+    draw();
+  })();
+
+  /* ============ Interactive 2: threshold, ROC, Bayes ============ */
+  (function () {
+    var D = 3.35, PREV = 0.08;
+    function erf(x) {
+      var s = x < 0 ? -1 : 1; x = Math.abs(x);
+      var t = 1 / (1 + 0.3275911 * x);
+      var y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+      return s * y;
+    }
+    function Phi(x) { return 0.5 * (1 + erf(x / Math.SQRT2)); }
+    function pdf(x) { return Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI); }
+
+    var sl = document.getElementById("th");
+    var cD = document.getElementById("cD"), cR = document.getElementById("cR");
+    var X0 = -3.5, X1 = 7;
+
+    function drawDens(t) {
+      var ctx = cD.getContext("2d"), W = cD.width, H = cD.height, pat = hatchFor(ctx);
+      clear(ctx, W, H);
+      var base = H - 22, top = 14;
+      function px(x) { return (x - X0) / (X1 - X0) * W; }
+      function py(y) { return base - (base - top) * y / 0.4; }
+      var steps = 320, i, x;
+
+      // false alarms: healthy curve right of t (solid ink)
+      ctx.fillStyle = INK; ctx.globalAlpha = 0.85;
+      ctx.beginPath(); ctx.moveTo(px(t), base);
+      for (i = 0; i <= steps; i++) { x = t + (X1 - t) * i / steps; ctx.lineTo(px(x), py(pdf(x))); }
+      ctx.lineTo(px(X1), base); ctx.closePath(); ctx.fill();
+      // missed: referable curve left of t (hatched)
+      ctx.globalAlpha = 1; ctx.fillStyle = pat;
+      ctx.beginPath(); ctx.moveTo(px(X0), base);
+      for (i = 0; i <= steps; i++) { x = X0 + (t - X0) * i / steps; ctx.lineTo(px(x), py(pdf(x - D))); }
+      ctx.lineTo(px(t), base); ctx.closePath(); ctx.fill();
+
+      // the two curves
+      ctx.strokeStyle = INK; ctx.lineWidth = 2;
+      [0, D].forEach(function (m) {
+        ctx.beginPath();
+        for (i = 0; i <= steps; i++) { x = X0 + (X1 - X0) * i / steps; var yy = py(pdf(x - m)); if (i) ctx.lineTo(px(x), yy); else ctx.moveTo(px(x), yy); }
+        ctx.stroke();
+      });
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(0, base + .5); ctx.lineTo(W, base + .5); ctx.stroke();
+      // threshold
+      ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(px(t), 4); ctx.lineTo(px(t), base); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = INK; ctx.font = "14px Oswald, sans-serif"; ctx.textAlign = "center";
+      ctx.fillText("HEALTHY", px(0), H - 5);
+      ctx.fillText("REFERABLE", px(D), H - 5);
+    }
+
+    var XM = 0.30, YM = 0.60; // zoom window: FPR in [0, .3], TPR in [.6, 1]
+    function drawROC(t) {
+      var ctx = cR.getContext("2d"), S = cR.width;
+      clear(ctx, S, S);
+      var L = 44, B = S - 36, R = S - 12, T = 12;
+      function px(f) { return L + (R - L) * f / XM; }
+      function py(s) { return B - (B - T) * (s - YM) / (1 - YM); }
+      ctx.strokeStyle = INK; ctx.fillStyle = INK; ctx.lineWidth = 1.5;
+      ctx.strokeRect(L + .5, T + .5, R - L, B - T);
+      ctx.font = "13px Oswald, sans-serif"; ctx.textAlign = "center";
+      [0, 0.1, 0.2, 0.3].forEach(function (f) { ctx.fillText(Math.round(f * 100) + "%", px(f), B + 16); });
+      ctx.fillText("FALSE ALARM RATE", (L + R) / 2, S - 4);
+      ctx.textAlign = "right";
+      [0.6, 0.8, 1].forEach(function (s) { ctx.fillText(Math.round(s * 100) + "%", L - 5, py(s) + 4); });
+      ctx.save(); ctx.translate(12, (T + B) / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = "center";
+      ctx.fillText("SENSITIVITY", 0, 0); ctx.restore();
+
+      ctx.save();
+      ctx.beginPath(); ctx.rect(L, T, R - L, B - T); ctx.clip();
+      ctx.lineWidth = 2; ctx.beginPath();
+      for (var i = 0; i <= 400; i++) {
+        var tt = 8 - 12 * i / 400;
+        var f = 1 - Phi(tt), s = 1 - Phi(tt - D);
+        if (i) ctx.lineTo(px(f), py(s)); else ctx.moveTo(px(f), py(s));
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // paper's operating points (EyePACS-1)
+      ctx.lineWidth = 1.5; ctx.fillStyle = PAPER;
+      [[1 - 0.981, 0.903], [1 - 0.934, 0.975]].forEach(function (p) {
+        ctx.beginPath(); ctx.arc(px(p[0]), py(p[1]), 6, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+      });
+      // current point
+      var fc = 1 - Phi(t), sc = 1 - Phi(t - D);
+      if (fc <= XM && sc >= YM) {
+        ctx.fillStyle = INK;
+        ctx.beginPath(); ctx.arc(px(fc), py(sc), 4.5, 0, 2 * Math.PI); ctx.fill();
+      }
+    }
+
+    function update() {
+      var t = +sl.value;
+      document.getElementById("thv").textContent = t.toFixed(2).replace("-", "\u2212");
+      drawDens(t);
+      drawROC(t);
+      var sens = 1 - Phi(t - D), spec = Phi(t);
+      var pos = 1000 * PREV, neg = 1000 - pos;
+      var caught = sens * pos, fa = (1 - spec) * neg;
+      document.getElementById("rSe").textContent = (100 * sens).toFixed(1) + "%";
+      document.getElementById("rSp").textContent = (100 * spec).toFixed(1) + "%";
+      document.getElementById("rCM").textContent = Math.round(caught) + " / " + Math.round(pos - caught);
+      document.getElementById("rFA").textContent = Math.round(fa);
+      document.getElementById("rPPV").textContent = (caught + fa > 0 ? (100 * caught / (caught + fa)).toFixed(0) : "–") + "%";
+    }
+    sl.addEventListener("input", update);
+    update();
+  })();
+})();
+</script>
+</body>
+</html>

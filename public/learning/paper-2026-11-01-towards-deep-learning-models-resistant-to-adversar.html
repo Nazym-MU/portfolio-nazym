@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Towards Deep Learning Models Resistant to Adversarial Attacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:2.6em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.sq{aspect-ratio:1 / 1}
+#cG{touch-action:none;cursor:crosshair}
+.bench figure{margin:0}
+.bench button{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.82rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  background:var(--paper);
+  color:var(--ink);
+  border:1.5px solid var(--ink);
+  padding:.3em .9em .25em;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.bench button:active{background:var(--paper-inset)}
+.bench button:focus-visible{outline:1px dotted var(--ink);outline-offset:3px}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.bench hr{border:none;border-top:1px dotted var(--ink);margin:1.2rem 0 .8rem}
+
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+  .dial{gap:.6rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- a row of l-infinity boxes, each with its data point (silhouette) -->
+    <svg class="strip" viewBox="0 0 420 60" fill="currentColor" aria-hidden="true">
+      <rect x="6" y="14" width="34" height="34"/><circle cx="23" cy="31" r="5" fill="#f4efe3"/>
+      <rect x="52" y="22" width="26" height="26"/><circle cx="65" cy="35" r="4" fill="#f4efe3"/>
+      <rect x="90" y="6" width="44" height="44"/><circle cx="112" cy="28" r="6" fill="#f4efe3"/>
+      <rect x="146" y="20" width="30" height="30"/><circle cx="161" cy="35" r="4.5" fill="#f4efe3"/>
+      <path d="M196 58 L206 2 L214 58z"/>
+      <rect x="230" y="18" width="32" height="32"/><circle cx="246" cy="34" r="4.5" fill="#f4efe3"/>
+      <rect x="274" y="8" width="42" height="42"/><circle cx="295" cy="29" r="6" fill="#f4efe3"/>
+      <rect x="328" y="24" width="24" height="24"/><circle cx="340" cy="36" r="3.5" fill="#f4efe3"/>
+      <rect x="364" y="12" width="38" height="38"/><circle cx="383" cy="31" r="5.5" fill="#f4efe3"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; ICLR 2018</p>
+      <h1>The Worst-Case Box</h1>
+    </div>
+    <p class="tagline">Towards Deep Learning Models Resistant to Adversarial Attacks</p>
+    <p class="tagline-hand">Aleksander M&#261;dry, Aleksandar Makelov, Ludwig Schmidt et al. &middot; 2017 &middot;
+    <a href="https://arxiv.org/abs/1706.06083">arXiv:1706.06083</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>Image classifiers can be fooled by changes to the pixels too small for a person to see. This paper states what “robust” should mean as a min–max problem: train the network to have low loss at the <em>worst</em> image inside a small box around each training image. It then shows the inner “find the worst image” problem can be solved well enough by repeated signed gradient steps, and that training on those worst images gives the first networks that hold up against strong attacks.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: box vs ball, and PGD vs one jump</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">99.2% &rarr; 6.4%</span></div>
+    <p class="entry-desc">A network trained on MNIST (28×28 grey images of handwritten digits, pixels scaled to [0,&nbsp;1]) gets 99.2% of test digits right. Move every pixel by at most 0.3, in the direction the network's gradient suggests, and accuracy falls to 6.4%. Such inputs are called <em>adversarial examples</em>.</p>
+    <p class="entry-desc">Many defences had been proposed, but each was tested against particular known attacks, and new attacks kept breaking them. Nobody could say what a defence actually guaranteed.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">min over weights, max over the box</span></div>
+    <p class="entry-desc">Fix the attacker's power first: it may change each pixel by at most \(\varepsilon\), i.e. pick any image in a small box around the real one. Then train to minimise the loss at the <em>worst</em> image in each box. The inner maximisation is the attack; the outer minimisation is training.</p>
+    <p class="entry-desc">For the inner problem they use <em>projected gradient descent</em> (PGD, run uphill): take a small step in the direction of the sign of the loss gradient, clip back into the box, repeat. Experiments show its answers from random starts all reach similar loss, so PGD is treated as the strongest attack that uses only gradients. Training then just feeds PGD's images to ordinary gradient descent.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">89.3% under attack</span></div>
+    <p class="entry-desc">On MNIST with \(\varepsilon = 0.3\), the robust network is 98.8% accurate on clean digits and 89.3% against the strongest attack tried (PGD, 100 steps, 20 random restarts). On CIFAR-10 (32×32 colour photos of 10 object classes; \(\varepsilon = 8\) on the 0–255 pixel scale) it reaches 87.3% clean and 45.8% under attack. A normally trained network of the same size gets 3.5%.</p>
+    <p class="entry-desc">Robustness needs capacity: small networks trained this way collapse to predicting one class, and wider ones do steadily better.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>A cube, its dual norm, and a max-function</b></p>
+
+  <h3 class="sub">The objects</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(x\in\mathbb R^{d},\ y\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">one image, its label</span></div>
+    <p class="entry-desc">An image flattened to a vector: \(d = 784\) for MNIST, \(d = 32\cdot32\cdot3 = 3072\) for CIFAR-10. The label \(y\) is one of 10 classes. Pairs \((x,y)\) are drawn from the data distribution \(\mathcal D\).</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(\theta\in\mathbb R^{p}\), \(L(\theta,x,y)\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">weights, loss</span></div>
+    <p class="entry-desc">\(\theta\) is every weight of the network. \(L\) is the cross-entropy loss: minus the log of the probability the network gives the correct label. It is non-convex in \(\theta\), non-concave in \(x\), and only piecewise smooth (ReLU and max-pooling have kinks).</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(\mathcal S=\{\delta:\|\delta\|_\infty\le\varepsilon\}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">the cube \([-\varepsilon,\varepsilon]^d\)</span></div>
+    <p class="entry-desc">The attacker's allowed changes \(\delta\): every pixel moves by at most \(\varepsilon\). It is a product of \(d\) intervals, a hypercube with \(2^d\) corners \(\varepsilon s\), \(s\in\{\pm1\}^d\). Being a product is what makes everything below cheap.</p>
+  </div>
+
+  <p>The whole paper is about one saddle-point problem (their eq. 2.1):</p>
+  $$\min_{\theta}\ \rho(\theta),\qquad \rho(\theta)=\mathbb E_{(x,y)\sim\mathcal D}\Big[\max_{\delta\in\mathcal S} L(\theta,\,x+\delta,\,y)\Big].$$
+  <p>\(\rho\) is the <em>robust risk</em>: the expected loss when an adversary moves each input to the worst point in its box. If \(\rho(\theta)\) is small, no allowed perturbation of a typical input causes high loss. That is a guarantee against every attack in the class, not just the ones you tried.</p>
+
+  <div class="callout">
+    <span class="callout-label">The fact doing the work: the cube's dual norm is \(\ell_1\)</span>
+    <p>Linearise the loss around \(x\): \(L(x+\delta)\approx L(x)+g^{\top}\delta\), with \(g=\nabla_xL(\theta,x,y)\) the gradient with respect to the <em>input</em>. Maximising a linear function over the cube is solved coordinate by coordinate:</p>
+    $$\max_{\|\delta\|_\infty\le\varepsilon} g^{\top}\delta=\varepsilon\|g\|_1,\qquad \text{attained at }\ \delta^\star=\varepsilon\,\operatorname{sgn}(g).$$
+    <p>(Proof: \(g^\top\delta\le\sum_i|g_i||\delta_i|\le\varepsilon\sum_i|g_i|\), with equality at the sign vector.) The maximiser is a corner of the cube. Over the Euclidean ball the answer would be \(\varepsilon\|g\|_2\) at \(\varepsilon g/\|g\|_2\). Since \(\|g\|_1\) can be as large as \(\sqrt d\,\|g\|_2\), the box is a much stronger attacker in high dimension.</p>
+    <p>That one line is the earlier one-step attack, the <em>fast gradient sign method</em> (FGSM): \(x+\varepsilon\operatorname{sgn}(\nabla_xL)\). It is the exact solution of the linearised inner problem, and no better than the linearisation.</p>
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>\(d=2\), \(g=(3,-1)\), \(\varepsilon=0.1\). Box: \(\delta^\star=(0.1,-0.1)\), gain \(g^\top\delta^\star=0.4=\varepsilon\|g\|_1\). Ball: \(\delta=0.1\,(3,-1)/\sqrt{10}\), gain \(0.1\sqrt{10}\approx0.316\). The cube's corner sticks out further along \(g\) than the ball does.</p>
+  </div>
+
+  <h3 class="sub">Robust margin of a linear classifier: the same duality</h3>
+  <p>Take the simplest classifier, \(\operatorname{sign}(w^\top x-b)\). The adversary can lower the score by \(\max_{\|\delta\|_\infty\le\varepsilon}w^\top\delta=\varepsilon\|w\|_1\). So \(x\) is safe iff \(|w^\top x-b|&gt;\varepsilon\|w\|_1\). Equivalently, its \(\ell_\infty\)-distance to the hyperplane \(\{w^\top z=b\}\) is \(|w^\top x-b|/\|w\|_1\). In general the distance in a norm is the score divided by the <em>dual</em> norm of \(w\).</p>
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>\(w=(1,1),\ b=0,\ x=(0.2,0.1)\), score \(0.3\), \(\varepsilon=0.2\). The worst \(\delta=-0.2\,(1,1)\) gives score \(-0.1\): flipped. Here \(\ell_\infty\)-distance \(0.3/\|w\|_1=0.15&lt;0.2\), while the Euclidean distance \(0.3/\sqrt2\approx0.21&gt;0.2\), so a ball of radius 0.2 would have been safe.</p>
+  </div>
+  <p>This is the paper's Figure 3 picture. A line can separate the points and still cut through their boxes, so a robust classifier needs a more complicated boundary. That is why capacity matters.</p>
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 200" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <!-- left: points and a separating line -->
+      <g fill="currentColor"><circle cx="50" cy="60" r="5"/><circle cx="80" cy="40" r="5"/><circle cx="70" cy="100" r="5"/><circle cx="40" cy="130" r="5"/><circle cx="100" cy="120" r="5"/></g>
+      <circle cx="150" cy="70" r="5"/><circle cx="170" cy="120" r="5"/><circle cx="140" cy="150" r="5"/><circle cx="185" cy="50" r="5"/><circle cx="128" cy="82" r="5"/>
+      <path d="M95 185 L125 15"/>
+      <!-- right: same points with their boxes -->
+      <g stroke-width="1.3">
+        <rect x="292" y="42" width="36" height="36"/><rect x="322" y="22" width="36" height="36"/><rect x="312" y="82" width="36" height="36"/><rect x="282" y="112" width="36" height="36"/><rect x="342" y="102" width="36" height="36"/>
+        <rect x="392" y="52" width="36" height="36"/><rect x="412" y="102" width="36" height="36"/><rect x="382" y="132" width="36" height="36"/><rect x="427" y="32" width="36" height="36"/><rect x="370" y="64" width="36" height="36"/>
+      </g>
+      <g fill="currentColor"><circle cx="310" cy="60" r="5"/><circle cx="340" cy="40" r="5"/><circle cx="330" cy="100" r="5"/><circle cx="300" cy="130" r="5"/><circle cx="360" cy="120" r="5"/></g>
+      <circle cx="410" cy="70" r="5"/><circle cx="430" cy="120" r="5"/><circle cx="400" cy="150" r="5"/><circle cx="445" cy="50" r="5"/><circle cx="388" cy="82" r="5"/>
+      <path d="M355 185 L385 15"/>
+      <!-- crosses: perturbed points on the wrong side -->
+      <path d="M371 107l8 8M379 107l-8 8" stroke-width="2.4"/>
+      <path d="M367 66l8 8M375 66l-8 8" stroke-width="2.4"/>
+      <text x="110" y="198" font-family="Oswald, sans-serif" font-size="11" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">POINTS: SEPARATED</text>
+      <text x="370" y="198" font-family="Oswald, sans-serif" font-size="11" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">BOXES: CUT</text>
+    </svg>
+    <figcaption>same line, same points. once each point brings its ε-box, the line slices two boxes; the × marks are adversarial examples.</figcaption>
+  </figure>
+
+  <h3 class="sub">The attack: PGD is sign-ascent plus clipping</h3>
+  <p>The inner problem is not linear, so they iterate the one-step answer. With step size \(\alpha\) and \(\Pi_{x+\mathcal S}\) the Euclidean projection onto the box around \(x\):</p>
+  $$x^{t+1}=\Pi_{x+\mathcal S}\big(x^{t}+\alpha\,\operatorname{sgn}(\nabla_xL(\theta,x^{t},y))\big),\qquad \Pi_{x+\mathcal S}(z)_i=\min\!\big(\max(z_i,\,x_i-\varepsilon),\,x_i+\varepsilon\big).$$
+  <p>Two structural facts make each step cost one gradient plus \(O(d)\):</p>
+  <p>The sign step is steepest ascent in the \(\ell_\infty\) geometry: \(\operatorname{sgn}(g)\) maximises \(g^\top v\) over \(\|v\|_\infty\le1\), by the duality above.</p>
+  <p>The projection onto a product of intervals splits into independent 1-D projections, i.e. clipping each pixel. (Onto an \(\ell_2\) ball you would rescale; onto an \(\ell_1\) ball you would need a sort.)</p>
+  <p>The paper starts from a uniformly random point in the box. MNIST: 40 steps of \(\alpha=0.01\) with \(\varepsilon=0.3\). CIFAR-10: 7 steps of size 2 with \(\varepsilon=8\).</p>
+  <div class="callout">
+    <span class="callout-label">Tiny example: one PGD step</span>
+    <p>\(x=(0.50,\,0.95)\), \(\varepsilon=0.1\): box \([0.40,0.60]\times[0.85,1.05]\). Current \(x^t=(0.58,\,0.97)\), gradient \((2.0,\,-0.3)\), \(\alpha=0.05\). Sign step: \((0.63,\,0.92)\). Clip: \((0.60,\,0.92)\). The first coordinate hits the wall; the second moves freely.</p>
+  </div>
+
+  <h3 class="sub">Why training on attacked inputs is the right gradient: Danskin</h3>
+  <p>Fix one example and write \(\phi(\theta)=\max_{\delta\in\mathcal S}L(\theta,x+\delta,y)\), a pointwise max of a compact family of functions. Training needs \(\nabla\phi\). Danskin's theorem (their Appendix A): if \(\nabla_\theta L\) is continuous, then \(\phi\) is directionally differentiable with</p>
+  $$\phi'(\theta;h)=\sup_{\delta\in\delta^\ast(\theta)}h^{\top}\nabla_\theta L(\theta,x+\delta,y),\qquad \delta^\ast(\theta)=\arg\max_{\delta\in\mathcal S}L(\theta,x+\delta,y).$$
+  <p>If the maximiser \(\delta^\ast\) is unique, \(\nabla\phi(\theta)=\nabla_\theta L(\theta,x+\delta^\ast,y)\). So you may treat the attacked image as fixed data and backpropagate as usual. The max moving with \(\theta\) contributes nothing to first order (the envelope theorem).</p>
+  <div class="callout">
+    <span class="callout-label">Tiny example: why uniqueness matters</span>
+    <p>\(L(\theta,\delta)=\theta\delta\), \(\delta\in[-1,1]\), so \(\phi(\theta)=|\theta|\). At \(\theta=2\), \(\delta^\ast=1\) and Danskin gives \(\phi'(2)=\delta^\ast=1\). Correct. At \(\theta=0\) every \(\delta\) is a maximiser, and \(\phi'(0;h)=\sup_{\delta}h\delta=|h|&gt;0\) in <em>both</em> directions. That is a kink, with no descent direction.</p>
+  </div>
+  <p>The paper is upfront that the hypotheses fail: ReLUs make \(L\) non-smooth, and PGD returns a local, not global, maximiser. Their patch is to restrict to a sub-box \(\mathcal S'\) where the found maximiser is global. Then the step at least decreases the loss at that adversarial point. The real evidence is empirical: the adversarial training loss falls steadily (their Figure 5).</p>
+
+  <h3 class="sub">The surprising landscape of the inner problem</h3>
+  <p>The inner max is highly non-concave, so you'd expect PGD to get stuck at bad local maxima. They ran PGD from \(10^5\) random starts per image. The maxima it found were genuinely different points: pairwise angles near 90°, distances like random pairs in the box. But their loss <em>values</em> were tightly concentrated, with no outliers. Along the segment between two maxima, the loss is convex and stays well above a random point's.</p>
+  <p>The 90° is ordinary high-dimensional geometry. For independent \(u,v\) uniform in \([-\varepsilon,\varepsilon]^d\), \(\cos\angle(u,v)\) has mean 0 and standard deviation about \(1/\sqrt d\), i.e. \(\pm2^\circ\) for \(d=784\). The concentration of the <em>values</em> is the real empirical finding. It is why PGD is offered as a “universal first-order adversary”: one that uses only gradients probably can't do much better.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <h3 class="sub">1 &middot; Box vs ball: where does a linear attack go?</h3>
+  <p>The hatched square is the box \(\|\delta\|_\infty\le\varepsilon\); the dashed circle is the ball \(\|\delta\|_2\le\varepsilon\). The arrow is a gradient \(g\). The filled dot is the box's best perturbation \(\varepsilon\operatorname{sgn}(g)\), and the hollow dot is the ball's, \(\varepsilon g/\|g\|_2\). The lines through them are perpendicular to \(g\): the further along \(g\) the line sits, the larger the gain \(g^\top\delta\).</p>
+  <p><strong>Try:</strong> drag anywhere to move \(g\). <strong>Notice:</strong> the box answer is always a corner and jumps only when \(g\) crosses an axis. It beats the ball most when \(g\) is diagonal (ratio \(\sqrt2\)), and the two tie when \(g\) is on an axis. Then use the slider to see what the same ratio does in the dimension of a real image.</p>
+
+  <div class="bench">
+    <canvas id="cG" class="sq" width="640" height="640" aria-label="Draggable gradient with the l-infinity box and l2 ball"></canvas>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">\(g\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gV">–</span></div>
+      <div class="entry"><span class="entry-name">box gain \(/\varepsilon=\|g\|_1\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="g1">–</span></div>
+      <div class="entry"><span class="entry-name">ball gain \(/\varepsilon=\|g\|_2\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="g2">–</span></div>
+    </div>
+    <hr>
+    <div class="dial">
+      <label for="dS">d = <output id="dV" for="dS">784</output></label>
+      <input id="dS" type="range" min="0" max="4" value="3" step="1">
+    </div>
+    <div class="ledger" style="margin-top:0">
+      <div class="entry"><span class="entry-name">\(\|g\|_1/\|g\|_2\), random Gaussian \(g\in\mathbb R^d\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="dR">–</span></div>
+      <div class="entry"><span class="entry-name">expected \(\approx\sqrt{2d/\pi}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="dE">–</span></div>
+      <div class="entry"><span class="entry-name">ceiling \(\sqrt d\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="dM">–</span></div>
+    </div>
+    <p class="aside-hand" style="margin:.8rem auto 0">at d = 784 a box attack gets ~22× the first-order gain of a ball attack with the same radius</p>
+  </div>
+
+  <h3 class="sub">2 &middot; One jump (FGSM) vs PGD with restarts</h3>
+  <p>A made-up loss over a 2-D perturbation \(\delta\), drawn as ink contour lines. The clean input \(x\) is at the centre and the bold square is the box of half-width \(\varepsilon\). The loss rises gently to the upper right, and there is a steep hill down-left that the gradient at \(x\) cannot see. The dashed arrow and hollow square are FGSM: one jump to the corner \(\varepsilon\operatorname{sgn}(\nabla L(x))\). The thin paths are 16 PGD runs from random starts (40 sign steps of size \(2.5\varepsilon/40\), clipped to the box, the paper's step rule). The ringed dot is the best endpoint.</p>
+  <p><strong>Try:</strong> start at \(\varepsilon=0.25\), then raise it to 0.5 and beyond; press “new starts” a few times. <strong>Notice:</strong> for small \(\varepsilon\) the loss is nearly linear inside the box, so FGSM and PGD agree. Past about 0.35 the hill enters the box: FGSM still jumps to the upper-right corner, but PGD runs that start nearby climb the hill to much higher loss. This is the paper's point that FGSM is a fine attack only when \(\varepsilon\) is small. (In 2-D the maxima have visibly different heights; the paper's equal-height finding is a high-dimensional effect.)</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="eS">ε = <output id="eV" for="eS">0.25</output></label>
+      <input id="eS" type="range" min="0.05" max="0.9" value="0.25" step="0.05">
+      <button id="rB" type="button">new starts</button>
+    </div>
+    <canvas id="cL" class="sq" width="640" height="640" aria-label="Loss landscape with FGSM and PGD attacks"></canvas>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">loss at \(x\) (no attack)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="l0">–</span></div>
+      <div class="entry"><span class="entry-name">FGSM: one jump to a corner</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lF">–</span></div>
+      <div class="entry"><span class="entry-name">PGD, 16 starts: lowest endpoint</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lW">–</span></div>
+      <div class="entry"><span class="entry-name">PGD, 16 starts: highest endpoint</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lB">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>From the paper's tables and appendix</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Training on FGSM makes you better under attack than clean, and useless against PGD</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">90.9% / 0.0%</span></div>
+    <p class="entry-desc">A CIFAR-10 network trained on FGSM images scores 87.4% on clean images, 90.9% on FGSM images, and 0.0% against 7-step PGD. FGSM's perturbations are a single, predictable corner, so the network learns to recognise them (“label leaking”) rather than become robust. A defence evaluated only against its own attack proves nothing.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The robust MNIST net learned a sparse thresholding layer</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">3 of 32 filters</span></div>
+    <p class="entry-desc">In the first convolution layer, only 3 of 32 filters are used, each with a single nonzero weight. A convolution with a one-entry kernel is just a scalar multiple of the (shifted) image, so the layer becomes \(\mathrm{ReLU}(\alpha x_i-\beta)\) per pixel: three thresholded copies of the image. A pixel with \(x_i+\varepsilon\le\beta/\alpha\) outputs 0 whatever the attacker does. Nobody coded this in. The authors tried hand-building the same tricks without adversarial training, and PGD fooled the result on every test example.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Many maxima, nearly orthogonal, same height</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(10^5\) restarts</span></div>
+    <p class="entry-desc">A non-concave problem whose local maxima sit at nearly 90° to each other and yet all reach nearly the same loss. It mirrors the folklore about training itself, where many different minima have similar loss. This is what licenses treating PGD as “the” first-order attack.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Gradient masking: the thresholds fool the attacker too</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\ell_2\), \(\varepsilon=4.5\)</span></div>
+    <p class="entry-desc">Under \(\ell_2\)-bounded attacks, PGD seemed unable to fool the MNIST model even at radius 4.5, where the digits visibly change identity. The paper itself flags this as an overestimate. A ReLU stuck at 0 has zero gradient, so the thresholds hide the direction to attack. An attack that uses no gradients (the decision-boundary attack) shows the model is far more brittle in \(\ell_2\). Robustness claimed under one norm doesn't transfer to another.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>Robust training is \(\min_\theta\mathbb E\max_{\|\delta\|_\infty\le\varepsilon}L\). Because the box's dual norm is \(\ell_1\), the best linear attack is the corner \(\varepsilon\operatorname{sgn}(\nabla_xL)\); PGD repeats that step and clips. By Danskin's theorem, ordinary training on PGD's outputs is gradient descent on the worst-case loss.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Towards Deep Learning Models Resistant to Adversarial Attacks</strong>, by Aleksander M&#261;dry, Aleksandar Makelov, Ludwig Schmidt, Dimitris Tsipras and Adrian Vladu (MIT), 2017; ICLR 2018.
+  <a href="https://arxiv.org/abs/1706.06083">arxiv.org/abs/1706.06083</a></p>
+  <p class="signoff">Written from the full text (arXiv v4). All numbers are from the paper. Both interactives use made-up 2-D examples, not the paper's networks.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3";
+  var FONT = "500 24px Oswald, sans-serif";
+
+  function sgn(t) { return t > 0 ? 1 : (t < 0 ? -1 : 0); }
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function makeHatch(ctx) {
+    var t = document.createElement("canvas");
+    t.width = 10; t.height = 10;
+    var h = t.getContext("2d");
+    h.strokeStyle = INK; h.lineWidth = 1.2;
+    h.beginPath();
+    h.moveTo(-1, 1); h.lineTo(1, -1);
+    h.moveTo(0, 10); h.lineTo(10, 0);
+    h.moveTo(9, 11); h.lineTo(11, 9);
+    h.stroke();
+    return ctx.createPattern(t, "repeat");
+  }
+
+  /* ============ 1. box vs ball ============ */
+  var cG = document.getElementById("cG"), gx = cG.getContext("2d");
+  var W = cG.width, R = 1.6, E1 = 0.6;
+  var hatchG = makeHatch(gx);
+  var g = [0.95, 0.4];
+
+  function P(p) { return [W / 2 + p[0] / R * (W / 2), W / 2 - p[1] / R * (W / 2)]; }
+  function Wd(px, py) { return [(px - W / 2) / (W / 2) * R, -(py - W / 2) / (W / 2) * R]; }
+
+  function line(ctx, a, b) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+
+  function drawG() {
+    gx.globalAlpha = 1;
+    gx.fillStyle = PAPER; gx.fillRect(0, 0, W, W);
+    gx.strokeStyle = INK; gx.fillStyle = INK;
+
+    // axes
+    gx.lineWidth = 1; gx.setLineDash([3, 7]);
+    line(gx, [0, W / 2], [W, W / 2]); line(gx, [W / 2, 0], [W / 2, W]);
+    gx.setLineDash([]);
+
+    // the box (hatched) and the ball (dashed)
+    var c = P([-E1, E1]), side = E1 / R * W;
+    gx.globalAlpha = 0.35; gx.fillStyle = hatchG; gx.fillRect(c[0], c[1], side, side);
+    gx.globalAlpha = 1; gx.fillStyle = INK;
+    gx.lineWidth = 2.5; gx.strokeRect(c[0], c[1], side, side);
+    gx.lineWidth = 2; gx.setLineDash([8, 6]);
+    gx.beginPath(); gx.arc(W / 2, W / 2, side / 2, 0, 2 * Math.PI); gx.stroke();
+    gx.setLineDash([]);
+
+    var n = Math.hypot(g[0], g[1]);
+    if (n < 1e-6) return;
+    var dI = [E1 * sgn(g[0]), E1 * sgn(g[1])], d2 = [E1 * g[0] / n, E1 * g[1] / n];
+    var t = [-g[1] / n, g[0] / n];
+
+    // level lines perpendicular to g through each optimiser
+    gx.lineWidth = 1.2;
+    line(gx, P([dI[0] - 4 * t[0], dI[1] - 4 * t[1]]), P([dI[0] + 4 * t[0], dI[1] + 4 * t[1]]));
+    gx.setLineDash([2, 6]);
+    line(gx, P([d2[0] - 4 * t[0], d2[1] - 4 * t[1]]), P([d2[0] + 4 * t[0], d2[1] + 4 * t[1]]));
+    gx.setLineDash([]);
+
+    // gradient arrow
+    var o = P([0, 0]), tip = P(g);
+    gx.lineWidth = 3; line(gx, o, tip);
+    var ang = Math.atan2(tip[1] - o[1], tip[0] - o[0]), ah = 18;
+    gx.beginPath();
+    gx.moveTo(tip[0], tip[1]);
+    gx.lineTo(tip[0] - ah * Math.cos(ang - 0.4), tip[1] - ah * Math.sin(ang - 0.4));
+    gx.lineTo(tip[0] - ah * Math.cos(ang + 0.4), tip[1] - ah * Math.sin(ang + 0.4));
+    gx.closePath(); gx.fill();
+
+    // optimisers
+    var pI = P(dI), p2 = P(d2);
+    gx.beginPath(); gx.arc(pI[0], pI[1], 9, 0, 2 * Math.PI); gx.fill();
+    gx.fillStyle = PAPER; gx.lineWidth = 2.5;
+    gx.beginPath(); gx.arc(p2[0], p2[1], 8, 0, 2 * Math.PI); gx.fill(); gx.stroke();
+    gx.fillStyle = INK;
+
+    // labels
+    gx.font = FONT; gx.textAlign = "center"; gx.textBaseline = "middle";
+    gx.fillText("g", tip[0] + 22 * Math.cos(ang), tip[1] + 22 * Math.sin(ang));
+    var nI = Math.hypot(dI[0], dI[1]) || 1;
+    var lI = P([dI[0] + 0.22 * dI[0] / nI, dI[1] + 0.22 * dI[1] / nI]);
+    gx.fillText("BOX", lI[0], lI[1]);
+    var l2 = P([d2[0] - 0.2 * d2[0] / E1 + 0.24 * t[0], d2[1] - 0.2 * d2[1] / E1 + 0.24 * t[1]]);
+    gx.fillText("BALL", l2[0], l2[1]);
+  }
+
+  function ledgerG() {
+    var a = Math.abs(g[0]) + Math.abs(g[1]), b = Math.hypot(g[0], g[1]);
+    document.getElementById("gV").textContent = "(" + g[0].toFixed(2) + ", " + g[1].toFixed(2) + ")";
+    document.getElementById("g1").textContent = a.toFixed(3);
+    document.getElementById("g2").textContent = b.toFixed(3) + (b > 1e-9 ? "  (ratio " + (a / b).toFixed(3) + ")" : "");
+  }
+
+  var dragging = false;
+  function setFromEvent(e) {
+    var r = cG.getBoundingClientRect();
+    var p = Wd((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * W);
+    p[0] = Math.max(-1.45, Math.min(1.45, p[0]));
+    p[1] = Math.max(-1.45, Math.min(1.45, p[1]));
+    if (Math.hypot(p[0], p[1]) < 0.05) return;
+    g = p; drawG(); ledgerG();
+  }
+  cG.addEventListener("pointerdown", function (e) {
+    dragging = true;
+    if (cG.setPointerCapture) cG.setPointerCapture(e.pointerId);
+    setFromEvent(e); e.preventDefault();
+  });
+  cG.addEventListener("pointermove", function (e) { if (dragging) setFromEvent(e); });
+  cG.addEventListener("pointerup", function () { dragging = false; });
+  cG.addEventListener("pointercancel", function () { dragging = false; });
+
+  // dimension ledger
+  var dims = [2, 10, 100, 784, 3072];
+  var dS = document.getElementById("dS");
+  function ledgerD() {
+    var d = dims[+dS.value], rnd = mulberry32(1706 + d), l1 = 0, l2 = 0, i;
+    for (i = 0; i < d; i++) {
+      var u = 0; while (u === 0) u = rnd();
+      var z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rnd());
+      l1 += Math.abs(z); l2 += z * z;
+    }
+    document.getElementById("dV").textContent = d;
+    document.getElementById("dR").textContent = (l1 / Math.sqrt(l2)).toFixed(2);
+    document.getElementById("dE").textContent = Math.sqrt(2 * d / Math.PI).toFixed(2);
+    document.getElementById("dM").textContent = Math.sqrt(d).toFixed(2);
+  }
+  dS.addEventListener("input", ledgerD);
+
+  drawG(); ledgerG(); ledgerD();
+
+  /* ============ 2. FGSM vs PGD on a toy landscape ============ */
+  var H = 1.4, A = -0.5, B = -0.6, S = 0.12;
+  function bump(u, v) { return H * Math.exp(-((u - A) * (u - A) + (v - B) * (v - B)) / S); }
+  function f(u, v) { return 0.6 * u + 0.3 * v - 0.9 * u * u + bump(u, v); }
+  function grad(u, v) {
+    var e = bump(u, v);
+    return [0.6 - 1.8 * u - e * 2 * (u - A) / S, 0.3 - e * 2 * (v - B) / S];
+  }
+
+  var cL = document.getElementById("cL"), lx = cL.getContext("2d"), W2 = cL.width;
+  function Q(u, v) { return [(u + 1) / 2 * W2, (1 - v) / 2 * W2]; }
+
+  // contour background, drawn once by marching squares
+  var bg = document.createElement("canvas");
+  bg.width = W2; bg.height = W2;
+  (function buildBg() {
+    var c = bg.getContext("2d"), N = 120, i, j, k;
+    c.fillStyle = PAPER; c.fillRect(0, 0, W2, W2);
+    var val = [], fmin = Infinity, fmax = -Infinity;
+    for (i = 0; i <= N; i++) {
+      val.push([]);
+      for (j = 0; j <= N; j++) {
+        var x = f(-1 + 2 * i / N, -1 + 2 * j / N);
+        val[i].push(x);
+        if (x < fmin) fmin = x;
+        if (x > fmax) fmax = x;
+      }
+    }
+    var K = 18, step = (fmax - fmin) / K;
+    c.strokeStyle = INK; c.lineWidth = 1.1; c.globalAlpha = 0.6;
+    c.beginPath();
+    function px(gi, gj) { return Q(-1 + 2 * gi / N, -1 + 2 * gj / N); }
+    for (k = 0; k < K; k++) {
+      var L = fmin + (k + 0.5) * step;
+      for (i = 0; i < N; i++) for (j = 0; j < N; j++) {
+        var cs = [[i, j, val[i][j]], [i + 1, j, val[i + 1][j]], [i + 1, j + 1, val[i + 1][j + 1]], [i, j + 1, val[i][j + 1]]];
+        var pts = [];
+        for (var e = 0; e < 4; e++) {
+          var p = cs[e], q = cs[(e + 1) % 4];
+          if ((p[2] - L) * (q[2] - L) < 0) {
+            var t = (L - p[2]) / (q[2] - p[2]);
+            pts.push(px(p[0] + t * (q[0] - p[0]), p[1] + t * (q[1] - p[1])));
+          }
+        }
+        if (pts.length >= 2) { c.moveTo(pts[0][0], pts[0][1]); c.lineTo(pts[1][0], pts[1][1]); }
+        if (pts.length === 4) { c.moveTo(pts[2][0], pts[2][1]); c.lineTo(pts[3][0], pts[3][1]); }
+      }
+    }
+    c.stroke();
+    c.globalAlpha = 1;
+  })();
+
+  var NS = 16, STEPS = 40, seed = 11, starts = [];
+  function newStarts() {
+    var r = mulberry32(seed++);
+    starts = [];
+    for (var s = 0; s < NS; s++) starts.push([2 * r() - 1, 2 * r() - 1]);
+  }
+  function clip(t, e) { return Math.max(-e, Math.min(e, t)); }
+  function pgd(p0, eps) {
+    var a = 2.5 * eps / STEPS, p = p0.slice(), path = [p.slice()];
+    for (var t = 0; t < STEPS; t++) {
+      var gr = grad(p[0], p[1]);
+      p = [clip(p[0] + a * sgn(gr[0]), eps), clip(p[1] + a * sgn(gr[1]), eps)];
+      path.push(p.slice());
+    }
+    return path;
+  }
+
+  var eS = document.getElementById("eS");
+  function drawL() {
+    var eps = +eS.value;
+    document.getElementById("eV").textContent = eps.toFixed(2);
+    lx.globalAlpha = 1; lx.setLineDash([]);
+    lx.drawImage(bg, 0, 0);
+
+    // fade everything outside the box
+    var c = Q(-eps, eps), side = eps * W2;
+    lx.fillStyle = PAPER; lx.globalAlpha = 0.6;
+    lx.fillRect(0, 0, W2, c[1]);
+    lx.fillRect(0, c[1] + side, W2, W2 - c[1] - side);
+    lx.fillRect(0, c[1], c[0], side);
+    lx.fillRect(c[0] + side, c[1], W2 - c[0] - side, side);
+    lx.globalAlpha = 1;
+    lx.strokeStyle = INK; lx.fillStyle = INK;
+    lx.lineWidth = 3; lx.strokeRect(c[0], c[1], side, side);
+
+    // PGD runs
+    var best = -Infinity, worst = Infinity, bestP = null, s, k;
+    for (s = 0; s < NS; s++) {
+      var path = pgd([eps * starts[s][0], eps * starts[s][1]], eps);
+      lx.lineWidth = 1.4; lx.globalAlpha = 0.75;
+      lx.beginPath();
+      var q0 = Q(path[0][0], path[0][1]); lx.moveTo(q0[0], q0[1]);
+      for (k = 1; k < path.length; k++) { var q = Q(path[k][0], path[k][1]); lx.lineTo(q[0], q[1]); }
+      lx.stroke();
+      lx.globalAlpha = 1;
+      var end = path[path.length - 1], fv = f(end[0], end[1]), qe = Q(end[0], end[1]);
+      lx.beginPath(); lx.arc(qe[0], qe[1], 5, 0, 2 * Math.PI); lx.fill();
+      if (fv > best) { best = fv; bestP = qe; }
+      if (fv < worst) worst = fv;
+    }
+    lx.lineWidth = 2;
+    lx.beginPath(); lx.arc(bestP[0], bestP[1], 13, 0, 2 * Math.PI); lx.stroke();
+
+    // FGSM
+    var g0 = grad(0, 0), fg = [eps * sgn(g0[0]), eps * sgn(g0[1])];
+    var o = Q(0, 0), qf = Q(fg[0], fg[1]);
+    lx.lineWidth = 2.2; lx.setLineDash([7, 6]);
+    line(lx, o, qf); lx.setLineDash([]);
+    lx.fillStyle = PAPER; lx.lineWidth = 2.5;
+    lx.fillRect(qf[0] - 9, qf[1] - 9, 18, 18); lx.strokeRect(qf[0] - 9, qf[1] - 9, 18, 18);
+    lx.fillStyle = INK;
+
+    // the clean input
+    lx.lineWidth = 2.5;
+    line(lx, [o[0] - 8, o[1] - 8], [o[0] + 8, o[1] + 8]);
+    line(lx, [o[0] - 8, o[1] + 8], [o[0] + 8, o[1] - 8]);
+    lx.font = FONT; lx.textAlign = "left"; lx.textBaseline = "middle";
+    lx.fillText("x", o[0] + 12, o[1] + 14);
+
+    document.getElementById("l0").textContent = f(0, 0).toFixed(3);
+    document.getElementById("lF").textContent = f(fg[0], fg[1]).toFixed(3);
+    document.getElementById("lW").textContent = worst.toFixed(3);
+    document.getElementById("lB").textContent = best.toFixed(3);
+  }
+
+  eS.addEventListener("input", drawL);
+  document.getElementById("rB").addEventListener("click", function () { newStarts(); drawL(); });
+  newStarts(); drawL();
+
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { drawG(); drawL(); });
+})();
+</script>
+</body>
+</html>
