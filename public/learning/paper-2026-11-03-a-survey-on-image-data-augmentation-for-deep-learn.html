@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Data Augmentation: a survey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 .8rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:2.6em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.maps{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:clamp(.6rem, 3vw, 1.4rem);
+}
+.maps.three{grid-template-columns:1fr 1fr 1fr}
+.maps figure{margin:0}
+.maps figcaption{font-size:1.05rem}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.sq{aspect-ratio:1 / 1}
+.bench figure.opm{max-width:340px;margin:1.2rem auto 0}
+.bench .spectrum{margin:1.2rem 0 0}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.opnote{font-size:.95rem;margin:.8rem 0 0;min-height:3.2em}
+
+.ops{display:flex;flex-wrap:wrap;gap:.45rem;margin:.2rem 0 1rem}
+.ops button, .btn{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--ink);
+  background:var(--paper);
+  border:1px solid var(--ink);
+  padding:.35em .8em .3em;
+  cursor:pointer;
+}
+.ops button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.ops button:focus-visible, .btn:focus-visible{outline:1px dotted var(--ink);outline-offset:3px}
+.toggle{
+  display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+  font-family:var(--font-head);font-size:.82rem;text-transform:uppercase;letter-spacing:.1em;
+  margin:.2rem 0 1rem;
+}
+.toggle input{accent-color:var(--ink);width:16px;height:16px}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+  .dial{gap:.6rem}
+  .dial label{font-size:.85rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- a row of pixel blocks, one erased, one shifted (silhouette) -->
+    <svg class="strip" viewBox="0 0 420 60" fill="currentColor" aria-hidden="true">
+      <rect x="10" y="14" width="40" height="40"/><rect x="62" y="14" width="40" height="40"/>
+      <rect x="114" y="14" width="40" height="40"/>
+      <rect x="167" y="15" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/>
+      <rect x="218" y="14" width="40" height="40"/><rect x="270" y="4" width="40" height="40"/>
+      <rect x="322" y="14" width="40" height="40"/><rect x="374" y="14" width="40" height="40"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; Journal of Big Data 2019</p>
+      <h1>Data Augmentation</h1>
+    </div>
+    <p class="tagline">A Survey on Image Data Augmentation for Deep Learning</p>
+    <p class="tagline-hand">Connor Shorten &amp; Taghi M. Khoshgoftaar &middot; 2019 &middot; J. Big Data 6:60 &middot; ~12,700 citations &middot;
+    <a href="https://doi.org/10.1186/s40537-019-0197-0">doi:10.1186/s40537-019-0197-0</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>Image classifiers overfit when labelled images are scarce. This survey catalogues the ways to make more training images out of the ones you have, from flips and crops to images faked by a second network, and collects the reported gains.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: augmentations as matrices</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">182 scans</span></div>
+    <p class="entry-desc">A convolutional neural network (CNN), the standard image classifier, has millions of weights. Given too few labelled images it <em>overfits</em>: it memorises the training set and does worse on new images. Medical imaging is the extreme case. One liver-lesion study the survey covers had 182 CT scans in total.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">warp or synthesise</span></div>
+    <p class="entry-desc"><em>Data augmentation</em> means applying changes that shouldn't alter the label (a mirrored cat is still a cat) and training on the results too. The survey splits the methods into two groups. <strong>Data warping</strong> transforms an existing image and keeps its label: flips, crops, rotations, colour shifts, blurs, blanking out a random patch, adversarial noise and style transfer. <strong>Oversampling</strong> creates new examples: blending two images, interpolating between examples inside a network's internal representation, and samples from a GAN (generative adversarial network: one network makes fake images while a second learns to tell them from real ones).</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">crops win</span></div>
+    <p class="entry-desc">AlexNet, the 2012 network that started the deep-learning boom in vision, took random 224×224 crops of 256×256 photos and their mirror images. That is \(32^2\) crop positions × 2 = 2048 times more data, and it cut error by over a point. On Caltech101 (8,421 photos in 101 object categories), cropping alone raised top-1 accuracy from 48.1% to 62.0%. Flips, rotations and colour changes each added only 1–3 points.</p>
+    <p class="entry-desc">Blanking a random rectangle cut error on CIFAR-10 (tiny 32×32 photos in 10 classes) from 5.17% to 4.31%. Averaging two images' pixels and keeping the first one's label cut error on a 1,000-image subset of CIFAR-10 from 43.1% to 31.0%. In the liver study, GAN-made lesions raised sensitivity from 78.6% to 85.7% and specificity from 88.4% to 92.4%. The survey's caveat: no augmentation creates what the data lacks. Photos of bulldogs alone will never yield a golden retriever.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Structured maps on pixel space</b></p>
+
+  <p>The survey has no equations of its own, but almost every “basic image manipulation” it lists is an affine map with a very particular matrix. Write an image of height \(H\), width \(W\) and 3 colour channels (red, green, blue) as one long vector \(x\in\mathbb R^n\), \(n=3HW\). Stack it channel by channel, each channel row by row. For CIFAR-10, \(n=3072\). An augmentation is then</p>
+  $$\tilde x \;=\; Mx + b,$$
+  <p>where \(M\) is an \(n\times n\) matrix (or \(m\times n\) for a crop) and \(b\) a fixed offset. Training on augmented data means minimising the average loss over random draws of \((M,b)\) rather than the loss on \(x\) alone.</p>
+
+  <h3 class="sub">The catalogue, by matrix structure</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Flip, 180° turn, PatchShuffle</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">permutation</span></div>
+    <p class="entry-desc">Each output pixel is some input pixel, so \(M=P\) is a permutation matrix: orthogonal, \(P^\top P=I\), with eigenvalues on the unit circle. A horizontal flip is \(I_3\otimes I_H\otimes J_W\), where \(J_W\) is the \(W\times W\) matrix with ones on the anti-diagonal and \(\otimes\) is the Kronecker product. It is also symmetric with \(P^2=I\), so its eigenvalues are \(\pm1\). <em>PatchShuffle</em> randomly permutes the pixels inside small windows; with 2×2 windows, each shuffled with probability 0.05, it cut CIFAR-10 error from 6.33% to 5.66%.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Crop, translate with fill</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">selection</span></div>
+    <p class="entry-desc">A crop keeps some coordinates, so it is \(S\in\mathbb R^{m\times n}\) made of rows of the identity. Then \(SS^\top=I_m\), and \(S^\top S\) is the diagonal projection onto the kept pixels. A shift that pads the vacated border with a constant is a permutation with some rows zeroed, plus \(b\) for the fill. Both have rank \(\lt n\): they throw information away.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Random erasing / cutout</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">diagonal projection</span></div>
+    <p class="entry-desc">Blank out a random patch and fill it: \(\tilde x = Dx+(I-D)r\). Here \(D\) is diagonal with entries 0 on the patch and 1 elsewhere (an orthogonal projection), and \(r\) is the fill. The survey reports random values as the best fill.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Colour transforms</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(C\otimes I_{HW}\)</span></div>
+    <p class="entry-desc">A colour change that treats each pixel the same applies one \(3\times3\) matrix \(C\) to every pixel's RGB vector, so \(M=C\otimes I_{HW}\). Brightness is \(b=\beta\mathbf 1\). Isolating a channel uses \(C=e_1e_1^\top\), a rank-1 projection. Converting to greyscale is \(w^\top\otimes I_{HW}\), with \(w\) the luminance weights. The survey quotes a ~3% accuracy drop for greyscale versus colour on ImageNet.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Kernel filters (blur, sharpen)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">block circulant</span></div>
+    <p class="entry-desc">Sliding a small kernel \(k\) over the image is convolution. With wrap-around boundaries, each channel's matrix \(K\) is block circulant with circulant blocks. Every such matrix is diagonalised by the 2-D discrete Fourier transform \(F\): \(K=F^{*}\operatorname{diag}(\hat k)F\), where \(\hat k\) is the kernel's Fourier transform. A symmetric blur kernel gives real eigenvalues that shrink toward 0 at high frequency (a low-pass filter). Sharpening pushes high-frequency eigenvalues above 1.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Mixing (SamplePairing), noise</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\tfrac12 I\), \(I\)</span></div>
+    <p class="entry-desc">SamplePairing averages \(x\) with another random training image \(x'\) and keeps \(x\)'s label: \(\tilde x=\tfrac12x+\tfrac12x'\), so the linear part is \(\tfrac12 I\) and \(x'\) acts as the offset. With \(N\) images, that gives \(N^2+N\) possible training inputs. Noise injection is \(M=I\) with a random Gaussian \(b\).</p>
+  </div>
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 190" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1.2"/>
+        </pattern>
+      </defs>
+      <!-- flip: exchange matrix -->
+      <rect x="20" y="15" width="120" height="120"/>
+      <g fill="currentColor" stroke="none">
+        <rect x="125" y="15" width="15" height="15"/><rect x="110" y="30" width="15" height="15"/>
+        <rect x="95" y="45" width="15" height="15"/><rect x="80" y="60" width="15" height="15"/>
+        <rect x="65" y="75" width="15" height="15"/><rect x="50" y="90" width="15" height="15"/>
+        <rect x="35" y="105" width="15" height="15"/><rect x="20" y="120" width="15" height="15"/>
+      </g>
+      <!-- blur: tridiagonal band -->
+      <rect x="180" y="15" width="120" height="120"/>
+      <path d="M180 15h30l90 90v30h-30l-90-90z" fill="url(#hatch)" stroke-width="1.5"/>
+      <!-- erase: diagonal with a gap -->
+      <rect x="340" y="15" width="120" height="120"/>
+      <g fill="currentColor" stroke="none">
+        <rect x="340" y="15" width="15" height="15"/><rect x="355" y="30" width="15" height="15"/>
+        <rect x="370" y="45" width="15" height="15"/>
+        <rect x="415" y="90" width="15" height="15"/><rect x="430" y="105" width="15" height="15"/>
+        <rect x="445" y="120" width="15" height="15"/>
+      </g>
+      <rect x="385.5" y="60.5" width="29" height="29" stroke-width="1" stroke-dasharray="3 3"/>
+      <g font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">
+        <text x="80" y="158">FLIP</text><text x="80" y="176" font-size="10">PERMUTATION</text>
+        <text x="240" y="158">BLUR</text><text x="240" y="176" font-size="10">BANDED · SYMMETRIC</text>
+        <text x="400" y="158">ERASE</text><text x="400" y="176" font-size="10">DIAGONAL 0/1</text>
+      </g>
+    </svg>
+    <figcaption>the same three ideas on an 8-pixel strip: one 1 per row; a band of weights; the identity with a hole.</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: why a blur is a low-pass filter</span>
+    <p>Take three pixels on a loop and the kernel \((\tfrac14,\tfrac12,\tfrac14)\). The matrix is circulant and symmetric:</p>
+    $$K=\begin{pmatrix}\tfrac12&\tfrac14&\tfrac14\\[2pt]\tfrac14&\tfrac12&\tfrac14\\[2pt]\tfrac14&\tfrac14&\tfrac12\end{pmatrix},\qquad K\mathbf 1=\mathbf 1,\qquad K\begin{pmatrix}1\\-1\\0\end{pmatrix}=\tfrac14\begin{pmatrix}1\\-1\\0\end{pmatrix}.$$
+    <p>The flat image (eigenvalue 1) passes untouched, and every oscillating pattern (eigenvalue \(\tfrac14\)) is damped fourfold. These are exactly the Fourier eigenvalues \(\tfrac12+\tfrac12\cos(2\pi j/3)\) for \(j=0,1,2\).</p>
+  </div>
+
+  <h3 class="sub">The one spectral step that does real work: “Fancy PCA” colour jitter</h3>
+
+  <p>The survey credits AlexNet's colour augmentation, “PCA color augmentation” (“Fancy PCA” in its Table 1), but doesn't give the recipe. From the AlexNet paper: collect the RGB vector \(c_p\in\mathbb R^3\) of every pixel \(p\) in the training set, with mean \(\bar c\). Form their \(3\times3\) covariance, which is symmetric positive semidefinite, and diagonalise it:</p>
+  $$\Sigma=\frac1N\sum_{p}(c_p-\bar c)(c_p-\bar c)^{\top}=P\Lambda P^{\top},\qquad P=[\,p_1\ p_2\ p_3\,],\ \ \lambda_1\ge\lambda_2\ge\lambda_3\ge0 .$$
+  <p>Then, each time an image is used, draw three scalars \(\alpha_i\sim\mathcal N(0,0.1^2)\) and add the <em>same</em> vector to every pixel of that image:</p>
+  $$c_p\;\longmapsto\;c_p+P\begin{pmatrix}\alpha_1\lambda_1\\ \alpha_2\lambda_2\\ \alpha_3\lambda_3\end{pmatrix},\qquad \operatorname{Cov}(\text{shift})=P\,(0.1^2\Lambda^2)\,P^{\top}=0.01\,\Sigma^2 .$$
+  <p>Why the eigendecomposition matters: the jitter follows the directions along which colour actually varies across natural photos, instead of adding isotropic RGB noise that produces tints no camera would record. The subtlety is in the last equation. Scaling by \(\lambda_i\) rather than \(\sqrt{\lambda_i}\) gives the shifts covariance \(\Sigma^2\), not \(\Sigma\), so the dominant direction is exaggerated quadratically. On ImageNet with pixels in \([0,1]\), \(\lambda\approx(0.2175,\,0.0188,\,0.0045)\) and \(p_1\approx-(0.57,0.58,0.58)\), which is the grey axis. Fancy PCA is therefore almost entirely a brightness jitter. That fits Table 1, where it scores 49.4% against colour jittering's 49.6%. The second panel of Try It lets you see this.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>Toy covariance with red and green correlated: \(\Sigma=\begin{pmatrix}2&1&0\\1&2&0\\0&0&0.5\end{pmatrix}\). Its eigenpairs are \(\lambda_1=3,\ p_1=\tfrac1{\sqrt2}(1,1,0)\); \(\lambda_2=1,\ p_2=\tfrac1{\sqrt2}(1,-1,0)\); \(\lambda_3=0.5,\ p_3=(0,0,1)\).</p>
+    <p>Draw \(\alpha=(0.1,-0.2,0.4)\). The shift is \(0.3\,p_1-0.2\,p_2+0.2\,p_3\approx(0.071,\ 0.354,\ 0.200)\), added to every pixel: the whole image tilts green-blue.</p>
+    <p>Across draws, the shift's standard deviation along \(p_1\) versus \(p_3\) is \(0.1\cdot3 : 0.1\cdot0.5 = 6:1\). The data's own ratio is only \(\sqrt{3/0.5}\approx2.45:1\).</p>
+  </div>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It: Augmentations as Matrices</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive 1<b>See the operator</b></p>
+
+  <p>An 8×8 handwritten-style “6” is a vector \(x\in\mathbb R^{64}\). Each button applies one augmentation from the survey as \(\tilde x=Mx+b\). It shows the result, the \(64\times64\) matrix \(M\) (one dot per nonzero entry), and \(M\)'s singular values.</p>
+  <p><strong>Try:</strong> flip, then turn 180°, then shift, blur and erase. <strong>Notice:</strong> the flip, the 180° turn and PatchShuffle have every singular value equal to 1. They are orthogonal and lose nothing, yet the 180° turn makes the 6 a 9, so it is a bad augmentation for digits (the survey's example). The shift and erase have exact zeros (rank drops), so information is gone. The blur keeps rank 64 but its singular values fall to about 0.001: nothing is deleted, but fine detail becomes practically unrecoverable.</p>
+
+  <div class="bench">
+    <div class="ops" role="group" aria-label="Augmentation">
+      <button type="button" data-op="id" aria-pressed="true">Identity</button>
+      <button type="button" data-op="flip" aria-pressed="false">Flip</button>
+      <button type="button" data-op="rot" aria-pressed="false">Turn 180°</button>
+      <button type="button" data-op="shuf" aria-pressed="false">PatchShuffle</button>
+      <button type="button" data-op="shift" aria-pressed="false">Shift 2 →</button>
+      <button type="button" data-op="blur" aria-pressed="false">Blur</button>
+      <button type="button" data-op="erase" aria-pressed="false">Erase</button>
+      <button type="button" data-op="mix" aria-pressed="false">Mix with a 7</button>
+    </div>
+    <div class="maps">
+      <figure><canvas id="cX" class="sq" width="240" height="240"></canvas><figcaption>input \(x\)</figcaption></figure>
+      <figure><canvas id="cY" class="sq" width="240" height="240"></canvas><figcaption>output \(Mx+b\)</figcaption></figure>
+    </div>
+    <p class="opnote" id="opNote"></p>
+    <figure class="opm"><canvas id="cM" class="sq" width="384" height="384"></canvas><figcaption>the matrix \(M\): row = output pixel, column = input pixel</figcaption></figure>
+    <figure class="spectrum">
+      <canvas id="cS" width="640" height="140"></canvas>
+      <figcaption>singular values of \(M\), sorted; dashed line at 1</figcaption>
+    </figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">rank of \(M\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lR">64</span></div>
+      <div class="entry"><span class="entry-name">orthogonal (\(M^\top M=I\))?</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lO">yes</span></div>
+      <div class="entry"><span class="entry-name">\(\sigma_{\max}\) / \(\sigma_{\min}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lS">1 / 1</span></div>
+    </div>
+  </div>
+
+  <p class="regime" style="margin-top:2.6rem">Interactive 2<b>Fancy PCA, channel by channel</b></p>
+  <p>A small synthetic scene (sky, sun, ground), shown as its three channels in ink: darker means less of that colour. The sliders set \(\alpha_1,\alpha_2,\alpha_3\), using ImageNet's eigenvalues and eigenvectors. Real draws have standard deviation 0.1; the sliders go to ±1 so the effects are visible.</p>
+  <p><strong>Try:</strong> move each slider to its end, then tick the box and do it again. <strong>Notice:</strong> with the paper's \(\lambda\)-scaling, \(\alpha_1\) moves all three channels together (brightness), while \(\alpha_2\) and \(\alpha_3\) barely register. With \(\sqrt\lambda\)-scaling, red-versus-blue and green-versus-magenta shifts become visible. Press <em>random draw</em> a few times to see what training actually sees: a few grey levels of brightness change.</p>
+
+  <div class="bench">
+    <div class="dial"><label for="a1">\(\alpha_1\) <output id="a1v">0.00</output></label><input id="a1" type="range" min="-1" max="1" step="0.05" value="0"></div>
+    <div class="dial"><label for="a2">\(\alpha_2\) <output id="a2v">0.00</output></label><input id="a2" type="range" min="-1" max="1" step="0.05" value="0"></div>
+    <div class="dial"><label for="a3">\(\alpha_3\) <output id="a3v">0.00</output></label><input id="a3" type="range" min="-1" max="1" step="0.05" value="0"></div>
+    <div class="toggle">
+      <input id="sq" type="checkbox"><label for="sq">scale by \(\sqrt{\lambda_i}\) instead of \(\lambda_i\)</label>
+      <button type="button" class="btn" id="draw">random draw</button>
+      <button type="button" class="btn" id="zero">reset</button>
+    </div>
+    <div class="maps three">
+      <figure><canvas id="cR" class="sq" width="160" height="160"></canvas><figcaption>red</figcaption></figure>
+      <figure><canvas id="cG" class="sq" width="160" height="160"></canvas><figcaption>green</figcaption></figure>
+      <figure><canvas id="cB" class="sq" width="160" height="160"></canvas><figcaption>blue</figcaption></figure>
+    </div>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">shift added to every pixel (of 255 levels)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="fS">R 0 · G 0 · B 0</span></div>
+      <div class="entry"><span class="entry-name">share of shift along \(p_1\) (brightness)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="fP">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>From the survey, and one classic</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Style is a Gram matrix, which forgets where</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(FF^\top\)</span></div>
+    <p class="entry-desc">Neural style transfer, which the survey uses to repaint training images in new textures, measures “style” at a CNN layer with \(F\in\mathbb R^{C\times N}\): \(C\) feature channels at \(N\) spatial positions. Style is the Gram matrix \(G=FF^\top=\sum_{\text{positions}}f_nf_n^\top\), which is \(C\times C\), symmetric and PSD. For any permutation \(Q\) of positions, \((FQ)(FQ)^\top=FF^\top\). So \(G\) records which features occur together and discards where they occur: texture without layout. Example: \(F=\begin{pmatrix}1&0&2\\0&1&1\end{pmatrix}\) and the same \(F\) with columns 1 and 3 swapped both give \(G=\begin{pmatrix}5&2\\2&2\end{pmatrix}\).</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Adversarial noise is a dual-norm fact</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\varepsilon\|g\|_1\)</span></div>
+    <p class="entry-desc">The fast gradient sign method perturbs an image by \(\delta=\varepsilon\,\operatorname{sign}(g)\), where \(g=\nabla_xJ\) is the gradient of the classifier's loss \(J\) with respect to the pixels. To first order this is optimal: \(\max_{\|\delta\|_\infty\le\varepsilon}g^\top\delta=\varepsilon\|g\|_1\), because \(\ell_1\) is the dual norm of \(\ell_\infty\). Each pixel moves by at most \(\varepsilon\) (0.007 in the survey's panda-to-gibbon figure), but \(\|g\|_1\) grows with the number of pixels. That explains the survey's remark that attacks get stronger as resolution rises. A network fooled on 89.4% of such MNIST (handwritten-digit) images at 97.6% confidence fell to 17.9% after training on them.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Noise injection is ridge regression in disguise</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\sigma^2\|w\|^2\)</span></div>
+    <p class="entry-desc">This one isn't in the survey; it is a classic result (Bishop, 1995). For a linear model with weights \(w\) and noise \(\varepsilon\sim\mathcal N(0,\sigma^2I)\) added to the inputs, \(\mathbb E\,(y-w^\top(x+\varepsilon))^2=(y-w^\top x)^2+\sigma^2\|w\|^2\). Training on noisy copies is exactly training with an \(\ell_2\) penalty. Augmentation and regularisation are the same thing seen from two sides.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Experts can't spot the fakes</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">62.5%, 58.6%</span></div>
+    <p class="entry-desc">Two radiologists shown a mix of real liver-lesion images and lesions generated by a GAN correctly flagged only 62.5% and 58.6% of the fakes. That is close to the 50% of guessing, and it is why GAN samples work as extra training data in medicine.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>Most image augmentations are simple structured matrices acting on the pixel vector: permutations, selections, convolutions, a \(3\times3\) colour map. Whether one helps depends on whether the label is really invariant under that matrix, not on how much information it preserves. The information-destroying crop beat every orthogonal flip.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>A survey on Image Data Augmentation for Deep Learning</strong>, by Connor Shorten and Taghi M. Khoshgoftaar (Florida Atlantic University). <em>Journal of Big Data</em> 6:60, 2019.
+  <a href="https://doi.org/10.1186/s40537-019-0197-0">doi.org/10.1186/s40537-019-0197-0</a></p>
+  <p class="signoff">Written from the full open-access text. The survey reports other papers' results; the numbers here are as it quotes them. The matrix forms are this page's framing. The Fancy PCA recipe is from Krizhevsky et al. (2012), and the ImageNet eigenvalues and eigenvectors are the ones common in open-source training code. The noise-as-ridge identity is Bishop (1995). PatchShuffle in the demo uses probability ½ so that it shows.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3";
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /* ================= Interactive 1: operators on an 8x8 image ================= */
+  var S = 8, N = 64, i, j, r, c;
+  var SIX = [
+    "00011100",
+    "00110000",
+    "01100000",
+    "01111100",
+    "01100110",
+    "01100110",
+    "00111100",
+    "00000000"];
+  var SEVEN = [
+    "01111110",
+    "00000110",
+    "00001100",
+    "00011000",
+    "00011000",
+    "00110000",
+    "00110000",
+    "00000000"];
+  function vec(rows) { var v = []; rows.forEach(function (s) { for (var k = 0; k < S; k++) v.push(+s[k]); }); return v; }
+  var X = vec(SIX), X7 = vec(SEVEN);
+  function zeros() { var M = []; for (i = 0; i < N; i++) { M.push([]); for (j = 0; j < N; j++) M[i].push(0); } return M; }
+  function idx(rr, cc) { return rr * S + cc; }
+
+  var notes = {
+    id: "Identity: M = I. Every singular value is 1.",
+    flip: "Horizontal flip: a permutation (one 1 per row and column). It is also symmetric with M² = I, so its eigenvalues are ±1. Orthogonal, so nothing is lost.",
+    rot: "180° turn: another permutation, orthogonal and lossless, and it turns this 6 into a 9. Invariance is a property of the task, not of the matrix.",
+    shuf: "PatchShuffle: the pixels inside each 2×2 block are permuted (here with probability ½ per block). Still a permutation, so still orthogonal.",
+    shift: "Shift right by 2 and fill with blank: the identity's rows slide over and 16 become zero. Rank 48; the two columns pushed off the edge are gone.",
+    blur: "3×3 blur with weights (1,2,1)⊗(1,2,1)/16, zero-padded. Symmetric and banded. Full rank, but the smallest singular value is about 0.001, so it is invertible on paper and hopeless in practice.",
+    erase: "Random erasing: a diagonal 0/1 matrix (an orthogonal projection) removes a 3×3 patch, then random fill enters through b. Rank 55.",
+    mix: "SamplePairing: average with a 7 and keep the label ‘6’. The linear part is ½I (every singular value ½); the 7 enters only through the offset b."
+  };
+
+  var rngShuf = mulberry32(64), shufPerm = [];
+  (function () {
+    for (var br = 0; br < S; br += 2) for (var bc = 0; bc < S; bc += 2) {
+      var cells = [idx(br, bc), idx(br, bc + 1), idx(br + 1, bc), idx(br + 1, bc + 1)];
+      var p = cells.slice();
+      if (rngShuf() < 0.5) {
+        for (var k = 3; k > 0; k--) { var m = Math.floor(rngShuf() * (k + 1)); var t = p[k]; p[k] = p[m]; p[m] = t; }
+      }
+      for (var q = 0; q < 4; q++) shufPerm.push([cells[q], p[q]]);
+    }
+  })();
+  var rngFill = mulberry32(7), fill = [];
+  for (i = 0; i < N; i++) fill.push(rngFill());
+
+  function build(op) {
+    var M = zeros(), b = [];
+    for (i = 0; i < N; i++) b.push(0);
+    if (op === "id") for (i = 0; i < N; i++) M[i][i] = 1;
+    if (op === "flip") for (r = 0; r < S; r++) for (c = 0; c < S; c++) M[idx(r, c)][idx(r, S - 1 - c)] = 1;
+    if (op === "rot") for (r = 0; r < S; r++) for (c = 0; c < S; c++) M[idx(r, c)][idx(S - 1 - r, S - 1 - c)] = 1;
+    if (op === "shuf") shufPerm.forEach(function (pq) { M[pq[0]][pq[1]] = 1; });
+    if (op === "shift") for (r = 0; r < S; r++) for (c = 2; c < S; c++) M[idx(r, c)][idx(r, c - 2)] = 1;
+    if (op === "blur") {
+      var w = [1, 2, 1];
+      for (r = 0; r < S; r++) for (c = 0; c < S; c++)
+        for (var dr = -1; dr <= 1; dr++) for (var dc = -1; dc <= 1; dc++) {
+          var rr = r + dr, cc = c + dc;
+          if (rr < 0 || rr >= S || cc < 0 || cc >= S) continue;
+          M[idx(r, c)][idx(rr, cc)] = w[dr + 1] * w[dc + 1] / 16;
+        }
+    }
+    if (op === "erase") {
+      for (i = 0; i < N; i++) M[i][i] = 1;
+      for (r = 2; r <= 4; r++) for (c = 2; c <= 4; c++) { M[idx(r, c)][idx(r, c)] = 0; b[idx(r, c)] = fill[idx(r, c)]; }
+    }
+    if (op === "mix") for (i = 0; i < N; i++) { M[i][i] = 0.5; b[i] = 0.5 * X7[i]; }
+    return { M: M, b: b };
+  }
+
+  // Cyclic Jacobi eigenvalues of a symmetric matrix.
+  function symEigvals(A0) {
+    var n = A0.length, a = A0.map(function (row) { return row.slice(); }), p, q, k;
+    for (var sweep = 0; sweep < 60; sweep++) {
+      var off = 0;
+      for (p = 0; p < n; p++) for (q = p + 1; q < n; q++) off += a[p][q] * a[p][q];
+      if (off < 1e-22) break;
+      for (p = 0; p < n - 1; p++) for (q = p + 1; q < n; q++) {
+        if (Math.abs(a[p][q]) < 1e-15) continue;
+        var th = (a[q][q] - a[p][p]) / (2 * a[p][q]);
+        var t = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th * th + 1));
+        var cs = 1 / Math.sqrt(t * t + 1), sn = t * cs, x1, x2;
+        for (k = 0; k < n; k++) { x1 = a[k][p]; x2 = a[k][q]; a[k][p] = cs * x1 - sn * x2; a[k][q] = sn * x1 + cs * x2; }
+        for (k = 0; k < n; k++) { x1 = a[p][k]; x2 = a[q][k]; a[p][k] = cs * x1 - sn * x2; a[q][k] = sn * x1 + cs * x2; }
+      }
+    }
+    var ev = []; for (p = 0; p < n; p++) ev.push(a[p][p]);
+    return ev;
+  }
+  var cache = {};
+  function singulars(op, M) {
+    if (cache[op]) return cache[op];
+    var G = zeros(), k;
+    for (i = 0; i < N; i++) for (j = i; j < N; j++) {
+      var s = 0; for (k = 0; k < N; k++) s += M[k][i] * M[k][j];
+      G[i][j] = s; G[j][i] = s;
+    }
+    var sv = symEigvals(G).map(function (e) { return Math.sqrt(Math.max(0, e)); });
+    sv.sort(function (u, v) { return v - u; });
+    cache[op] = sv;
+    return sv;
+  }
+
+  function drawImg(cv, v) {
+    var ctx = cv.getContext("2d"), cell = cv.width / S;
+    ctx.globalAlpha = 1; ctx.fillStyle = PAPER; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = INK;
+    for (r = 0; r < S; r++) for (c = 0; c < S; c++) {
+      var val = Math.max(0, Math.min(1, v[idx(r, c)]));
+      if (val <= 0) continue;
+      ctx.globalAlpha = val;
+      ctx.fillRect(c * cell, r * cell, cell, cell);
+    }
+    ctx.globalAlpha = 0.25; ctx.strokeStyle = INK; ctx.lineWidth = 1;
+    for (var g = 1; g < S; g++) {
+      ctx.beginPath(); ctx.moveTo(g * cell + 0.5, 0); ctx.lineTo(g * cell + 0.5, cv.height); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, g * cell + 0.5); ctx.lineTo(cv.width, g * cell + 0.5); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawMat(cv, M) {
+    var ctx = cv.getContext("2d"), cell = cv.width / N, mx = 0;
+    for (i = 0; i < N; i++) for (j = 0; j < N; j++) mx = Math.max(mx, Math.abs(M[i][j]));
+    ctx.globalAlpha = 1; ctx.fillStyle = PAPER; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.globalAlpha = 0.18; ctx.strokeStyle = INK; ctx.lineWidth = 1;
+    for (var g = 8; g < N; g += 8) {
+      ctx.beginPath(); ctx.moveTo(g * cell + 0.5, 0); ctx.lineTo(g * cell + 0.5, cv.height); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, g * cell + 0.5); ctx.lineTo(cv.width, g * cell + 0.5); ctx.stroke();
+    }
+    ctx.fillStyle = INK;
+    for (i = 0; i < N; i++) for (j = 0; j < N; j++) {
+      if (M[i][j] === 0) continue;
+      ctx.globalAlpha = Math.max(0.25, Math.abs(M[i][j]) / mx);
+      ctx.fillRect(j * cell, i * cell, cell, cell);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawSpec(cv, sv) {
+    var ctx = cv.getContext("2d"), W = cv.width, H = cv.height, pad = 12;
+    var top = Math.max(1, sv[0]) * 1.1, bw = (W - 2 * pad) / N;
+    ctx.globalAlpha = 1; ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = INK; ctx.fillStyle = INK; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(pad, H - pad + 0.5); ctx.lineTo(W - pad, H - pad + 0.5); ctx.stroke();
+    for (var k = 0; k < N; k++) {
+      var h = (H - 2 * pad) * sv[k] / top;
+      var x = pad + k * bw + bw * 0.15, w = bw * 0.7;
+      if (sv[k] < 1e-9) { ctx.beginPath(); ctx.arc(x + w / 2, H - pad - 3, 1.6, 0, 2 * Math.PI); ctx.stroke(); }
+      else ctx.fillRect(x, H - pad - h, w, Math.max(1, h));
+    }
+    var y1 = H - pad - (H - 2 * pad) / top;
+    ctx.save(); ctx.setLineDash([4, 5]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, y1); ctx.lineTo(W - pad, y1); ctx.stroke(); ctx.restore();
+  }
+
+  var cX = document.getElementById("cX"), cY = document.getElementById("cY");
+  var cM = document.getElementById("cM"), cS = document.getElementById("cS");
+  function fmt(x) { return x >= 0.1 ? x.toFixed(2) : x < 1e-9 ? "0" : x.toPrecision(2); }
+  function show(op) {
+    var o = build(op), y = [];
+    for (i = 0; i < N; i++) { var s = o.b[i]; for (j = 0; j < N; j++) s += o.M[i][j] * X[j]; y.push(s); }
+    drawImg(cX, X); drawImg(cY, y); drawMat(cM, o.M);
+    var sv = singulars(op, o.M);
+    drawSpec(cS, sv);
+    var rank = sv.filter(function (s) { return s > 1e-9; }).length;
+    var orth = sv.every(function (s) { return Math.abs(s - 1) < 1e-9; });
+    document.getElementById("lR").textContent = rank + " / 64";
+    document.getElementById("lO").textContent = orth ? "yes" : "no";
+    document.getElementById("lS").textContent = fmt(sv[0]) + " / " + fmt(sv[N - 1]);
+    document.getElementById("opNote").textContent = notes[op];
+  }
+  var buttons = document.querySelectorAll(".ops button");
+  Array.prototype.forEach.call(buttons, function (btn) {
+    btn.addEventListener("click", function () {
+      Array.prototype.forEach.call(buttons, function (b2) { b2.setAttribute("aria-pressed", b2 === btn ? "true" : "false"); });
+      show(btn.getAttribute("data-op"));
+    });
+  });
+  show("id");
+
+  /* ================= Interactive 2: Fancy PCA ================= */
+  var LAM = [0.2175, 0.0188, 0.0045];
+  var PV = [ // columns p1, p2, p3 ; rows R, G, B
+    [-0.5675, 0.7192, 0.4009],
+    [-0.5808, -0.0045, -0.8140],
+    [-0.5836, -0.6948, 0.4203]];
+  var Q = 16, base = [[], [], []];
+  for (r = 0; r < Q; r++) for (c = 0; c < Q; c++) {
+    var u = c / (Q - 1), v = r / (Q - 1), R, G, B;
+    if (v > 0.72) { R = 0.35; G = 0.5; B = 0.2; }
+    else if ((u - 0.7) * (u - 0.7) + (v - 0.3) * (v - 0.3) < 0.035) { R = 0.95; G = 0.8; B = 0.35; }
+    else { R = 0.35 - 0.1 * v; G = 0.55 - 0.2 * v; B = 0.85 - 0.3 * v; }
+    base[0].push(R); base[1].push(G); base[2].push(B);
+  }
+  var sl = [document.getElementById("a1"), document.getElementById("a2"), document.getElementById("a3")];
+  var outs = [document.getElementById("a1v"), document.getElementById("a2v"), document.getElementById("a3v")];
+  var sqBox = document.getElementById("sq");
+  var chan = [document.getElementById("cR"), document.getElementById("cG"), document.getElementById("cB")];
+
+  function drawChan(cv, vals) {
+    var ctx = cv.getContext("2d"), cell = cv.width / Q;
+    ctx.globalAlpha = 1; ctx.fillStyle = PAPER; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = INK;
+    for (var k = 0; k < Q * Q; k++) {
+      var val = Math.max(0, Math.min(1, vals[k]));
+      ctx.globalAlpha = 1 - val;
+      ctx.fillRect((k % Q) * cell, Math.floor(k / Q) * cell, cell + 0.5, cell + 0.5);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function fancy() {
+    var a = sl.map(function (s) { return +s.value; });
+    a.forEach(function (x, k) { outs[k].textContent = (x >= 0 ? "" : "−") + Math.abs(x).toFixed(2); });
+    var coef = a.map(function (x, k) { return x * (sqBox.checked ? Math.sqrt(LAM[k]) : LAM[k]); });
+    var shift = [0, 1, 2].map(function (ch) { return PV[ch][0] * coef[0] + PV[ch][1] * coef[1] + PV[ch][2] * coef[2]; });
+    for (var ch = 0; ch < 3; ch++) drawChan(chan[ch], base[ch].map(function (x) { return x + shift[ch]; }));
+    function lv(x) { var n = Math.round(255 * x); return (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(n); }
+    document.getElementById("fS").textContent = "R " + lv(shift[0]) + " · G " + lv(shift[1]) + " · B " + lv(shift[2]);
+    var tot = coef[0] * coef[0] + coef[1] * coef[1] + coef[2] * coef[2];
+    document.getElementById("fP").textContent = tot > 0 ? Math.round(100 * coef[0] * coef[0] / tot) + "%" : "–";
+  }
+  sl.forEach(function (s) { s.addEventListener("input", fancy); });
+  sqBox.addEventListener("change", fancy);
+  var rngA = mulberry32(2012);
+  function gauss() { var u1 = 0; while (u1 === 0) u1 = rngA(); return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * rngA()); }
+  document.getElementById("draw").addEventListener("click", function () {
+    sl.forEach(function (s) { s.value = Math.max(-1, Math.min(1, Math.round(gauss() * 0.1 / 0.05) * 0.05)).toFixed(2); });
+    fancy();
+  });
+  document.getElementById("zero").addEventListener("click", function () { sl.forEach(function (s) { s.value = 0; }); fancy(); });
+  fancy();
+})();
+</script>
+</body>
+</html>

@@ -79,6 +79,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-07-development-and-validation-of-a-deep-learning-algo.html",
         date: "2026-11-07",
     },
+    {
+        title: "Image Data Augmentation",
+        blurb: "A survey of the ways to turn a small set of training photos into a much larger one (mirroring, cropping, colour shifts, blanked-out patches, blended images and computer-generated fakes) and how much each one helps image-recognition networks.",
+        tags: ["paper of the day", "computer-vision"],
+        file: "learning/paper-2026-11-03-a-survey-on-image-data-augmentation-for-deep-learn.html",
+        date: "2026-11-03",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
