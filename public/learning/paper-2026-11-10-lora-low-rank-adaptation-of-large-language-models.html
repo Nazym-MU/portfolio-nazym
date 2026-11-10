@@ -1,241 +1,689 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LoRA: Low-Rank Adaptation of Large Language Models (morning paper)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoRA: Low-Rank Adaptation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
   onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
 <style>
-  :root {
-    --bg: #fafaf9;
-    --surface: #ffffff;
-    --text: #1c1917;
-    --muted: #6b7280;
-    --border: #e7e5e4;
-    --accent: #4f46e5;
-    --accent-soft: #eef2ff;
-    --accent-border: #c7d2fe;
-    --chip-bg: #f1f5f9;
-    --chip-text: #64748b;
-    --code-bg: #f5f5f4;
-    --neg: #94a3b8;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0f1115;
-      --surface: #171a21;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --border: #2a2f3a;
-      --accent: #8b93ff;
-      --accent-soft: #1d2040;
-      --accent-border: #3b3f7a;
-      --chip-bg: #232733;
-      --chip-text: #9ca3af;
-      --code-bg: #1f232c;
-      --neg: #64748b;
-    }
-  }
-  * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-    font-size: 16px;
-    line-height: 1.6;
-    overflow-wrap: break-word;
-  }
-  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 56px; }
-  h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 8px; letter-spacing: -0.01em; }
-  h2 { font-size: 1.15rem; margin: 44px 0 14px; letter-spacing: -0.005em; }
-  h3 { font-size: 1rem; margin: 0 0 8px; }
-  p { margin: 0 0 12px; }
-  a { color: var(--accent); }
-  code, .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.88em; }
-  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
-  .meta { color: var(--muted); font-size: 0.92rem; margin-bottom: 14px; }
-  .lede { font-size: 1.05rem; }
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 16px 18px;
-    margin: 14px 0;
-  }
-  .card.new { background: var(--accent-soft); border-color: var(--accent-border); }
-  .tag {
-    display: inline-block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
-    text-transform: uppercase; padding: 2px 8px; border-radius: 999px; margin-bottom: 8px;
-  }
-  .tag.new { background: var(--accent); color: var(--surface); }
-  .chip {
-    display: inline-block; font-size: 0.72rem; font-weight: 500; padding: 1px 8px;
-    border-radius: 999px; background: var(--chip-bg); color: var(--chip-text);
-    border: 1px solid var(--border); margin-right: 6px; white-space: nowrap; vertical-align: 1px;
-  }
-  ul { padding-left: 1.2em; margin: 0 0 12px; }
-  li { margin: 6px 0; }
-  ul.known { list-style: none; padding: 0; }
-  ul.known li { padding: 8px 0; border-bottom: 1px solid var(--border); margin: 0; }
-  ul.known li:last-child { border-bottom: none; }
-  .label { font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 12px 0 4px; }
-  .katex-display { overflow-x: auto; overflow-y: hidden; padding: 4px 0; margin: 10px 0; }
-  .objects { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: baseline; }
-  .objects div:nth-child(odd) { white-space: nowrap; }
-  .remember { font-size: 1.08rem; font-weight: 500; border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; }
-  footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
-  /* interactive */
-  .widget .maps { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
-  .widget figure { margin: 0; }
-  .widget figcaption { font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 4px; }
-  .widget canvas { width: 100%; display: block; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); }
-  .widget canvas.sq { aspect-ratio: 1 / 1; image-rendering: pixelated; }
-  .widget input[type=range] { width: 100%; accent-color: var(--accent); }
-  .row { display: flex; align-items: center; gap: 12px; }
-  .row label { white-space: nowrap; font-weight: 600; }
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-  .stat { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
-  .stat .k { font-size: 0.72rem; color: var(--muted); line-height: 1.3; }
-  .stat .v { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 1rem; font-weight: 500; }
-  @media (max-width: 420px) {
-    .stats { grid-template-columns: 1fr; }
-    h1 { font-size: 1.4rem; }
-  }
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+/* sub-heads inside a section */
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+/* section regime line */
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+/* math inside caps rows must keep its own case */
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:1.4em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.maps{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:clamp(.6rem, 3vw, 1.4rem);
+}
+.maps figure{margin:0}
+.maps figcaption{font-size:1.05rem}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.sq{aspect-ratio:1 / 1}
+.bench .spectrum{margin:1.2rem 0 0}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
 </style>
 </head>
 <body>
-<main>
+<div class="sheet">
 
-<!-- 1. Header -->
 <header>
-  <h1>LoRA: Low-Rank Adaptation of Large Language Models</h1>
-  <div class="meta">
-    Edward J. Hu, Yelong Shen, Phillip Wallis et al. · 2021 · ICLR 2022 ·
-    <a href="https://arxiv.org/abs/2106.09685">arXiv:2106.09685</a>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
   </div>
-  <p class="lede">To fine-tune a huge pretrained model, freeze every weight matrix \(W_0\) and learn only a rank-\(r\) correction \(\Delta W = BA\). The paper shows that \(r = 1\)–\(4\) is often enough.</p>
+
+  <div class="hero">
+    <!-- decaying singular-value bars (silhouette) -->
+    <svg class="strip" viewBox="0 0 420 60" fill="currentColor" aria-hidden="true">
+      <rect x="10" y="4" width="22" height="56"/><rect x="40" y="18" width="22" height="42"/>
+      <rect x="70" y="34" width="22" height="26"/><rect x="100" y="44" width="22" height="16"/>
+      <rect x="130" y="50" width="22" height="10"/><rect x="160" y="53" width="22" height="7"/>
+      <rect x="190" y="55" width="22" height="5"/><rect x="220" y="56" width="22" height="4"/>
+      <rect x="250" y="57" width="22" height="3"/><rect x="280" y="57" width="22" height="3"/>
+      <rect x="310" y="58" width="22" height="2"/><rect x="340" y="58" width="22" height="2"/>
+      <rect x="370" y="58" width="22" height="2"/><rect x="400" y="59" width="20" height="1"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; ICLR 2022</p>
+      <h1>LoRA</h1>
+    </div>
+    <p class="tagline">Low-Rank Adaptation of Large Language Models</p>
+    <p class="tagline-hand">Edward J. Hu, Yelong Shen, Phillip Wallis et al. &middot; 2021 &middot;
+    <a href="https://arxiv.org/abs/2106.09685">arXiv:2106.09685</a></p>
+  </div>
 </header>
 
-<!-- 2. In 60 seconds -->
-<h2>In 60 seconds</h2>
-<ul>
-  <li><strong>Problem.</strong> Full fine-tuning of GPT-3 learns a new \(\Delta\Phi\) with all 175B entries for every task. That means a 350&nbsp;GB checkpoint per task and 1.2&nbsp;TB of GPU memory to train. Adapter layers avoid this, but they add 20–30% latency at batch size 1.</li>
-  <li><strong>Idea.</strong> Write the update to each attention matrix as a product \(BA\) with \(B\in\mathbb R^{d\times r}\), \(A\in\mathbb R^{r\times k}\), \(r\ll d\), and train only \(A, B\). After training, fold \(BA\) into \(W_0\).</li>
-  <li><strong>Result.</strong> On GPT-3 175B, 4.7M trainable parameters (≈0.003%) match or beat full fine-tuning: MNLI 91.7 vs 89.5, WikiSQL 73.4 vs 73.8, SAMSum ROUGE-1 53.8 vs 52.0. The checkpoint drops to 35&nbsp;MB, training memory to 350&nbsp;GB, and inference latency is unchanged.</li>
-</ul>
+<main>
 
-<!-- 3. The linear algebra -->
-<h2>The linear algebra</h2>
+<div class="premise">
+  <p>Fine-tuning a large language model for a new task normally rewrites every one of its weights, so each task costs a full copy of the model. LoRA freezes the original weights and learns each weight matrix's <em>change</em> as the product of two thin matrices. The paper shows that a change of rank 1 to 4 is often enough.</p>
+</div>
 
-<div class="card">
-  <h3>The objects</h3>
-  <div class="objects">
-    <div>\(W_0\in\mathbb R^{d\times k}\)</div><div>Pretrained, dense, generically full-rank, <em>frozen</em>. In GPT-3 these are \(W_q, W_v\) with \(d=k=d_{\text{model}}=12{,}288\), in each of 96 layers.</div>
-    <div>\(B\in\mathbb R^{d\times r}\)</div><div>Trainable, initialised to \(0\).</div>
-    <div>\(A\in\mathbb R^{r\times k}\)</div><div>Trainable, initialised i.i.d. \(\mathcal N(0,\sigma^2)\).</div>
-    <div>\(\Delta W = BA\)</div><div>\(\operatorname{rank}\le r\), with \(r\in\{1,2,4,8\}\). It is zero at initialisation, so training starts exactly at the pretrained model.</div>
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: how many directions?</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">350&nbsp;GB per task</span></div>
+    <p class="entry-desc">A pretrained language model is a large set of weights learned once from a huge amount of text. Call all of them \(\Phi\). <em>Fine-tuning</em> adapts the model to one task, such as turning English questions into database queries, by training further on that task's examples. That changes every weight: \(\Phi\) becomes \(\Phi+\Delta\Phi\), where \(\Delta\Phi\) is the fine-tuning update, as large as the model itself.</p>
+    <p class="entry-desc">For GPT-3 175B (OpenAI's model with 175 billion weights), each fine-tuned copy is a 350&nbsp;GB file, and training it takes 1.2&nbsp;TB of GPU memory. Ten tasks means ten such copies to store and serve.</p>
+    <p class="entry-desc">The standard workaround is <em>adapters</em>: small extra layers inserted into the network and trained instead of the original weights. The per-task file is small, but the extra layers add computation at every step of generation, slowing it by 20–30% when serving one request at a time.</p>
   </div>
-  $$h \;=\; W_0x + \frac{\alpha}{r}\,BAx, \qquad \#\text{params} = r(d+k)\ \text{ instead of } dk.$$
-  <p>For one GPT-3 matrix with \(r=1\), that is 24,576 numbers instead of 151 million. The \(\alpha/r\) factor keeps the update's scale stable when you change \(r\), so the learning rate doesn't need re-tuning.</p>
-  <p style="margin:0">At deployment you store \(W = W_0 + BA\). It has the same shape as \(W_0\), so a forward pass costs exactly what the base model's does. To switch tasks, subtract \(BA\) and add \(B'A'\).</p>
-</div>
 
-<div class="card">
-  <h3>The fact doing the work: the update's spectrum decays fast</h3>
-  <p>Take the SVD of the update and apply Eckart–Young:</p>
-  $$\Delta W=\sum_{i}\sigma_i\,u_iv_i^{\top},\qquad \min_{\operatorname{rank}M\le r}\|\Delta W-M\|_F^2=\sum_{i>r}\sigma_i^2 .$$
-  <p>LoRA's bet is that the tail \(\sum_{i>r}\sigma_i^2\) is negligible for the <em>task update</em>, even though \(W_0\) itself is full-rank. LoRA never computes an SVD during training; it learns the factors directly. The SVD appears only in Section 7, where they check the bet. At \(r=8\) and \(r=64\), the top singular direction of the learned \(A\) is shared (similarity \(&gt;0.5\)). The remaining directions don't agree across ranks or random seeds, which suggests they are mostly noise.</p>
-</div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\Delta W = BA\)</span></div>
+    <p class="entry-desc">Keep the pretrained weights frozen and learn only the change, in a restricted form. Take one pretrained weight matrix \(W_0\) of size \(d\times k\) (in GPT-3, an attention matrix of size 12,288 × 12,288). Its change \(\Delta W\) is not learned entry by entry. LoRA writes it as \(\Delta W = BA\), a tall thin \(B\) (\(d\times r\)) times a wide thin \(A\) (\(r\times k\)), where the rank \(r\) is tiny, around 1 to 8. Only \(A\) and \(B\) are trained.</p>
+    <p class="entry-desc">After training, add \(BA\) into \(W_0\) once. The result has the same shape as before, so the model runs exactly as fast as the original. A task is stored as just its small \(A, B\) pairs.</p>
+  </div>
 
-<div class="card">
-  <h3>What you already have</h3>
-  <ul class="known">
-    <li><span class="chip">you know this</span><strong>Rank.</strong> \(\operatorname{rank}(BA)\le r\) is the entire constraint. Nothing else, such as sparsity or orthogonality, is imposed on \(A\) or \(B\).</li>
-    <li><span class="chip">you know this</span><strong>SVD / low-rank approximation.</strong> Used only to <em>analyse</em> the learned \(A\), via its top right singular vectors in \(\mathbb R^{12288}\). Eckart–Young bounds what any rank-\(r\) \(BA\) could achieve.</li>
-    <li><span class="chip">you know this</span><strong>Projections and Frobenius norm.</strong> To ask how \(\Delta W\) relates to \(W\), they project \(W\) onto \(\Delta W\)'s top-\(r\) singular subspaces: \(\|U_r^{\top} W V_r\|_F\). They compare that with \(\|\Delta W\|_F\) (see “Cool things”).</li>
-    <li><span class="chip">you know this</span><strong>Attention.</strong> Only \(W_q, W_v\) get LoRA. The MLP, \(W_k\) and \(W_o\) stay frozen.</li>
-    <li><span class="chip">you know this</span><strong>Gradient descent.</strong> Only \(A\) and \(B\) receive gradients, which is where the memory savings come from.</li>
-  </ul>
-</div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">≈0.003% trained</span></div>
+    <p class="entry-desc">On GPT-3 175B, LoRA trains 4.7 million numbers (about 0.003% of the model) and matches or beats full fine-tuning on three tasks: deciding whether one sentence implies another (MNLI, accuracy 91.7 vs 89.5), English to SQL (WikiSQL, 73.4 vs 73.8), and summarising chat conversations (SAMSum, word-overlap score 53.8 vs 52.0).</p>
+    <p class="entry-desc">The per-task file shrinks from 350&nbsp;GB to 35&nbsp;MB, training memory from 1.2&nbsp;TB to 350&nbsp;GB, and generation is no slower.</p>
+  </div>
+</section>
 
-<div class="card new">
-  <span class="tag new">new to you</span>
-  <h3>Gradients through a factorisation (and why \(B=0\) at init)</h3>
-  <p>If the loss depends on \(W = W_0 + BA\) and \(G = \partial L/\partial W\in\mathbb R^{d\times k}\), the chain rule gives</p>
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Frozen plus low rank</b></p>
+
+  <p>GPT-3 is a transformer: a stack of 96 layers, each holding one vector per word of the input. Inside each layer, <em>attention</em> lets words exchange information. It begins by multiplying every word's vector by learned square matrices: \(W_q\) produces “queries”, \(W_k\) “keys”, \(W_v\) “values”, and \(W_o\) maps the mixed result back. LoRA attaches to these matrices.</p>
+
+  <h3 class="sub">The objects, for one matrix</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(W_0\in\mathbb R^{d\times k}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">frozen</span></div>
+    <p class="entry-desc">The pretrained matrix, sending a \(k\)-dimensional input \(x\) to a \(d\)-dimensional output. It is dense, essentially full-rank, and never updated. The paper adapts \(W_q\) and \(W_v\) in every layer, where \(d=k=12{,}288\) (GPT-3's vector width). Everything else stays frozen.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(B\in\mathbb R^{d\times r}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">trainable</span></div>
+    <p class="entry-desc">Trainable, starts at \(0\).</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(A\in\mathbb R^{r\times k}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">trainable</span></div>
+    <p class="entry-desc">Trainable, starts with independent random Gaussian entries.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(\Delta W = BA\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">rank ≤ r</span></div>
+    <p class="entry-desc">The learned change. Rank at most \(r\) is the only constraint; nothing like sparsity or orthogonality is imposed. Since \(B=0\) at the start, \(\Delta W=0\) and training begins exactly at the pretrained model.</p>
+  </div>
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 175" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1.2"/>
+        </pattern>
+      </defs>
+      <!-- W0: big frozen square, hatched -->
+      <rect x="20" y="20" width="120" height="120" fill="url(#hatch)"/>
+      <text x="80" y="164" font-family="Oswald, sans-serif" font-size="13" letter-spacing="2" text-anchor="middle" fill="currentColor" stroke="none">W<tspan dy="4" font-size="10">0</tspan><tspan dy="-4"> &middot; FROZEN</tspan></text>
+      <!-- plus -->
+      <path d="M164 80h22M175 69v22"/>
+      <!-- B: tall thin -->
+      <rect x="208" y="20" width="18" height="120"/>
+      <text x="217" y="164" font-family="Oswald, sans-serif" font-size="13" letter-spacing="2" text-anchor="middle" fill="currentColor" stroke="none">B</text>
+      <text x="217" y="13" font-family="Oswald, sans-serif" font-size="11" text-anchor="middle" fill="currentColor" stroke="none">r</text>
+      <!-- A: wide thin -->
+      <rect x="240" y="20" width="120" height="18"/>
+      <text x="300" y="58" font-family="Oswald, sans-serif" font-size="13" letter-spacing="2" text-anchor="middle" fill="currentColor" stroke="none">A</text>
+      <text x="368" y="33" font-family="Oswald, sans-serif" font-size="11" fill="currentColor" stroke="none">r</text>
+      <!-- dimension ticks -->
+      <path d="M12 20v120M9 20h6M9 140h6" stroke-width="1"/>
+      <text x="6" y="84" font-family="Oswald, sans-serif" font-size="11" text-anchor="end" fill="currentColor" stroke="none">d</text>
+      <path d="M20 148h120" stroke-width="1" stroke-dasharray="2 3"/>
+      <!-- tally -->
+      <text x="252" y="96" font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">STORED, NOT TRAINED: d&#183;k</text>
+      <text x="252" y="118" font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">TRAINED: r(d + k)</text>
+      <path d="M252 128h200" stroke-width="1"/>
+    </svg>
+    <figcaption>hatched: the pretrained matrix nobody touches. outlined: the two thin factors that do all the learning.</figcaption>
+  </figure>
+
+  <p>The adapted layer computes its output \(h\) from input \(x\) as</p>
+  $$h \;=\; W_0x + \frac{\alpha}{r}\,BAx, \qquad \#\text{trained} = r(d+k)\ \text{ instead of } dk.$$
+  <p>Here \(\alpha\) is a fixed constant, not trained. Dividing by \(r\) keeps the update's size roughly constant as you change \(r\), so the learning rate needn't be re-tuned. For one GPT-3 matrix with \(r=1\), that is 24,576 trained numbers instead of 151 million.</p>
+  <p>Memory drops because the optimizer (Adam) keeps two running averages for every trained number. Frozen \(W_0\) needs neither those nor stored gradients.</p>
+  <p>At deployment you store \(W = W_0 + BA\). It has the same shape as \(W_0\), so a forward pass costs exactly what the base model's does. To switch tasks, subtract \(BA\) and add another task's \(B'A'\).</p>
+
+  <div class="callout">
+    <span class="callout-label">Why rank r should be enough: the update's singular values decay fast</span>
+    <p>Write any update by its singular value decomposition, with \(\sigma_1\ge\sigma_2\ge\dots\ge0\). By Eckart–Young, the best rank-\(r\) approximation keeps the first \(r\) terms, and the squared error is the tail:</p>
+    $$\Delta W=\sum_{i}\sigma_i\,u_iv_i^{\top},\qquad \min_{\operatorname{rank}M\le r}\|\Delta W-M\|_F^2=\sum_{i>r}\sigma_i^2 .$$
+    <p>\(W_0\) itself is full-rank. The paper's hypothesis is that the <em>change</em> a task needs has a negligible tail. Earlier work motivated this: pretrained models can be fine-tuned well while restricted to a random low-dimensional subspace.</p>
+    <p>LoRA never computes an SVD during training; it learns \(A\) and \(B\) directly. The SVD appears only in the paper's analysis (Section 7), which trains with \(r=8\) and \(r=64\) and compares the learned \(A\)'s. Their top singular direction is shared (similarity above 0.5, measured below). The remaining directions disagree across ranks and random seeds, so they look like noise.</p>
+  </div>
+
+  <h3 class="sub">How a factorised update learns, and why \(B\) starts at 0</h3>
+
+  <p>Let \(L\) be the training loss and \(G=\partial L/\partial W\in\mathbb R^{d\times k}\) its gradient with respect to the whole matrix, the direction full fine-tuning would step in. With learning rate \(\eta\), the chain rule through \(W=W_0+BA\) gives</p>
   $$\frac{\partial L}{\partial B}=G A^{\top},\qquad \frac{\partial L}{\partial A}=B^{\top}G,\qquad \delta(BA)\approx-\eta\big(G\,A^{\top}\!A+BB^{\top}G\big).$$
-  <p>\(A^{\top}A\) (size \(k\times k\)) and \(BB^{\top}\) (size \(d\times d\)) are PSD with rank \(\le r\). So each LoRA step is the full fine-tuning step \(-\eta G\), multiplied on the right and left by two low-rank PSD matrices. The step only sees the part of \(G\) that lies on \(\operatorname{row}(A)\) and \(\operatorname{col}(B)\).</p>
-  <div class="label">Tiny example</div>
-  <p>\(d=k=2,\ r=1\): \(A=\begin{pmatrix}1&2\end{pmatrix},\ B=\begin{pmatrix}0\\0\end{pmatrix},\ G=\begin{pmatrix}1&0\\0&-1\end{pmatrix}\).</p>
-  <p>\(\partial L/\partial A = B^{\top}G = (0\ \ 0)\), so \(A\) does not move on step 1. \(\partial L/\partial B = GA^{\top} = \binom{1}{-2}\). With \(\eta = 0.1\) we get \(B=\binom{-0.1}{0.2}\), so
-  \(\Delta W = BA=\begin{pmatrix}-0.1&-0.2\\0.2&0.4\end{pmatrix} = -\eta\,G A^{\top}A\).
-  Full fine-tuning would have stepped \(-\eta G=\begin{pmatrix}-0.1&0\\0&0.1\end{pmatrix}\), which is rank 2. LoRA keeps only \(G\)'s action on \(\operatorname{span}\{(1,2)\}\), scaled by \(\|A\|^2=5\).</p>
-  <p style="margin:0"><strong>Intuition:</strong> because \(B=0\), LoRA starts as gradient descent inside a <em>random</em> \(r\)-dimensional slice of input space, spanned by the Gaussian rows of \(A\). This is the “random subspace / intrinsic dimension” picture that inspired the paper. After the first step \(A\) moves too, so the slice itself is learned.</p>
-</div>
+  <p>\(A^{\top}A\) (\(k\times k\)) and \(BB^{\top}\) (\(d\times d\)) are positive semidefinite with rank \(\le r\). So each LoRA step is the full step \(-\eta G\), filtered on the right and left by low-rank matrices: it only sees the part of \(G\) acting on the row space of \(A\) and the column space of \(B\).</p>
 
-<div class="card new">
-  <span class="tag new">new to you</span>
-  <h3>Principal angles between subspaces (the paper's \(\phi\))</h3>
-  <p>Let \(U\in\mathbb R^{n\times i}\) and \(V\in\mathbb R^{n\times j}\) have orthonormal columns. The singular values of \(U^{\top}V\) are \(\cos\theta_1\ge\dots\ge\cos\theta_p\), with \(p=\min(i,j)\). The angles \(\theta_\ell\) are the <em>principal angles</em> between the two column spaces. The paper's similarity measure is</p>
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>\(d=k=2,\ r=1\): \(A=\begin{pmatrix}1&2\end{pmatrix},\ B=\begin{pmatrix}0\\0\end{pmatrix},\ G=\begin{pmatrix}1&0\\0&-1\end{pmatrix}\).</p>
+    <p>\(\partial L/\partial A = B^{\top}G = (0\ \ 0)\), so \(A\) does not move on step 1. \(\partial L/\partial B = GA^{\top} = \binom{1}{-2}\). With \(\eta = 0.1\), \(B=\binom{-0.1}{0.2}\), so
+    \(\Delta W = BA=\begin{pmatrix}-0.1&-0.2\\0.2&0.4\end{pmatrix} = -\eta\,G A^{\top}A\).</p>
+    <p>Full fine-tuning would have stepped \(-\eta G=\begin{pmatrix}-0.1&0\\0&0.1\end{pmatrix}\), which is rank 2. LoRA keeps only \(G\)'s action on \(\operatorname{span}\{(1,2)\}\), scaled by \(\|A\|^2=5\).</p>
+  </div>
+
+  <p>So with \(B=0\), LoRA starts as gradient descent inside a <em>random</em> \(r\)-dimensional slice of input space, spanned by the Gaussian rows of \(A\). From the second step \(A\) moves too, so the slice itself is learned.</p>
+
+  <h3 class="sub">Measuring whether two learned subspaces agree (the paper's \(\phi\))</h3>
+
+  <p>To compare two runs, take the top singular directions of each learned \(A\) and stack them as orthonormal columns: \(U\in\mathbb R^{n\times i}\) and \(V\in\mathbb R^{n\times j}\), with \(n\) the input dimension. The singular values of \(U^{\top}V\) are \(\cos\theta_1\ge\dots\ge\cos\theta_p\), \(p=\min(i,j)\), where the \(\theta_\ell\) are the <em>principal angles</em> between the two subspaces. The paper's similarity is their average squared cosine:</p>
   $$\phi=\frac{\|U^{\top}V\|_F^2}{\min(i,j)}=\frac1p\sum_{\ell=1}^{p}\cos^2\theta_\ell\in[0,1].$$
-  <p>\(\phi = 1\) iff one subspace contains the other, and \(0\) iff they are orthogonal. It equals \(1-d^2/p\), where \(d\) is the Grassmann projection-metric distance.</p>
-  <div class="label">Tiny example</div>
-  <p>\(n=3\): \(U=[e_1\ e_2]\), \(V=[\tfrac{1}{\sqrt2}(e_1+e_2)\ \ e_3]\). Then
-  \(U^{\top}V=\begin{pmatrix}1/\sqrt2&0\\1/\sqrt2&0\end{pmatrix}\), with singular values \(1, 0\), so \(\theta = 0^\circ, 90^\circ\).
-  \(\phi=(1+0)/2=0.5\): the subspaces share exactly one direction, \((e_1+e_2)/\sqrt2\), and are orthogonal otherwise.</p>
-  <p style="margin:0"><strong>Intuition:</strong> random subspaces in high dimension barely overlap. \(\mathbb E\|U^{\top}V\|_F^2 = ij/n\), so for \(i=j=64\) in \(\mathbb R^{12288}\), \(\phi\approx 0.005\). That is why the “random Gaussian” panel of their Fig. 4 is black, and why \(\phi&gt;0.5\) on the top direction is a strong signal.</p>
-</div>
+  <p>\(\phi = 1\) iff one subspace contains the other, and \(0\) iff they are orthogonal.</p>
 
-<!-- 4. One interactive -->
-<h2>Try it: how many directions does an update need?</h2>
-<div class="card widget">
-  <p>Below is a 16×16 “update”: a rank-2 signal \(S\) plus small Gaussian noise. Slide \(r\) to see the best rank-\(r\) approximation, which is the most any \(BA\) of that rank can do. The error against the <em>noisy observation</em> always falls as \(r\) grows. The error against the <em>true signal</em> bottoms out near \(r=2\): past that point, the extra directions only fit noise. This mirrors the paper's reading of its Fig. 3.</p>
-  <div class="row">
-    <label for="rk">r = <span id="rv" class="mono">2</span></label>
-    <input id="rk" type="range" min="1" max="16" value="2" step="1">
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>\(n=3\): \(U=[e_1\ e_2]\), \(V=[\tfrac{1}{\sqrt2}(e_1+e_2)\ \ e_3]\). Then
+    \(U^{\top}V=\begin{pmatrix}1/\sqrt2&0\\1/\sqrt2&0\end{pmatrix}\), with singular values \(1, 0\), so \(\theta = 0^\circ, 90^\circ\).
+    \(\phi=(1+0)/2=0.5\): the subspaces share exactly one direction, \((e_1+e_2)/\sqrt2\), and are orthogonal otherwise.</p>
   </div>
-  <div class="maps">
-    <figure><canvas id="cM" class="sq" width="160" height="160"></canvas><figcaption>observed \(\Delta W\) (signal + noise)</figcaption></figure>
-    <figure><canvas id="cR" class="sq" width="160" height="160"></canvas><figcaption>rank-\(r\) approximation</figcaption></figure>
+
+  <p>Random subspaces in high dimension barely overlap: \(\mathbb E\|U^{\top}V\|_F^2 = ij/n\), so for \(i=j=64\) in \(\mathbb R^{12288}\), \(\phi\approx 0.005\). That is why \(\phi&gt;0.5\) on the top direction is a strong signal.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It: How Many Directions Does an Update Need?</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive<b>Best rank-r fit</b></p>
+
+  <p>The left panel is a made-up 16×16 update \(\Delta W\) (so \(d=k=16\)). It is a rank-2 “true signal” \(S\), the part that matters for the task, plus small random noise, standing in for training noise. The slider sets the rank \(r\). The right panel is the best rank-\(r\) approximation (the top \(r\) SVD terms), the most any \(BA\) of that rank can capture.</p>
+  <p><strong>Try:</strong> start at \(r=1\), step to 2, then drag to 16. <strong>Notice:</strong> by \(r=2\) the right panel already shows the left one's pattern; later steps only add speckle. In the bars, only the first two singular values are large. The error against the noisy matrix keeps falling to 0, but the error against the true signal is lowest at \(r=2\) and then rises: the extra directions fit noise. That is the paper's argument in miniature.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="rk">r = <output id="rv" for="rk">2</output></label>
+      <input id="rk" type="range" min="1" max="16" value="2" step="1">
+    </div>
+    <div class="maps">
+      <figure><canvas id="cM" class="sq" width="320" height="320"></canvas><figcaption>observed \(\Delta W\) (signal + noise)</figcaption></figure>
+      <figure><canvas id="cR" class="sq" width="320" height="320"></canvas><figcaption>best rank-\(r\) approximation</figcaption></figure>
+    </div>
+    <p class="aside-hand" style="margin:.6rem auto 0">solid ink: positive entries &middot; hatched: negative</p>
+    <figure class="spectrum">
+      <canvas id="cS" width="640" height="150"></canvas>
+      <figcaption>singular values \(\sigma_1,\dots,\sigma_{16}\): kept ones solid, dropped ones outlined</figcaption>
+    </figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">trained numbers \(r(d+k)\) vs \(dk=256\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="sP">64</span></div>
+      <div class="entry"><span class="entry-name">rel. error vs noisy matrix</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="sO">–</span></div>
+      <div class="entry"><span class="entry-name">rel. error vs true signal</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="sT">–</span></div>
+    </div>
   </div>
-  <canvas id="cS" width="640" height="150"></canvas>
-  <div style="font-size:0.8rem;color:var(--muted);text-align:center;margin-top:4px">singular values \(\sigma_1,\dots,\sigma_{16}\) (kept ones in accent)</div>
-  <div class="stats">
-    <div class="stat"><div class="k">params \(r(d+k)\) vs \(dk=256\)</div><div class="v" id="sP">64</div></div>
-    <div class="stat"><div class="k">rel. error vs observed</div><div class="v" id="sO">–</div></div>
-    <div class="stat"><div class="k">rel. error vs true signal</div><div class="v" id="sT">–</div></div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>From the paper's tables</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Rank 1 is enough on GPT-3</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">r = 1</span></div>
+    <p class="entry-desc">Adapting \(W_q, W_v\) with \(r=1\) scores 73.4 on WikiSQL and 91.3 on MNLI. With \(r=64\) the scores are 73.5 and 91.4. A rank-one change to a 12,288-dimensional map captures nearly the whole task.</p>
   </div>
-</div>
 
-<!-- 5. Cool things -->
-<h2>Cool things</h2>
-<div class="card">
-  <ul style="margin:0">
-    <li><strong>Rank 1 is enough on GPT-3.</strong> Adapting \(W_q, W_v\) with \(r=1\) gives 73.4 on WikiSQL and 91.3 on MNLI. With \(r=64\) the scores are 73.5 and 91.4. A rank-one update to a 12,288-dimensional map captures nearly the whole task.</li>
-    <li><strong>The update amplifies directions \(W\) already has but doesn't emphasise.</strong> In layer 48, project \(W_q\) onto \(\Delta W_q\)'s top-4 singular subspaces: you get \(\|U_4^\top W_qV_4\|_F = 0.32\). Using \(W_q\)'s own top-4 directions instead gives 21.67, and random directions give 0.02. Meanwhile \(\|\Delta W_q\|_F = 6.91\), an <em>amplification factor</em> of about 21.5. So \(\Delta W\) is correlated with \(W\) (well above random) but avoids \(W\)'s top principal directions: it boosts features that pretraining learned but left quiet.</li>
-    <li><strong>Spread the rank across matrices.</strong> At a fixed 18M-parameter budget, putting everything into \(W_q\) at \(r=8\) scores 70.4 on WikiSQL. Splitting it as \(W_q, W_v\) at \(r=4\) scores 73.7. Width across matrices beats depth in one.</li>
-    <li><strong>The factors aren't identifiable.</strong> \(BA=(BC)(C^{-1}A)\) for any invertible \(r\times r\) matrix \(C\), a \(GL(r)\) symmetry. That's why the analysis compares <em>subspaces</em> (singular vectors and principal angles) rather than raw entries of \(A\).</li>
-  </ul>
-</div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The update amplifies directions \(W\) has but doesn't emphasise</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">× 21.5</span></div>
+    <p class="entry-desc">Take layer 48 and a learned \(\Delta W_q\) of rank 4. Let \(U_4, V_4\) hold its top-4 left and right singular vectors. Then \(\|U_4^\top W_qV_4\|_F\) measures how strongly the pretrained \(W_q\) already acts along those directions.</p>
+    <p class="entry-desc">It is 0.32. Along \(W_q\)'s own top-4 directions it would be 21.67, along random ones 0.02. Meanwhile \(\|\Delta W_q\|_F = 6.91\), so the update boosts those directions by about \(6.91/0.32\approx21.5\times\). \(\Delta W\) is related to \(W\) (well above random) but avoids its dominant directions: it amplifies features pretraining learned but left quiet.</p>
+  </div>
 
-<!-- 6. If you remember one thing -->
-<h2>If you remember one thing</h2>
-<p class="remember">Adapting a giant model moves each weight matrix along only a handful of directions, so the update can be written as \(BA\) with \(r\) as small as 1–4 with no loss in quality, and merged back into \(W_0\) at no inference cost.</p>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Spread the rank across matrices</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">18M budget</span></div>
+    <p class="entry-desc">With 18M trained numbers to spend, putting all of them into \(W_q\) at \(r=8\) scores 70.4 on WikiSQL. Splitting them over \(W_q\) and \(W_v\) at \(r=4\) each scores 73.7. Adapting more matrices at lower rank beats one matrix at higher rank.</p>
+  </div>
 
-<!-- 7. Footer -->
-<footer>
-  <p><strong>LoRA: Low-Rank Adaptation of Large Language Models</strong>, by Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang and Weizhu Chen (Microsoft), 2021.
-  <a href="https://arxiv.org/abs/2106.09685">arxiv.org/abs/2106.09685</a></p>
-  <p style="margin:0">Written from the full text (arXiv v2). All numbers are from the paper's tables. The interactive uses a synthetic matrix, not GPT-3 weights.</p>
-</footer>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The factors aren't identifiable</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(GL(r)\)</span></div>
+    <p class="entry-desc">\(BA=(BC)(C^{-1}A)\) for any invertible \(r\times r\) matrix \(C\), so many \((A,B)\) pairs give the same update. That's why the analysis compares <em>subspaces</em> (singular vectors and principal angles) rather than raw entries of \(A\).</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>Adapting a giant model to a task changes each weight matrix along only a handful of directions. So the change can be learned as \(BA\), two thin matrices of rank 1 to 4, with no loss in quality, and then added into the frozen pretrained weights \(W_0\) at no inference cost.</p>
+  </div>
+</section>
+
 </main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>LoRA: Low-Rank Adaptation of Large Language Models</strong>, by Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang and Weizhu Chen (Microsoft), 2021.
+  <a href="https://arxiv.org/abs/2106.09685">arxiv.org/abs/2106.09685</a></p>
+  <p class="signoff">Written from the full text (arXiv v2). All numbers are from the paper's tables. The interactive uses a synthetic matrix, not GPT-3 weights.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
 
 <script>
 (function () {
@@ -328,17 +776,39 @@
   }
 
   function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3";
+
+  // Diagonal pen hatching used for negative entries.
+  function hatch(ctx) {
+    var t = document.createElement("canvas");
+    t.width = 6; t.height = 6;
+    var h = t.getContext("2d");
+    h.strokeStyle = INK; h.lineWidth = 1.4;
+    h.beginPath();
+    h.moveTo(-1, 1); h.lineTo(1, -1);
+    h.moveTo(0, 6); h.lineTo(6, 0);
+    h.moveTo(5, 7); h.lineTo(7, 5);
+    h.stroke();
+    return ctx.createPattern(t, "repeat");
+  }
+  var patterns = [];
+  function hatchFor(ctx) {
+    for (var n = 0; n < patterns.length; n++) if (patterns[n].ctx === ctx) return patterns[n].p;
+    var p = hatch(ctx);
+    patterns.push({ ctx: ctx, p: p });
+    return p;
+  }
 
   function heat(canvas, X) {
     var ctx = canvas.getContext("2d"), cell = canvas.width / N;
-    var acc = css("--accent"), neg = css("--neg");
+    var pat = hatchFor(ctx);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = css("--surface");
+    ctx.fillStyle = PAPER;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     for (i = 0; i < N; i++) for (j = 0; j < N; j++) {
       var v = X[i][j] / maxAbs;
       ctx.globalAlpha = Math.min(1, Math.abs(v));
-      ctx.fillStyle = v >= 0 ? acc : neg;
+      ctx.fillStyle = v >= 0 ? INK : pat;
       ctx.fillRect(j * cell, i * cell, cell, cell);
     }
     ctx.globalAlpha = 1;
@@ -346,18 +816,28 @@
 
   function bars(canvas, r) {
     var ctx = canvas.getContext("2d"), W = canvas.width, H = canvas.height;
-    var acc = css("--accent"), muted = css("--neg");
     ctx.globalAlpha = 1;
-    ctx.fillStyle = css("--surface");
+    ctx.fillStyle = PAPER;
     ctx.fillRect(0, 0, W, H);
     var pad = 12, bw = (W - 2 * pad) / N, top = dec[0].s;
+    ctx.strokeStyle = INK;
+    ctx.fillStyle = INK;
+    ctx.lineWidth = 1.5;
+    // baseline
+    ctx.beginPath(); ctx.moveTo(pad, H - pad + 0.5); ctx.lineTo(W - pad, H - pad + 0.5); ctx.stroke();
     for (k = 0; k < N; k++) {
-      var h = (H - 2 * pad) * dec[k].s / top;
-      ctx.globalAlpha = k < r ? 1 : 0.45;
-      ctx.fillStyle = k < r ? acc : muted;
-      ctx.fillRect(pad + k * bw + bw * 0.15, H - pad - h, bw * 0.7, h);
+      var h = Math.max(1, (H - 2 * pad) * dec[k].s / top);
+      var x = pad + k * bw + bw * 0.15, w = bw * 0.7;
+      if (k < r) ctx.fillRect(x, H - pad - h, w, h);
+      else ctx.strokeRect(x + 0.75, H - pad - h + 0.75, w - 1.5, h - 1.5);
     }
-    ctx.globalAlpha = 1;
+    // dashed cut after the r-th value
+    var cx = pad + r * bw;
+    ctx.save();
+    ctx.setLineDash([4, 5]);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, 4); ctx.lineTo(cx, H - pad); ctx.stroke();
+    ctx.restore();
   }
 
   var slider = document.getElementById("rk");
@@ -380,11 +860,6 @@
   }
 
   slider.addEventListener("input", update);
-  if (window.matchMedia) {
-    var mq = window.matchMedia("(prefers-color-scheme: dark)");
-    if (mq.addEventListener) mq.addEventListener("change", update);
-    else if (mq.addListener) mq.addListener(update);
-  }
   update();
 })();
 </script>

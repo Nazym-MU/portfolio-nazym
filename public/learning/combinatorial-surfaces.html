@@ -324,6 +324,68 @@ footer .colophon{
   body{padding:0}
   .sheet{border:none;max-width:none}
 }
+
+/* ---------- link lab (interactive) ---------- */
+.lab{
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.8rem auto;
+  border:1px solid var(--ink);
+  padding:1rem clamp(.7rem, 3vw, 1.4rem) 1.1rem;
+}
+.lab .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.4rem;
+  text-align:center;
+}
+.lab-key{
+  text-align:center;
+  font-family:var(--font-hand);
+  font-size:1.15rem;
+  color:var(--ink-soft);
+  margin-bottom:.3rem;
+}
+.lab svg{
+  width:100%;
+  max-width:440px;
+  height:auto;
+  display:block;
+  margin:0 auto;
+  color:var(--ink);
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.lab .vt{cursor:pointer;outline:none}
+.lab .hit{fill:transparent;stroke:none}
+.lab .vt:focus-visible .hit{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:3 3}
+.lab-controls{display:flex;justify-content:center;margin:.7rem 0 .8rem}
+.lab button{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.74rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  background:var(--paper);
+  color:var(--ink);
+  border:1px solid var(--ink);
+  border-radius:0;
+  padding:.5em 1em;
+  cursor:pointer;
+}
+.lab button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.lab-read{font-size:.95rem;line-height:1.5;min-height:6.5em}
+.lab-read p{margin:0 0 .35rem}
+.lab-read .verdict{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.82rem;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+}
 </style>
 </head>
 <body>
@@ -333,13 +395,12 @@ footer .colophon{
   <div class="topbar">
     <span class="wordmark" aria-hidden="true">N.</span>
     <nav aria-label="Sections">
-      <a href="#simplex">Simplex</a>
-      <a href="#complex">Complex</a>
-      <a href="#neighborhoods">Neighborhoods</a>
+      <a href="#sixty">60 sec</a>
+      <a href="#defs">Definitions</a>
       <a href="#surface">Surface</a>
-      <a href="#manifold">Manifolds</a>
+      <a href="#try">Try it</a>
       <a href="#halfedge">Halfedge</a>
-      <a href="#orbits">Orbits</a>
+      <a href="#remember">Remember</a>
     </nav>
   </div>
 
@@ -363,215 +424,96 @@ footer .colophon{
 <main>
 
 <div class="premise">
-  <p>A triangle mesh has two halves that come apart cleanly. There is the
-  <strong>geometry</strong>: where each vertex sits in space, and everything that
-  depends on position, such as length, angle, area, curvature. And there is the
-  <strong>connectivity</strong>: which vertices form an edge, which edges bound a
-  triangle, what is glued to what. This page is entirely about the second half.</p>
-
-  <p>Stripping the coordinates away is not an act of poverty. It buys precision.
-  Once a surface is a purely combinatorial object, a finite family of finite sets,
-  questions that are slippery in the smooth world become checkable by counting.
-  Is this thing actually a surface? Does it have a boundary? Can I walk around a
-  vertex and get back where I started? Each becomes a condition you can verify on
-  a laptop, exactly, with no epsilons.</p>
-
-  <p>The path runs in one direction. Build a piece (the simplex), collect pieces
-  under a closure rule (the complex), look at what surrounds a piece (star, closure,
-  link), and then impose one local condition on those surroundings that promotes a
-  bag of triangles into a surface. The last section swaps the whole picture for a
-  set of arrows and two permutations, which is how a computer actually stores it.</p>
+  <p>A triangle mesh is two things stacked together: <strong>geometry</strong>
+  (where each vertex sits in space) and <strong>connectivity</strong> (which
+  vertices are joined into edges and triangles). This page is only about the
+  second.</p>
+  <p>Throw the coordinates away and a surface becomes a finite list of finite sets.
+  The payoff: &ldquo;is this actually a surface?&rdquo; turns into a check you can
+  run vertex by vertex, exactly, with no tolerances.</p>
 </div>
 
-<nav class="contents" aria-label="Contents">
-  <h2>Contents</h2>
-  <a href="#simplex"><div class="entry"><span class="entry-name">The simplex</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
-  <a href="#complex"><div class="entry"><span class="entry-name">Simplicial complexes &amp; purity</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
-  <a href="#neighborhoods"><div class="entry"><span class="entry-name">Star, closure, link</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
-  <a href="#boundary"><div class="entry"><span class="entry-name">Boundary &amp; interior</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
-  <a href="#surface"><div class="entry"><span class="entry-name">What makes a surface a surface</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
-  <a href="#manifold"><div class="entry"><span class="entry-name">Spheres &amp; n-manifolds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">VI</span></div></a>
-  <a href="#halfedge"><div class="entry"><span class="entry-name">The halfedge mesh</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">VII</span></div></a>
-  <a href="#orbits"><div class="entry"><span class="entry-name">Everything is an orbit</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">VIII</span></div></a>
-</nav>
-
-<!-- ================= I. SIMPLEX ================= -->
-<section id="simplex">
-  <h2 class="sec"><span>I &middot; The Simplex</span></h2>
+<!-- ================= 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>In 60 Seconds</span></h2>
   <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Building block<b>k-simplex</b></p>
-
-  <p>Start with the smallest possible piece of a shape. A <strong>k-simplex</strong>
-  is the k-dimensional shape formed by the convex hull of k&nbsp;+&nbsp;1 vertices.
-  The convex hull is the smallest convex set containing those points, which you can
-  picture as the shape a rubber sheet takes when stretched around them.</p>
-
-  <p>The count is the part worth internalizing. It takes 1 point to pin down a
-  0-dimensional thing, 2 to span a line, 3 to span a triangle, 4 to span a
-  tetrahedron. Dimension is always one less than the number of vertices, because the
-  first vertex only fixes a location and each vertex after it contributes one new
-  direction to move in.</p>
-
-  <figure class="wide">
-    <svg viewBox="0 0 480 130" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <!-- 0-simplex -->
-      <circle cx="40" cy="70" r="5" fill="currentColor" stroke="none"/>
-      <!-- 1-simplex -->
-      <line x1="140" y1="70" x2="215" y2="70"/>
-      <circle cx="140" cy="70" r="5" fill="currentColor" stroke="none"/>
-      <circle cx="215" cy="70" r="5" fill="currentColor" stroke="none"/>
-      <!-- 2-simplex -->
-      <path d="M285 95 L330 25 L375 95 Z" stroke-linejoin="round"/>
-      <circle cx="285" cy="95" r="5" fill="currentColor" stroke="none"/>
-      <circle cx="330" cy="25" r="5" fill="currentColor" stroke="none"/>
-      <circle cx="375" cy="95" r="5" fill="currentColor" stroke="none"/>
-      <!-- 3-simplex -->
-      <path d="M410 95 L450 20 L472 95 Z" stroke-linejoin="round"/>
-      <path d="M410 95 L440 62 L472 95" stroke-linejoin="round"/>
-      <path d="M450 20 L440 62" stroke-dasharray="4 4"/>
-      <circle cx="410" cy="95" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="450" cy="20" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="472" cy="95" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="440" cy="62" r="4" fill="currentColor" stroke="none"/>
-    </svg>
-    <figcaption>k = 0, 1, 2, 3. one more vertex, one more dimension.</figcaption>
-  </figure>
-
-  <p>Once connectivity is all that matters, a simplex needs no coordinates at all.
-  It is just the set of its vertices. The 2-simplex &#123;3,&nbsp;5,&nbsp;2&#125; is
-  a triangle on those three vertices. The 1-simplex &#123;1,&nbsp;2&#125; is the
-  edge joining vertex 1 to vertex 2. Written this way the object is called an
-  <em>abstract</em> simplex, and it carries exactly the information we care about:
-  which vertices are involved.</p>
-
-  <p>Every nonempty subset of a simplex is again a simplex, called a
-  <strong>face</strong>. The triangle &#123;3,&nbsp;5,&nbsp;2&#125; has faces
-  &#123;3,&nbsp;5&#125;, &#123;5,&nbsp;2&#125;, &#123;3,&nbsp;2&#125; (its three
-  edges), the three single vertices, and the triangle itself. A face that is not
-  the whole simplex is a <em>proper</em> face. That word does real work in the
-  boundary definition later.</p>
-
-  <div class="callout">
-    <span class="callout-label">Keep hold of</span>
-    <p>A k-simplex has k&nbsp;+&nbsp;1 vertices. Abstractly it <em>is</em> its
-    vertex set, and its faces are the nonempty subsets of that set.</p>
-  </div>
+  <ul style="padding-left:1.2em">
+    <li><strong>A mesh as lists.</strong> Number the vertices 1, 2, 3, &hellip; and
+    record each triangle as the set of its three numbers, like &#123;3,&nbsp;5,&nbsp;2&#125;.
+    Edges are pairs. Positions are never stored.</li>
+    <li><strong>The question.</strong> Triangles can be glued in ways no real surface
+    allows: three triangles sharing one edge, or two cones touching only at their
+    tips. A genuine surface looks like a small flat disk wherever you zoom in.</li>
+    <li><strong>The test.</strong> Pick a vertex and look at the triangles around it.
+    Their far edges, the ones that don&rsquo;t touch the vertex, form a ring called
+    the <em>link</em>. The mesh is a surface exactly when every vertex&rsquo;s link
+    is one closed loop (or one open path, for vertices on the outer rim).</li>
+    <li><strong>How code stores it.</strong> Split every edge into two arrows pointing
+    opposite ways, one for each triangle beside it (&ldquo;halfedges&rdquo;). Two
+    pointer rules, <em>twin</em> (flip to the opposite arrow) and <em>next</em>
+    (move to the next arrow around the same triangle), recover every face, edge and
+    vertex. Alternating them walks you around a vertex, and the surface test becomes:
+    does the walk come back?</li>
+  </ul>
 </section>
 
-<!-- ================= II. COMPLEX ================= -->
-<section id="complex">
-  <h2 class="sec"><span>II &middot; Simplicial Complexes &amp; Purity</span></h2>
+<!-- ================= DEFINITIONS ================= -->
+<section id="defs">
+  <h2 class="sec"><span>I &middot; The Definitions</span></h2>
   <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Assembly rule<b>Closed under subsets</b></p>
-
-  <p>Now collect simplices. Not any collection will do. An
-  <strong>abstract simplicial complex</strong> is a collection of abstract simplices
-  that is <em>closed under taking subsets</em>: for every simplex &sigma; in the
-  complex &#8490;, every face &sigma;&prime; &sube; &sigma; is also in &#8490;.</p>
-
-  <p>The condition says something modest and necessary. If you have declared that a
-  triangle is part of your mesh, you have implicitly declared that its edges and its
-  vertices are part of it too. There is no such thing as a triangle whose edges do
-  not exist. Bookkeeping this way means every piece a shape is built from is present
-  in the list, so any operation you define can reach downward without falling off
-  the edge of the data.</p>
+  <p class="regime">Sets of vertices<b>No coordinates</b></p>
 
   <div class="entry-block">
-    <div class="entry"><span class="entry-name">Subcomplex</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">&#8490;&prime; &sube; &#8490;</span></div>
-    <p class="entry-desc">A <strong>subcomplex</strong> is a subset of a complex that
-    is itself a complex. So it must be closed under subsets in its own right. This is
-    why a single edge, taken alone, is not a subcomplex of anything: the set
-    &#123;&#123;1,&nbsp;2&#125;&#125; leaves out the vertices &#123;1&#125; and
-    &#123;2&#125;. Add them and you have a subcomplex. The lesson is that a valid
-    piece of a mesh always drags its faces along with it.</p>
+    <div class="entry"><span class="entry-name">Simplex</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">the building block</span></div>
+    <p class="entry-desc">A <strong>k-simplex</strong> is the simplest k-dimensional
+    piece: a point (k&nbsp;=&nbsp;0), a segment (1), a triangle (2), a tetrahedron
+    (3). It needs k&nbsp;+&nbsp;1 vertices, since the first fixes a location and each
+    further one adds a direction.</p>
+    <p class="entry-desc">With connectivity all we keep, a simplex <em>is</em> its
+    vertex set: &#123;3,&nbsp;5,&nbsp;2&#125; is a triangle, &#123;1,&nbsp;2&#125; an
+    edge. Its <strong>faces</strong> are its nonempty subsets (a triangle&rsquo;s
+    three edges, three corners, and itself). A <strong>proper face</strong> is any
+    face other than the whole simplex.</p>
   </div>
 
   <div class="entry-block">
-    <div class="entry"><span class="entry-name">Pure k-simplicial complex</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">no strays</span></div>
-    <p class="entry-desc">A complex is <strong>pure of degree k</strong> when every
-    simplex in it is contained in some simplex of degree k (possibly itself). For
-    k&nbsp;=&nbsp;2 this says every vertex and every edge belongs to at least one
-    triangle. A collection of triangles with a stray edge poking off the side, or a
-    lone vertex floating in the middle of nowhere, fails the test. Purity is what
-    rules out debris of lower dimension hanging off an otherwise two-dimensional
-    object.</p>
-  </div>
-
-  <figure class="wide">
-    <svg viewBox="0 0 480 130" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <!-- pure -->
-      <path d="M30 100 L70 30 L110 100 Z" stroke-linejoin="round"/>
-      <path d="M110 100 L70 30 L150 30 Z" stroke-linejoin="round"/>
-      <path d="M110 100 L150 30 L190 100 Z" stroke-linejoin="round"/>
-      <circle cx="30" cy="100" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="70" cy="30" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="110" cy="100" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="150" cy="30" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="190" cy="100" r="4" fill="currentColor" stroke="none"/>
-      <!-- divider -->
-      <line x1="240" y1="15" x2="240" y2="115" stroke-dasharray="3 6"/>
-      <!-- not pure -->
-      <path d="M290 100 L330 30 L370 100 Z" stroke-linejoin="round"/>
-      <path d="M370 100 L330 30 L410 30 Z" stroke-linejoin="round"/>
-      <line x1="410" y1="30" x2="455" y2="18"/>
-      <circle cx="290" cy="100" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="330" cy="30" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="370" cy="100" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="410" cy="30" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="455" cy="18" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="440" cy="95" r="4" fill="currentColor" stroke="none"/>
-    </svg>
-    <figcaption>left: pure. right: not &mdash; a dangling edge and a floating vertex belong to no triangle.</figcaption>
-  </figure>
-</section>
-
-<!-- ================= III. NEIGHBORHOODS ================= -->
-<section id="neighborhoods">
-  <h2 class="sec"><span>III &middot; Star, Closure, Link</span></h2>
-  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Local structure<b>Three operators</b></p>
-
-  <p>To say anything about a surface locally, you need a way to ask what surrounds a
-  given piece. Three operators do this. Each takes a subset S of a complex and
-  returns another subset. Only the last two are guaranteed to return complexes.</p>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Star &nbsp;St(S)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">everything above</span></div>
-    <p class="entry-desc">The <strong>star</strong> of S is the collection of all
-    simplices in &#8490; that contain any simplex of S. For a single vertex i, St(i)
-    is every simplex &sigma; with i &isin; &sigma;: the vertex itself, every edge
-    incident on it, every triangle touching it. Think of it as the umbrella of things
-    resting on top of S.</p>
-    <p class="entry-desc">The star is usually <em>not</em> a complex. St(i) contains
-    a triangle ijk but not the opposite edge jk, since jk does not contain i. It is
-    open at the outer rim, which is exactly the property the next two operators are
-    built to exploit.</p>
+    <div class="entry"><span class="entry-name">Simplicial complex</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">closed under subsets</span></div>
+    <p class="entry-desc">A <strong>simplicial complex</strong>, written &#119986;, is
+    a collection of simplices with one rule: if a simplex (call it &sigma;) is in
+    &#119986;, so is every face of &sigma;.</p>
+    <p class="entry-desc">The purpose is bookkeeping. Declaring a triangle implicitly
+    declares its edges and corners; the rule makes them explicitly present, so any
+    operation can reach down to them. A <strong>subcomplex</strong> is a subset that
+    obeys the rule on its own: &#123;&#123;1,&nbsp;2&#125;&#125; is not one, but
+    &#123;&#123;1,&nbsp;2&#125;,&nbsp;&#123;1&#125;,&nbsp;&#123;2&#125;&#125; is.</p>
   </div>
 
   <div class="entry-block">
-    <div class="entry"><span class="entry-name">Closure &nbsp;Cl(S)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">smallest repair</span></div>
-    <p class="entry-desc">The <strong>closure</strong> of S is the smallest
-    subcomplex of &#8490; containing S, smallest meaning fewest elements. Concretely,
-    take S and throw in every face of every one of its simplices, which is the least
-    you can add to satisfy the subset-closure rule. Closure is the repair operation:
-    hand it any ragged collection and it hands back a legitimate complex.</p>
+    <div class="entry"><span class="entry-name">Pure</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">no stray pieces</span></div>
+    <p class="entry-desc">A complex is <strong>pure of dimension 2</strong> when
+    every edge and every vertex lies in at least one triangle. It rules out debris: an
+    edge dangling off the mesh, or a lone vertex floating beside it. A surface is
+    triangles and nothing else.</p>
   </div>
 
   <div class="entry-block">
-    <div class="entry"><span class="entry-name">Link &nbsp;Lk(S)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">the rim</span></div>
-    <p class="entry-desc">The <strong>link</strong> is the two combined:</p>
-    <p class="formula">Lk(S) = Cl(St(S)) &#92; St(Cl(S))</p>
-    <p class="entry-desc">Read it as a subtraction. Cl(St(S)) is the whole
-    neighborhood of S patched up into a complex, everything touching S plus the faces
-    needed to make that legal. St(Cl(S)) is everything that touches S or any of its
-    faces. Removing the second from the first deletes every simplex still in contact
-    with S and leaves only the outer rim: the part of the neighborhood that surrounds
-    S without meeting it.</p>
-    <p class="entry-desc">For a vertex i in a triangle mesh this cancellation is easy
-    to see. Cl(St(i)) is the fan of triangles around i together with all their edges
-    and vertices. St(Cl(i)) is everything containing i. What survives is the ring of
-    edges opposite i, the boundary of the fan. That ring is the object the surface
-    condition tests.</p>
+    <div class="entry"><span class="entry-name">Star, closure, link</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">what is near a vertex</span></div>
+    <p class="entry-desc">To ask whether a mesh looks like a disk near a vertex i, we
+    need a precise meaning for &ldquo;near i&rdquo;. Three operations supply it.</p>
+    <p class="entry-desc">The <strong>star</strong>, written St(i), is every simplex
+    that contains i: the vertex, its edges, its triangles. It is an open fan, and
+    usually not a complex: it holds the triangle &#123;i,&nbsp;j,&nbsp;k&#125; but not
+    its far edge &#123;j,&nbsp;k&#125;, which doesn&rsquo;t contain i.</p>
+    <p class="entry-desc">The <strong>closure</strong> of a collection, written Cl,
+    is the smallest complex containing it: add every missing face. Cl(St(i)) is the
+    closed fan, far edges included.</p>
+    <p class="entry-desc">The <strong>link</strong>, written Lk(i), is the closed fan
+    minus everything touching i:</p>
+    <p class="formula">Lk(i) = Cl(St(i)) &#92; St(i)</p>
+    <p class="entry-desc">Example: if six triangles surround i, the closed fan has 6
+    triangles, 12 edges and 7 vertices. Deleting what touches i removes i, its 6
+    spokes and the 6 triangles, leaving 6 rim edges on 6 rim vertices: a hexagon.
+    That ring is what the surface test inspects.</p>
   </div>
 
   <figure class="wide">
@@ -609,99 +551,51 @@ footer .colophon{
       </g>
       <text x="405" y="148" font-family="Oswald, sans-serif" font-size="13" letter-spacing="2" text-anchor="middle" fill="currentColor" stroke="none">CL(ST(i))</text>
     </svg>
-    <figcaption>the star is the fan, the link is its rim, the closure fills the fan back into a legal complex.</figcaption>
+    <figcaption>the star is the open fan, the link is its rim, the closure is fan plus rim.</figcaption>
   </figure>
-</section>
 
-<!-- ================= IV. BOUNDARY ================= -->
-<section id="boundary">
-  <h2 class="sec"><span>IV &middot; Boundary &amp; Interior</span></h2>
-  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Counting test<b>Exactly one</b></p>
-
-  <p>The word boundary has an intuitive meaning and here it gets a definition that
-  matches it by counting. For a pure k-subcomplex &#8490;&prime; &sube; &#8490;, the
-  <strong>boundary</strong> bd(&#8490;&prime;) is the closure of the set of all
-  simplices &sigma; that are proper faces of <em>exactly one</em> simplex of
-  &#8490;&prime;.</p>
-
-  <p>The counting is the whole idea. Take a patch of triangles. An interior edge sits
-  between two triangles, so it is a proper face of two of them. An edge along the rim
-  has a triangle on one side and nothing on the other, so it is a proper face of
-  exactly one. Collect those rim edges, take the closure to bring in their endpoints,
-  and you have the boundary loop. The definition is doing nothing more exotic than
-  noticing where the second triangle failed to show up.</p>
-
-  <p>The <strong>interior</strong> is then everything else:</p>
-  <p class="formula">int(&#8490;&prime;) = &#8490;&prime; &#92; bd(&#8490;&prime;)</p>
-
-  <div class="callout">
-    <span class="callout-label">Why the closure is in there</span>
-    <p>Without it you would collect a set of edges with no vertices, which is not a
-    complex, exactly the single-edge problem from section II. Taking the closure
-    makes the boundary a genuine subcomplex, so you can then apply star, link, or
-    boundary to it again.</p>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Boundary</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">face of exactly one</span></div>
+    <p class="entry-desc">Boundary is defined by counting. In a pure patch of
+    triangles, an interior edge is a side of two triangles; a rim edge is a side of
+    only one. So the <strong>boundary</strong> is: every simplex that is a proper face
+    of exactly one triangle, then closed up so the rim edges bring their endpoints.
+    The <strong>interior</strong> is everything else. The definition just notices
+    where a second triangle failed to show up.</p>
   </div>
-
-  <figure>
-    <svg viewBox="0 0 400 130" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <path d="M40 105 L90 25 L140 105 Z" stroke-linejoin="round"/>
-      <path d="M140 105 L90 25 L190 25 Z" stroke-linejoin="round"/>
-      <path d="M140 105 L190 25 L240 105 Z" stroke-linejoin="round"/>
-      <path d="M240 105 L190 25 L290 25 Z" stroke-linejoin="round"/>
-      <path d="M240 105 L290 25 L340 105 Z" stroke-linejoin="round"/>
-      <!-- boundary highlighted thick -->
-      <path d="M40 105 L90 25 L190 25 L290 25 L340 105 L240 105 L140 105 Z" stroke-width="5" stroke-linejoin="round"/>
-      <circle cx="140" cy="105" r="4" fill="currentColor" stroke="none"/>
-      <circle cx="240" cy="105" r="4" fill="currentColor" stroke="none"/>
-    </svg>
-    <figcaption>heavy line: edges with only one triangle. thin line: interior edges, two triangles each.</figcaption>
-  </figure>
 </section>
 
-<!-- ================= V. SURFACE ================= -->
+<!-- ================= SURFACE ================= -->
 <section id="surface">
-  <h2 class="sec"><span>V &middot; What Makes a Surface a Surface</span></h2>
+  <h2 class="sec"><span>II &middot; What Makes a Surface</span></h2>
   <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
   <p class="regime">The condition<b>Every link is a loop</b></p>
 
-  <p>Here is the payoff. An <strong>abstract simplicial surface</strong> is a pure
-  simplicial 2-complex in which the link of every vertex is a single loop of edges.
-  Equivalently, the star of every vertex is a combinatorial disk made of triangles.</p>
-
-  <p>Pure and 2-dimensional means you have triangles and nothing but triangles, with
-  no lower-dimensional debris. The link condition is what turns that pile of triangles
-  into a surface. It is a purely local test, applied once per vertex, and it encodes
-  the defining property of a surface: <strong>every point has a neighborhood that
-  looks like a flat disk</strong>. A complex satisfying it is called
-  <em>manifold</em>.</p>
-
-  <p>Think about why a loop is the right thing to demand. Walk around vertex i,
-  crossing from one incident triangle to the next through their shared edges. If the
-  link is a single closed loop, that walk visits every triangle around i exactly once
-  and returns to where it began, without branching and without dead ends. That is
-  precisely what it means for the fan around i to be a disk. Break the loop and the
-  disk breaks with it.</p>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Word by word</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">why each fails</span></div>
-    <p class="entry-desc"><strong>Single.</strong> Two separate loops in one link mean
-    two cones of triangles pinched together at a single shared vertex, like an
-    hourglass. Each cone is disk-like on its own, but their union is not. Cut the
-    vertex and the object falls into two pieces, which no point of a real surface
-    does.</p>
-    <p class="entry-desc"><strong>Loop, not a path.</strong> A link that is an open
-    arc rather than a closed cycle means the fan around i does not close up. That
-    vertex sits on a boundary, so its neighborhood is a half-disk. Legitimate for a
-    surface <em>with</em> boundary, but it fails the closed-surface definition, which
-    is why boundary gets its own treatment in section IV.</p>
-    <p class="entry-desc"><strong>Of edges.</strong> The link has to be
-    1-dimensional. If three triangles share one edge, the link of a vertex on that
-    edge contains a branch point where three arcs meet, so it is not a loop. This is
-    the classic <em>nonmanifold edge</em>, and no arrangement of a real surface
-    produces one, because a surface is locally flat and a flat disk has only two sides
-    to an edge.</p>
+  <div class="callout">
+    <span class="callout-label">The link test</span>
+    <p>A <strong>simplicial surface</strong> is a pure 2-dimensional complex in which
+    the link of every vertex is a single closed loop of edges. A complex passing this
+    test is called <strong>manifold</strong>: near every point it looks like a flat
+    disk.</p>
+    <p>Why a loop is the right demand: walk around i from triangle to triangle through
+    shared edges. A single loop means the walk meets each triangle once and returns to
+    the start, so the fan closes into a disk.</p>
   </div>
+
+  <p>If the mesh may have an outer rim, a rim vertex&rsquo;s link is a single
+  <em>open path</em> instead, and its fan is a half-disk. Reading the definition word
+  by word gives every way it can fail:</p>
+  <ul style="padding-left:1.2em">
+    <li><strong>Single.</strong> Two separate loops (or paths) in one link mean two
+    fans pinched at one vertex, like an hourglass. Delete that vertex and the mesh
+    falls apart, which no point of a real surface does.</li>
+    <li><strong>Loop.</strong> An open path means the fan never closes: a rim vertex.
+    Fine for a surface with boundary, not for a closed one.</li>
+    <li><strong>Of edges, no branching.</strong> If three triangles share the edge
+    &#123;i,&nbsp;j&#125;, each contributes a link edge at j, so three link edges meet
+    there. That branch point is a <em>nonmanifold edge</em>: a flat disk has only two
+    sides to any line.</li>
+  </ul>
 
   <figure class="wide">
     <svg viewBox="0 0 480 150" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -732,127 +626,60 @@ footer .colophon{
       </g>
       <text x="410" y="145" font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">NONMANIFOLD VERTEX</text>
     </svg>
-    <figcaption>the two failures on the right are exactly the two ways a link stops being a single loop of edges.</figcaption>
+    <figcaption>left passes. middle: a link that branches. right: a link in two pieces.</figcaption>
   </figure>
 
-  <div class="callout">
-    <span class="callout-label">The one thing to remember</span>
-    <p>A surface is not defined by how it looks from far away. It is defined by one
-    local condition checked at every vertex: the link is a single loop of edges. Get
-    that right everywhere and the global thing is a surface, whatever shape it turns
-    out to have.</p>
+  <div class="lab" id="try">
+    <span class="callout-label">Try it &middot; tap a vertex</span>
+    <p class="lab-key">shaded = its star &middot; heavy line = its link</p>
+    <svg id="lab-svg" viewBox="0 0 340 215" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" role="group" aria-label="A small triangle mesh. Each vertex is a button.">
+      <g id="lab-star"></g>
+      <g id="lab-edges"></g>
+      <g id="lab-link"></g>
+      <g id="lab-verts"></g>
+    </svg>
+    <div class="lab-controls">
+      <button type="button" id="lab-fin" aria-pressed="false">Glue a third triangle onto an edge</button>
+    </div>
+    <div class="lab-read" id="lab-read" aria-live="polite"></div>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">n-manifold</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">link = sphere</span></div>
+    <p class="entry-desc">The test generalizes by one substitution. Write
+    <span class="up">&#120138;</span><sup>n</sup> for the n-dimensional sphere, the
+    unit-length points of &#8477;<sup>n+1</sup>: &#120138;<sup>1</sup> is a circle,
+    &#120138;<sup>2</sup> an ordinary sphere, &#120138;<sup>0</sup> the two points
+    &plusmn;1.</p>
+    <p class="entry-desc">A <strong>simplicial n-manifold</strong> is a pure
+    n-dimensional complex whose every vertex link is a triangulated
+    (n&minus;1)-sphere. For n&nbsp;=&nbsp;2 that is a loop: the surface case. For
+    n&nbsp;=&nbsp;3, a tetrahedral mesh where each vertex is wrapped in a triangulated
+    sphere. For n&nbsp;=&nbsp;1, every vertex has exactly two neighbors, so a finite
+    1-manifold is a union of closed loops. Same idea each time: the rim of a small
+    n-dimensional neighborhood is an (n&minus;1)-sphere.</p>
   </div>
 </section>
 
-<!-- ================= VI. MANIFOLD ================= -->
-<section id="manifold">
-  <h2 class="sec"><span>VI &middot; Spheres &amp; n-Manifolds</span></h2>
-  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Generalization<b>Link = (n&minus;1)-sphere</b></p>
-
-  <p>The surface condition generalizes, and the generalization explains why a loop
-  was the right thing to ask for in the first place. First, the sphere. The
-  <strong>n-sphere</strong> is</p>
-  <p class="formula"><span class="up">&#120138;</span><sup>n</sup> := &#123; x &isin; &#8477;<sup>n+1</sup> : |x| = 1 &#125;</p>
-  <p>the set of all points at unit distance from the origin in
-  (n&nbsp;+&nbsp;1)-dimensional space. Note the index: the sphere is n-dimensional
-  but lives in one dimension more, because the constraint |x|&nbsp;=&nbsp;1 removes
-  one degree of freedom. A <strong>simplicial n-sphere</strong> is any triangulation
-  of it, a complex glued together in that pattern.</p>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">The small cases</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">n = 0, 1, 2</span></div>
-    <p class="entry-desc"><strong>&#120138;<sup>2</sup></strong> is the ordinary unit
-    sphere in &#8477;<sup>3</sup>. Triangulated, it is something like an icosahedron.</p>
-    <p class="entry-desc"><strong>&#120138;<sup>1</sup></strong> is the unit circle in
-    the plane. Triangulated, it is a closed loop of edges. This is the link condition
-    from section V, restated.</p>
-    <p class="entry-desc"><strong>&#120138;<sup>0</sup></strong> is
-    &#123;x &isin; &#8477; : |x| = 1&#125;, which is just the two points &plusmn;1. A
-    pair of points, and it is a legitimate sphere: the pattern holds all the way
-    down.</p>
-  </div>
-
-  <p>Now the general definition. A <strong>simplicial n-manifold</strong> is a pure
-  simplicial n-complex in which the link of every vertex is a simplicial
-  (n&nbsp;&minus;&nbsp;1)-sphere. One statement, and the dimension is a parameter.</p>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">n = 2 &nbsp;&middot;&nbsp; surface</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">link = &#120138;<sup>1</sup></span></div>
-    <p class="entry-desc">Every link is a simplicial 1-sphere, a closed loop of edges.
-    This is exactly the surface definition, recovered as a special case.</p>
-  </div>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">n = 3 &nbsp;&middot;&nbsp; tet mesh</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">link = &#120138;<sup>2</sup></span></div>
-    <p class="entry-desc">A tetrahedral mesh in which every vertex is enclosed by a
-    triangulation of the sphere. Stand at a vertex inside the mesh and the tetrahedra
-    around you form a little ball, whose surface is that sphere.</p>
-  </div>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">n = 1 &nbsp;&middot;&nbsp; curve</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">link = &#120138;<sup>0</sup></span></div>
-    <p class="entry-desc">Every vertex has a link that is a pair of points, meaning
-    exactly two neighbors: one on each side. A vertex with one neighbor would be a
-    loose end, and a vertex with three would be a junction, and both are barred. Force
-    that at every vertex of a finite complex and the only thing you can build is a
-    collection of closed loops. The low-dimensional case is where the definition is
-    easiest to check by hand.</p>
-  </div>
-
-  <div class="callout">
-    <span class="callout-label">The pattern</span>
-    <p>Manifold means locally flat, and &ldquo;locally flat in n dimensions&rdquo; is
-    encoded as &ldquo;the boundary of my neighborhood is an
-    (n&nbsp;&minus;&nbsp;1)-sphere.&rdquo; A disk's rim is a circle; a ball's surface
-    is a sphere; a segment's ends are two points. Same statement, three dimensions.</p>
-  </div>
-</section>
-
-<!-- ================= VII. HALFEDGE ================= -->
+<!-- ================= HALFEDGE ================= -->
 <section id="halfedge">
-  <h2 class="sec"><span>VII &middot; The Halfedge Mesh</span></h2>
+  <h2 class="sec"><span>III &middot; The Halfedge Mesh</span></h2>
   <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
   <p class="regime">Data structure<b>One set, two maps</b></p>
 
-  <p>Everything so far is a definition. This section is how you store it. The
-  simplicial view keeps a list of vertex sets and answers questions like
-  &ldquo;which triangles touch this vertex&rdquo; by searching. The halfedge view
-  replaces the search with pointer-following, and it does so by throwing away the
-  sets entirely and keeping only arrows.</p>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Halfedge</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">an oriented edge</span></div>
-    <p class="entry-desc">For every unoriented edge &#123;i,&nbsp;j&#125; between
-    vertices i and j, keep two oriented edges, ij and ji. They are distinct:
-    ij&nbsp;&ne;&nbsp;ji. These are the <strong>halfedges</strong>, and H is the set
-    of all of them. On a surface without boundary every edge is shared by exactly two
-    triangles and so yields exactly two halfedges, giving |H|&nbsp;=&nbsp;2|E|.</p>
-    <p class="entry-desc">Orientation is the point. An unoriented edge cannot tell you
-    which side you are on. A halfedge can, so you can adopt the convention that ij
-    belongs to the triangle on its left and ji to the triangle on its right. Each
-    triangle then owns three halfedges pointing consistently around it.</p>
-  </div>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Twin &nbsp;&eta;</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">&eta; : H &rarr; H</span></div>
-    <p class="entry-desc">The <strong>twin</strong> map sends a halfedge to the one
-    with the same endpoints and the opposite direction:</p>
-    <p class="formula">&eta;(ij) = ji</p>
-    <p class="entry-desc">Twin is how you cross an edge into the neighboring triangle.
-    Applying it twice returns you to where you started, so &eta;&nbsp;&#8728;&nbsp;&eta;
-    is the identity.</p>
-  </div>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Next &nbsp;&rho;</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">&rho; : H &rarr; H</span></div>
-    <p class="entry-desc">The <strong>next</strong> map advances to the following
-    halfedge around the same triangle:</p>
-    <p class="formula">&rho;(ij) = jk &nbsp;&nbsp;for every triangle ijk &isin; &#8490;</p>
-    <p class="entry-desc">Note that the target of ij is the source of jk, so next
-    walks forward along the triangle without leaving it. Three applications inside a
-    triangle bring you back to the start.</p>
-  </div>
+  <p>The definitions answer &ldquo;which triangles touch i?&rdquo; by searching a
+  list. A halfedge mesh answers by following pointers.</p>
+  <p>Split each edge &#123;i,&nbsp;j&#125; into two arrows: ij (from i to j) and ji.
+  These are <strong>halfedges</strong>, and H is the set of all of them. Orient every
+  triangle the same way round; then each triangle owns the three arrows circling it,
+  and an edge&rsquo;s two arrows belong to the triangles on its two sides. Without a
+  rim, every edge gives exactly two, so H has twice as many elements as there are
+  edges.</p>
+  <p>Only two maps from H to itself are stored. <strong>Twin</strong>, written
+  &eta; (eta), flips an arrow, crossing into the neighboring triangle; twice is the
+  identity. <strong>Next</strong>, written &rho; (rho), moves to the following arrow
+  around the same triangle; three steps bring you home.</p>
+  <p class="formula">&eta;(ij) = ji &nbsp;&nbsp;&nbsp;&nbsp; &rho;(ij) = jk &nbsp;(for the triangle ijk)</p>
 
   <figure>
     <svg viewBox="0 0 400 170" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -883,87 +710,34 @@ footer .colophon{
       <text x="270" y="85" font-family="Oswald, sans-serif" font-size="13" letter-spacing="1" fill="currentColor" stroke="none">dashed: ji = &#951;(ij)</text>
       <text x="270" y="110" font-family="Oswald, sans-serif" font-size="13" letter-spacing="1" fill="currentColor" stroke="none">&#961;(ij) = jk</text>
     </svg>
-    <figcaption>each triangle owns three halfedges going the same way round. twin steps across into the neighbor.</figcaption>
-  </figure>
-</section>
-
-<!-- ================= VIII. ORBITS ================= -->
-<section id="orbits">
-  <h2 class="sec"><span>VIII &middot; Everything Is an Orbit</span></h2>
-  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">The trick<b>Faces, edges, vertices from &eta; and &rho;</b></p>
-
-  <p>An <strong>orbit</strong> is the sequence you get by applying a map to its own
-  output over and over, starting from some element, until you cycle back to where you
-  began. The elegance of the halfedge structure is that the mesh's faces, edges, and
-  vertices are not stored anywhere. They are the orbits of &eta; and &rho;.</p>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Faces</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">orbits of &rho;</span></div>
-    <p class="entry-desc">Start at i<sub>1</sub>i<sub>2</sub> and apply &rho;
-    repeatedly. Each step moves to the next halfedge around the same triangle, so the
-    walk goes around the face and returns to i<sub>1</sub>i<sub>2</sub>. On a triangle
-    mesh every such orbit has length three, and the set of halfedges it visits
-    <em>is</em> the face.</p>
-  </div>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Edges</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">orbits of &eta;</span></div>
-    <p class="entry-desc">Start at ij, apply &eta; to get ji, apply it again to get
-    back ij. Every orbit has length two, and the pair &#123;ij,&nbsp;ji&#125; is the
-    unoriented edge. This is the same fact as
-    |H|&nbsp;=&nbsp;2|E|, read off the structure instead of counted.</p>
-  </div>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Vertices</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">orbits of &rho; &#8728; &eta;</span></div>
-    <p class="entry-desc">This is the interesting one. Compose the two maps, remembering
-    that &#8728; is function composition, so the right map goes first: twin, then next.
-    Take a halfedge pointing away from vertex i. Its twin points back toward i.
-    Applying next to that twin gives the following halfedge around the neighboring
-    triangle, which points away from i again. So one application of
-    &rho;&nbsp;&#8728;&nbsp;&eta; rotates you by one triangle around i, and the orbit
-    sweeps the entire fan and comes back.</p>
-    <p class="entry-desc">That orbit is the vertex, and its length is the vertex's
-    degree. This also gives you the surface condition for free: the fan closes up
-    precisely when the orbit returns to its starting halfedge having visited each
-    incident triangle once, which is the single-loop link from section V. Checking
-    whether a mesh is manifold turns into checking whether some pointers come back
-    around.</p>
-  </div>
-
-  <figure>
-    <svg viewBox="0 0 400 170" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <defs>
-        <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M0 0 L10 5 L0 10 z" fill="currentColor" stroke="none"/>
-        </marker>
-      </defs>
-      <g transform="translate(90,10)">
-        <path d="M110 15 L150 55 L133 118 L70 135 L20 92 L38 22 Z" stroke-linejoin="round" opacity=".35"/>
-        <path d="M75 72 L110 15 M75 72 L150 55 M75 72 L133 118 M75 72 L70 135 M75 72 L20 92 M75 72 L38 22" opacity=".35"/>
-        <!-- rotation arrows around the vertex -->
-        <path d="M108 60 a35 35 0 0 1 -14 33" marker-end="url(#ar2)" stroke-width="2.2"/>
-        <path d="M86 106 a35 35 0 0 1 -34 -8" marker-end="url(#ar2)" stroke-width="2.2"/>
-        <path d="M44 88 a35 35 0 0 1 4 -35" marker-end="url(#ar2)" stroke-width="2.2"/>
-        <path d="M58 42 a35 35 0 0 1 32 -8" marker-end="url(#ar2)" stroke-width="2.2"/>
-        <path d="M100 40 a35 35 0 0 1 12 15" marker-end="url(#ar2)" stroke-width="2.2"/>
-        <circle cx="75" cy="72" r="5" fill="currentColor" stroke="none"/>
-      </g>
-      <text x="300" y="80" font-family="Oswald, sans-serif" font-size="13" letter-spacing="1" fill="currentColor" stroke="none">&#961; &#8728; &#951;</text>
-      <text x="300" y="102" font-family="Oswald, sans-serif" font-size="13" letter-spacing="1" fill="currentColor" stroke="none">one step =</text>
-      <text x="300" y="122" font-family="Oswald, sans-serif" font-size="13" letter-spacing="1" fill="currentColor" stroke="none">one triangle</text>
-    </svg>
-    <figcaption>twin, then next, then twin, then next &mdash; until you land on the halfedge you started from.</figcaption>
+    <figcaption>each triangle owns three arrows going the same way round. twin steps across into the neighbor.</figcaption>
   </figure>
 
   <div class="callout">
-    <span class="callout-label">The one thing to remember</span>
-    <p>A combinatorial surface needs no coordinates. Give a computer a set of
-    halfedges and two maps on it, twin and next, and faces, edges, vertices, and the
-    manifold condition all fall out as orbits. Geometry is the layer you add on top
-    afterwards, by assigning each vertex a position.</p>
+    <span class="callout-label">Faces, edges, vertices as orbits</span>
+    <p>Nothing else is stored. Start at one halfedge and apply a map over and over
+    until you return; the halfedges visited form its <strong>orbit</strong>. Every
+    mesh element is one:</p>
+    <p><strong>Face</strong> = orbit of next: ij &rarr; jk &rarr; ki &rarr; ij, length 3.</p>
+    <p><strong>Edge</strong> = orbit of twin: ij &rarr; ji &rarr; ij, length 2.</p>
+    <p><strong>Vertex</strong> = orbit of &ldquo;twin, then next&rdquo;, written
+    &rho;&nbsp;&#8728;&nbsp;&eta;. Start at ij, leaving i. Its twin ji points back into
+    i, and next moves on to the arrow leaving i in the neighboring triangle. Each step
+    turns one triangle around i.</p>
+    <p>So the orbit&rsquo;s length is the number of triangles at i, and the orbit
+    closing up after meeting each of them once <em>is</em> the single-loop link test.
+    Checking that a mesh is manifold becomes checking that pointers come back
+    around.</p>
   </div>
+</section>
+
+<!-- ================= REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="aside-hand">A surface is one local condition: the ring of edges opposite
+  each vertex is a single loop. Code checks it by walking twin-then-next until it
+  comes back; coordinates come afterwards.</p>
 </section>
 
 </main>
@@ -976,5 +750,134 @@ footer .colophon{
 </footer>
 
 </div>
+<script>
+(function () {
+  var svg = document.getElementById('lab-svg');
+  if (!svg) return;
+  var NS = 'http://www.w3.org/2000/svg';
+  var gStar = document.getElementById('lab-star');
+  var gEdges = document.getElementById('lab-edges');
+  var gLink = document.getElementById('lab-link');
+  var gVerts = document.getElementById('lab-verts');
+  var read = document.getElementById('lab-read');
+  var finBtn = document.getElementById('lab-fin');
+
+  // vertex positions (viewBox 340 x 215)
+  var P = [[115,110],[185,110],[150,50],[80,50],[45,110],[80,170],[150,170],
+           [245,62],[300,112],[245,165],[205,20]];
+  var BASE = [[0,1,2],[0,2,3],[0,3,4],[0,4,5],[0,5,6],[0,6,1],[1,7,8],[1,8,9]];
+  var FIN = [0,2,10];
+  var fin = false, sel = 0;
+
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function clear(g) { while (g.firstChild) g.removeChild(g.firstChild); }
+  function tris() { return fin ? BASE.concat([FIN]) : BASE; }
+  function key(a, b) { return a < b ? a + '-' + b : b + '-' + a; }
+  function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+
+  function analyse(v) {
+    var star = [], link = [], adj = {};
+    tris().forEach(function (t) {
+      if (t.indexOf(v) < 0) return;
+      star.push(t);
+      var o = t.filter(function (x) { return x !== v; });
+      link.push(o);
+      (adj[o[0]] = adj[o[0]] || []).push(o[1]);
+      (adj[o[1]] = adj[o[1]] || []).push(o[0]);
+    });
+    var nodes = Object.keys(adj), seen = {}, comps = 0, maxDeg = 0, ends = 0;
+    nodes.forEach(function (n) {
+      maxDeg = Math.max(maxDeg, adj[n].length);
+      if (adj[n].length === 1) ends++;
+      if (seen[n]) return;
+      comps++;
+      var stack = [n];
+      while (stack.length) {
+        var x = stack.pop();
+        if (seen[x]) continue;
+        seen[x] = true;
+        adj[x].forEach(function (y) { if (!seen[y]) stack.push(String(y)); });
+      }
+    });
+    return { star: star, link: link, comps: comps, maxDeg: maxDeg, ends: ends };
+  }
+
+  function verdict(a) {
+    if (a.maxDeg >= 3) return ['Branch point: not a surface here',
+      'Three link edges meet at one vertex, because three triangles share an edge through this vertex. That is a nonmanifold edge.'];
+    if (a.comps > 1) return ['Two pieces: not a surface here',
+      'The link falls into ' + a.comps + ' separate pieces: two fans pinched together at this one vertex, like an hourglass. A nonmanifold vertex.'];
+    if (a.ends === 0) return ['One closed loop: interior point',
+      'Walking around the vertex visits every triangle once and comes back. The fan closes into a disk.'];
+    return ['One open path: rim point',
+      'The walk around the vertex hits a dead end on both sides, so the fan is a half-disk. Allowed for a surface with boundary.'];
+  }
+
+  function draw() {
+    clear(gStar); clear(gEdges); clear(gLink); clear(gVerts);
+    var a = analyse(sel);
+    a.star.forEach(function (t) {
+      el('path', { d: 'M' + P[t[0]] + 'L' + P[t[1]] + 'L' + P[t[2]] + 'Z',
+        fill: 'currentColor', 'fill-opacity': '.16', stroke: 'none' }, gStar);
+    });
+    var done = {};
+    tris().forEach(function (t) {
+      var isFin = t === FIN;
+      [[t[0],t[1]],[t[1],t[2]],[t[2],t[0]]].forEach(function (e) {
+        var k = key(e[0], e[1]);
+        if (done[k]) return;
+        done[k] = true;
+        var attrs = { x1: P[e[0]][0], y1: P[e[0]][1], x2: P[e[1]][0], y2: P[e[1]][1] };
+        if (isFin) attrs['stroke-dasharray'] = '5 4';
+        el('line', attrs, gEdges);
+      });
+    });
+    a.link.forEach(function (e) {
+      el('line', { x1: P[e[0]][0], y1: P[e[0]][1], x2: P[e[1]][0], y2: P[e[1]][1],
+        'stroke-width': '5' }, gLink);
+    });
+    var n = fin ? P.length : P.length - 1;
+    for (var i = 0; i < n; i++) (function (i) {
+      var g = el('g', { 'class': 'vt', tabindex: '0', role: 'button',
+        'aria-label': 'Vertex ' + (i + 1) + (i === sel ? ', selected' : '') }, gVerts);
+      el('circle', { 'class': 'hit', cx: P[i][0], cy: P[i][1], r: 16 }, g);
+      if (i === sel) el('circle', { cx: P[i][0], cy: P[i][1], r: 7.5,
+        fill: 'var(--paper)', stroke: 'currentColor', 'stroke-width': '2.5' }, g);
+      else el('circle', { cx: P[i][0], cy: P[i][1], r: 4.5, fill: 'currentColor', stroke: 'none' }, g);
+      g.addEventListener('click', function () { pick(i); });
+      g.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pick(i, true); }
+      });
+    })(i);
+    var v = verdict(a);
+    read.innerHTML = '<p>Star: ' + plural(a.star.length, 'triangle') +
+      ' &middot; Link: ' + plural(a.link.length, 'edge') + '</p>' +
+      '<p class="verdict">' + v[0] + '</p><p>' + v[1] + '</p>';
+  }
+
+  function pick(i, keepFocus) {
+    sel = i;
+    draw();
+    if (keepFocus) {
+      var g = gVerts.children[i];
+      if (g && g.focus) g.focus();
+    }
+  }
+
+  finBtn.addEventListener('click', function () {
+    fin = !fin;
+    finBtn.setAttribute('aria-pressed', String(fin));
+    if (!fin && sel === 10) sel = 0;
+    draw();
+  });
+
+  draw();
+})();
+</script>
 </body>
 </html>

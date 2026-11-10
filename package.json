@@ -3,13 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "tickets": "node scripts/build-tickets.js",
-    "tickets:publish": "node scripts/build-tickets.js && git add public/tickets.json && git commit -m \"chore: update tickets from vault\" && git push",
-    "dev": "npm run tickets && npm run study && vite",
-    "build": "npm run tickets && npm run study && vite build",
-    "preview": "vite preview",
-    "study": "node scripts/build-study-plan.js",
-    "study:publish": "node scripts/build-study-plan.js && git add public/study-plan.json && git commit -m \"chore: update study plan from vault\" && git push"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "",

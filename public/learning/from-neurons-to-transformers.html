@@ -302,6 +302,35 @@ footer .colophon{
   body{padding:0}
   .sheet{border:none;max-width:none}
 }
+
+/* ---------- try-it panel ---------- */
+.lab{
+  border:1px solid var(--ink);
+  box-shadow:0 0 0 4px var(--paper), 0 0 0 5px var(--ink);
+  padding:1.1rem 1.2rem 1.2rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:2rem auto;
+}
+.lab .callout-label{
+  font-family:var(--font-head);font-weight:600;font-size:.72rem;
+  text-transform:uppercase;letter-spacing:.2em;display:block;margin-bottom:.5rem;
+}
+.lab p{font-size:.95rem;margin-bottom:.6rem}
+.lab svg{width:100%;height:auto;display:block;margin:.4rem 0}
+.lab input[type=range]{width:100%;accent-color:var(--ink);margin:.4rem 0}
+.lab-btns{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin:.3rem 0 .6rem}
+.lab button{
+  font-family:var(--font-head);font-weight:500;font-size:.75rem;
+  text-transform:uppercase;letter-spacing:.14em;
+  background:var(--paper);color:var(--ink);
+  border:1px solid var(--ink);padding:.3em .9em;cursor:pointer;
+}
+.lab button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.lab-read{
+  font-family:var(--font-hand);font-size:1.35rem;line-height:1.3;
+  text-align:center;color:var(--ink);margin:.2rem 0 0;
+}
+.formula{overflow-x:auto}
 </style>
 </head>
 <body>
@@ -311,14 +340,11 @@ footer .colophon{
   <div class="topbar">
     <span class="wordmark" aria-hidden="true">N.</span>
     <nav aria-label="Sections">
-      <a href="#perceptron">Perceptron</a>
-      <a href="#backprop">Backprop</a>
-      <a href="#cnn">CNN</a>
-      <a href="#rnn">RNN</a>
-      <a href="#lstm">LSTM</a>
-      <a href="#attention">Attention</a>
-      <a href="#transformer">Transformer</a>
-      <a href="#after">After</a>
+      <a href="#sixty">60 seconds</a>
+      <a href="#regimes">The two regimes</a>
+      <a href="#timeline">Timeline</a>
+      <a href="#walls">Three walls</a>
+      <a href="#cool">Cool things</a>
     </nav>
   </div>
 
@@ -340,418 +366,288 @@ footer .colophon{
 <main>
 
 <div class="premise">
-  <p>Every architecture in this story exists because the previous one hit a wall.
-  The perceptron could not draw a curve. The multilayer net could not see. The
-  convolutional net could not remember. The recurrent net could not remember far
-  enough. The gated recurrent net could not be parallelized. Each fix created the
-  next problem, and the chain has not stopped.</p>
-  <p>Underneath the whole sequence runs one recurring tension. A
-  <strong>feed-forward</strong> network sends input to output in a single pass
-  and keeps no state, which makes it fast and trainable in parallel. A
-  <strong>recurrent</strong> network threads a hidden state through a loop, which
-  gives it memory at the price of going one step at a time. The field has crossed
-  that line twice &mdash; and is, right now, crossing it a third time.</p>
+  <p>Every architecture from the perceptron to Mamba exists because the one
+  before it hit a specific wall. This page follows that chain, and reads each
+  step through one question: does the network look at its input in a single
+  pass, or does it carry a running memory from one step to the next?</p>
 </div>
 
-<nav class="contents" aria-label="Contents">
-  <h2>Contents</h2>
-  <a href="#perceptron"><div class="entry"><span class="entry-name">The neuron &amp; the perceptron</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1943&ndash;1958</span></div></a>
-  <a href="#xor"><div class="entry"><span class="entry-name">The XOR wall &amp; the first winter</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1969</span></div></a>
-  <a href="#backprop"><div class="entry"><span class="entry-name">Backpropagation &amp; the MLP</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1970&ndash;1986</span></div></a>
-  <a href="#cnn"><div class="entry"><span class="entry-name">The convolutional net</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1980&ndash;2012</span></div></a>
-  <a href="#rnn"><div class="entry"><span class="entry-name">The recurrent net</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1986&ndash;1990</span></div></a>
-  <a href="#lstm"><div class="entry"><span class="entry-name">LSTM &amp; GRU</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1991&ndash;2014</span></div></a>
-  <a href="#attention"><div class="entry"><span class="entry-name">Attention</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2014&ndash;2015</span></div></a>
-  <a href="#transformer"><div class="entry"><span class="entry-name">The Transformer</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2017</span></div></a>
-  <a href="#after"><div class="entry"><span class="entry-name">What came after</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2018&ndash;now</span></div></a>
-</nav>
-
-<!-- ================= 1. PERCEPTRON ================= -->
-<section id="perceptron">
-  <h2 class="sec"><span>I &middot; The Neuron &amp; the Perceptron</span></h2>
+<!-- ================= 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
   <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Regime<b>Feed-forward</b></p>
 
   <div class="entry-block">
-    <div class="entry"><span class="entry-name">McCulloch &amp; Pitts unit</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1943</span></div>
-    <p class="entry-desc">A cartoon of a neuron: take a weighted sum of the
-    inputs, and fire if the sum crosses a threshold. McCulloch and Pitts showed
-    that networks of these binary threshold units could compute logical
-    functions &mdash; AND, OR, NOT, and combinations of them. But there was no
-    way for the network to <em>learn</em>; every weight had to be wired by hand.</p>
+    <div class="entry"><span class="entry-name">Two ways to build a net</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">the tension</span></div>
+    <p class="entry-desc">A <strong>feed-forward</strong> network pushes its
+    input through a stack of layers once and forgets it. Nothing carries over,
+    so every part of the input can be computed at the same time. A
+    <strong>recurrent</strong> network reads a sequence one item at a time and
+    keeps a running summary of what it has read so far. That gives it memory,
+    but item 500 cannot be processed until item 499 is done.</p>
   </div>
-
   <div class="entry-block">
-    <div class="entry"><span class="entry-name">Hebb's rule</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1949</span></div>
-    <p class="entry-desc">Hebb supplied a biological learning principle:
-    connections between neurons that activate together should strengthen &mdash;
-    &ldquo;cells that fire together wire together.&rdquo; A principle, not yet an
-    algorithm.</p>
+    <div class="entry"><span class="entry-name">The pattern</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1943&ndash;2017</span></div>
+    <p class="entry-desc">Each fix exposed the next limit. Single neurons could
+    only draw straight boundaries. Stacked layers fixed that but were hopeless
+    on images until convolutions. Text needed memory, so loops were added. The
+    loops forgot anything far back, so gates were added. Then the loop itself
+    became the bottleneck, because it can't run in parallel.</p>
   </div>
-
   <div class="entry-block">
-    <div class="entry"><span class="entry-name">Rosenblatt's perceptron</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1958</span></div>
-    <p class="entry-desc">Rosenblatt fused the two into something trainable: a
-    single linear unit with an update rule that nudges the weights whenever the
-    unit misclassifies an example. Crucially, the rule comes with a proof: if the
-    data can be split by a straight line (it is <em>linearly separable</em>), the
-    perceptron is guaranteed to find such a line in finitely many updates.</p>
-  </div>
-
-  <div class="callout">
-    <span class="callout-label">Problem solved</span>
-    <p>A machine that learns its own decision boundary from labeled examples,
-    instead of having its weights wired by hand.</p>
+    <div class="entry"><span class="entry-name">Now</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2017&ndash;</span></div>
+    <p class="entry-desc">The Transformer (2017) removed the loop: every word
+    looks directly at every other word, all at once. The price is that the
+    work grows with the <em>square</em> of the text length. State space models
+    such as Mamba (2023) bring back a running memory whose cost grows only
+    linearly with length, while still training in parallel. The field has now
+    switched sides three times.</p>
   </div>
 </section>
 
-<!-- ================= 2. XOR ================= -->
-<section id="xor">
-  <h2 class="sec"><span>II &middot; The XOR Wall &amp; the First Winter</span></h2>
+<!-- ================= REGIMES ================= -->
+<section id="regimes">
+  <h2 class="sec"><span>II &middot; The Two Regimes</span></h2>
   <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Regime<b>Feed-forward</b></p>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Minsky &amp; Papert, <i>Perceptrons</i></span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1969</span></div>
-    <p class="entry-desc">Minsky and Papert proved that a single-layer perceptron
-    cannot represent any function that is not linearly separable. The canonical
-    counterexample is XOR &mdash; &ldquo;exactly one of the two inputs is
-    on&rdquo; &mdash; whose four cases cannot be split by any single straight
-    line. Plot them on a square: the two positive corners sit diagonally
-    opposite each other, and no line puts them on one side alone.</p>
-  </div>
-
-  <p>Everyone understood, even then, that stacking layers would fix this in
-  principle: a hidden layer can carve the plane into pieces a single line
-  cannot. The trouble was that nobody knew how to train the hidden layers.
-  Which weights inside the stack deserve the blame for an error at the output?
-  Without an answer to that <em>credit assignment</em> question, deeper networks
-  were unreachable. Funding and interest collapsed &mdash; the first AI winter.</p>
 
   <div class="callout">
-    <span class="callout-label">Problem exposed</span>
-    <p>Linear models are fundamentally limited &mdash; and the obvious fix,
-    hidden layers, was untrainable.</p>
-  </div>
-</section>
-
-<!-- ================= 3. BACKPROP ================= -->
-<section id="backprop">
-  <h2 class="sec"><span>III &middot; Backpropagation &amp; the MLP</span></h2>
-  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Regime<b>Feed-forward</b></p>
-
-  <p>The multilayer perceptron (MLP) stacks linear layers with nonlinear
-  activation functions between them &mdash; the nonlinearity is what lets the
-  stack bend its decision boundary into curves. The missing piece was how to
-  assign credit to weights buried in the middle.</p>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Reverse-mode differentiation</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1970 / 1974</span></div>
-    <p class="entry-desc">The answer is reverse-mode automatic differentiation:
-    nothing more exotic than the chain rule from calculus, applied backward
-    through the computation graph. Run the network forward, then walk the error
-    backward layer by layer, and each weight receives exactly its share of the
-    blame &mdash; its gradient. Linnainmaa (1970) and Werbos (1974) had the
-    mathematics worked out.</p>
-  </div>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Backpropagation popularized</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1986</span></div>
-    <p class="entry-desc">Rumelhart, Hinton, and Williams named it
-    backpropagation, showed it solving real tasks, and made the world notice.
-    Gradient descent could now train arbitrarily deep stacks.</p>
-  </div>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Universal approximation</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1989 / 1991</span></div>
-    <p class="entry-desc">Cybenko and then Hornik proved that an MLP with a
-    single hidden layer and enough units can approximate any continuous
-    function to any precision. After that, raw expressiveness was no longer the
-    worry. The worry became whether a network of practical size could learn the
-    <em>right</em> function from data &mdash; which is a question about
-    structure, not capacity.</p>
+    <span class="callout-label">Feed-forward</span>
+    <p class="formula">y = f&thinsp;( W<sub>L</sub> &hellip; f&thinsp;( W<sub>1</sub> x ) )</p>
+    <p>Here x is the input vector, y the output, W<sub>1</sub> through
+    W<sub>L</sub> the weight matrices of the L layers, and f a fixed nonlinear
+    function applied entry by entry (a ReLU, or the sigmoid &sigma;, which
+    squashes any number into the range 0 to 1). Without f the whole stack would
+    collapse into one matrix.</p>
+    <p>One wide enough hidden layer can approximate any continuous function
+    (Cybenko 1989), so the real question was what <em>structure</em> to build
+    in.</p>
   </div>
 
   <div class="callout">
-    <span class="callout-label">Problem solved</span>
-    <p>Nonlinear decision boundaries &mdash; XOR included &mdash; trained end to
-    end by gradient descent through hidden layers.</p>
+    <span class="callout-label">Recurrent</span>
+    <p class="formula">h<sub>t</sub> = f&thinsp;( W<sub>x</sub> x<sub>t</sub> + W<sub>h</sub> h<sub>t&minus;1</sub> )</p>
+    <p>Now the input is a sequence. x<sub>t</sub> is the item at position t
+    (say, the vector for the t-th word), and h<sub>t</sub> is the
+    <em>hidden state</em>: a vector the network rewrites at every step as its
+    summary of everything up to t. W<sub>x</sub> mixes in the new word,
+    W<sub>h</sub> carries the old summary forward.</p>
+    <p>The same matrices are reused at every step, so any length fits.
+    Training unrolls the loop into a long chain of weight-sharing copies and
+    backpropagates through it: <em>backpropagation through time</em>.</p>
   </div>
-</section>
-
-<!-- ================= 4. CNN ================= -->
-<section id="cnn">
-  <h2 class="sec"><span>IV &middot; The Convolutional Net</span></h2>
-  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Regime<b>Feed-forward</b></p>
-
-  <p>An MLP treats its input as one flat vector, and on images that is ruinous.
-  A 224&times;224 color image is roughly 150,000 numbers, so a single fully
-  connected hidden layer already needs hundreds of millions of weights. Worse,
-  the flat view has no idea that a cat shifted three pixels to the right is
-  still a cat &mdash; every pixel position learns from scratch, independently.</p>
-
-  <p>Convolutional neural networks fix this with three structural ideas:</p>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Local receptive fields</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">idea 1</span></div>
-    <p class="entry-desc">Each unit looks at only a small patch of the image,
-    the way an edge is a local fact before a face is a global one.</p>
-  </div>
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Weight sharing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">idea 2</span></div>
-    <p class="entry-desc">The same small filter slides across the entire image,
-    so the parameter count scales with the filter size, not the image size. One
-    edge detector serves every location. This is what cuts those hundreds of
-    millions of weights down by orders of magnitude.</p>
-  </div>
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Pooling</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">idea 3</span></div>
-    <p class="entry-desc">Downsample between layers, keeping the strongest local
-    responses, so small shifts and distortions stop mattering.</p>
-  </div>
-
-  <p>Together these give <em>translation equivariance</em> essentially for free:
-  shift the input and the feature maps shift with it, rather than being
-  scrambled. The lineage: Fukushima's Neocognitron (1980) had the structure;
-  LeCun (1989, then LeNet-5 in 1998) added backprop training and read handwritten
-  digits with it; AlexNet (Krizhevsky, Sutskever &amp; Hinton, 2012) scaled the
-  recipe on GPUs, won ImageNet by a huge margin, and set off the modern deep
-  learning boom.</p>
-
-  <div class="callout">
-    <span class="callout-label">Problem solved</span>
-    <p>Exploiting spatial structure, so vision becomes tractable and what is
-    learned at one position generalizes to every other.</p>
-  </div>
-
-  <p class="aside-hand">but note: a CNN is still feed-forward. fixed-size input,
-  one pass, no memory &mdash; that's exactly the next wall.</p>
 </section>
 
 <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
 
-<!-- ================= 5. RNN ================= -->
-<section id="rnn">
-  <h2 class="sec"><span>V &middot; Sequences Need Memory: The RNN</span></h2>
+<!-- ================= TIMELINE ================= -->
+<section id="timeline">
+  <h2 class="sec"><span>III &middot; The Chain of Walls</span></h2>
   <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Regime<b>Recurrent</b> <span aria-hidden="true">&mdash;</span> the loop enters</p>
-
-  <p>Text, speech, and time series have two properties that no feed-forward net
-  can handle. They come in <em>variable lengths</em> &mdash; a sentence can be 5
-  words or 50 &mdash; and they are <em>order-dependent</em>: &ldquo;dog bites
-  man&rdquo; is not &ldquo;man bites dog.&rdquo; An MLP or CNN takes a fixed-size
-  input, makes one pass, and carries nothing from one input to the next.</p>
+  <p class="aside-hand">FF = feed-forward &middot; R = recurrent</p>
 
   <div class="entry-block">
-    <div class="entry"><span class="entry-name">The recurrent network</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1986&ndash;1990</span></div>
-    <p class="entry-desc">Recurrent neural networks (Jordan, then Elman, 1990)
-    add a hidden state that the network feeds back into itself at every
-    timestep. The update is, roughly:</p>
+    <div class="entry"><span class="entry-name">Perceptron &middot; FF</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1943&ndash;1958</span></div>
+    <p class="entry-desc">A neuron as arithmetic: take a weighted sum of the
+    inputs and output 1 if it clears a threshold, else 0. McCulloch and Pitts
+    showed such units compute logic, with hand-set weights. Rosenblatt added
+    learning: on each mistake, nudge the weights toward the right answer. It
+    provably converges whenever a straight line (a hyperplane) separates the
+    two classes.</p>
   </div>
-
-  <div class="callout">
-    <span class="callout-label">The recurrence</span>
-    <p class="formula">h<sub>t</sub> = f&thinsp;( W<sub>x</sub> x<sub>t</sub> + W<sub>h</sub> h<sub>t&minus;1</sub> )</p>
-    <p>New memory = a function of the current input and the previous memory.
-    The same weights W are reused at every step, so any length of sequence fits,
-    and h<sub>t</sub> serves as a compressed summary of everything seen so far.</p>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">XOR wall</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1969</span></div>
+    <p class="entry-desc">XOR outputs 1 when exactly one of two inputs is 1.
+    On the unit square its two &ldquo;yes&rdquo; corners sit on a diagonal,
+    so no single line separates them. Minsky and Papert proved one layer can't
+    do it. A hidden layer could, but nobody knew how to train weights that
+    never see the answer. Funding dried up: the first AI winter.</p>
   </div>
-
-  <p>Training works by <em>unrolling</em> the loop: lay the network out as one
-  long feed-forward chain, one copy per timestep (all sharing the same weights
-  &mdash; the CNN trick again, but across time instead of space), and run
-  ordinary backprop down the chain. This is called <strong>backpropagation
-  through time</strong>.</p>
-
-  <p>This is the cleanest statement of the feed-forward versus recurrent divide.
-  Feed-forward: input to output in one pass, no state, fully parallel.
-  Recurrent: a loop threads a hidden state across timesteps, giving memory but
-  forcing the steps into sequence.</p>
-
-  <div class="callout">
-    <span class="callout-label">Problem solved</span>
-    <p>Processing sequences of arbitrary length, with sensitivity to order.</p>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Backprop + MLP &middot; FF</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1970&ndash;1986</span></div>
+    <p class="entry-desc">The blame problem has a clean answer: swap the hard
+    threshold for a smooth function, then run the chain rule backward from the
+    loss. One backward pass gives the gradient for every weight, at roughly the
+    cost of one forward pass (Linnainmaa, Werbos). Rumelhart, Hinton and
+    Williams made it famous as <em>backpropagation</em>, and multi-layer
+    perceptrons (MLPs) became trainable.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">CNN &middot; FF</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1980&ndash;2012</span></div>
+    <p class="entry-desc">A 224&times;224 colour image is about 150,000
+    numbers, so a dense layer needs billions of weights and ignores that
+    neighbouring pixels are related. A convolutional net (CNN) slides one small
+    filter across the image, so the same few weights find an edge wherever it
+    appears. Stacked filters build edges into textures into objects. AlexNet
+    (2012) made it win.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">RNN &middot; R</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1986&ndash;1990</span></div>
+    <p class="entry-desc">Text and speech break the feed-forward mould:
+    inputs have no fixed length, and order changes meaning (&ldquo;dog bites
+    man&rdquo; vs &ldquo;man bites dog&rdquo;). Jordan and Elman added the
+    loop above, giving the recurrent neural network (RNN).</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">LSTM / GRU &middot; R</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1997 / 2014</span></div>
+    <p class="entry-desc">Plain RNNs could not learn links more than a few
+    dozen steps apart (section IV shows why). The long short-term memory
+    (LSTM) adds a protected memory lane with gates controlling it. The gated
+    recurrent unit (GRU) is a lighter version with two gates. The loop
+    stays.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Seq2seq + attention &middot; R</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2014&ndash;2015</span></div>
+    <p class="entry-desc">Sequence-to-sequence translation: one LSTM (the
+    encoder) reads the source sentence, and its final hidden state, a single
+    vector, is all a second LSTM (the decoder) gets. Long sentences don't fit
+    through that keyhole. Bahdanau et al. let the decoder look back at
+    <em>every</em> encoder state and take a weighted blend, re-chosen per
+    output word. That blend is attention.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Transformer &middot; FF</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2017</span></div>
+    <p class="entry-desc">&ldquo;Attention is all you need&rdquo;: keep the
+    attention, delete the recurrence. Attention ignores order, so a position
+    vector is added to each word before it goes in. The result runs fully in
+    parallel on GPUs, and it led to BERT, the GPT line, scaling laws and,
+    applied to image patches, ViT.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">S4 / Mamba &middot; R</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2021&ndash;2024</span></div>
+    <p class="entry-desc">State space models put a running memory back in,
+    but a linear one, built so it trains in parallel and doesn't forget.
+    Section IV explains the trick.</p>
   </div>
 </section>
 
-<!-- ================= 6. LSTM ================= -->
-<section id="lstm">
-  <h2 class="sec"><span>VI &middot; Vanishing Gradients: LSTM &amp; GRU</span></h2>
+<!-- ================= THREE WALLS ================= -->
+<section id="walls">
+  <h2 class="sec"><span>IV &middot; Three Walls, Up Close</span></h2>
   <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Regime<b>Recurrent</b> <span aria-hidden="true">&mdash;</span> now with gates</p>
 
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">The vanishing gradient</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1991 / 1994</span></div>
-    <p class="entry-desc">Backprop through time multiplies a long chain of
-    Jacobians &mdash; the matrices of local derivatives &mdash; one per
-    timestep. Multiply many numbers slightly below 1 and the product races to
-    zero; slightly above 1 and it explodes. Hochreiter (1991) and Bengio et al.
-    (1994) formalized this. The practical consequence: a vanilla RNN cannot
-    connect information across long gaps &mdash; a pronoun to the noun forty
-    words earlier &mdash; because the training signal linking them has vanished
-    before it arrives.</p>
+  <div class="callout">
+    <span class="callout-label">1 &middot; Vanishing gradients &rarr; LSTM</span>
+    <p>Suppose the loss at step T depends on a word seen at step 1. Backprop
+    through time reaches h<sub>1</sub> by the chain rule, one factor per
+    step:</p>
+    <p class="formula">&part;h<sub>T</sub> / &part;h<sub>1</sub> = &prod;<sub>t</sub> &part;h<sub>t</sub> / &part;h<sub>t&minus;1</sub></p>
+    <p>Each factor is a Jacobian, roughly W<sub>h</sub> scaled by the slope of
+    f, the same kind of matrix every step. So the product behaves like a
+    power: it dies off or blows up exponentially (Hochreiter 1991, Bengio et
+    al. 1994).</p>
   </div>
 
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">LSTM</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1997</span></div>
-    <p class="entry-desc">Hochreiter and Schmidhuber's Long Short-Term Memory
-    adds a separate <em>cell state</em>: a conveyor belt running through time
-    that is updated <em>additively</em> rather than by repeated matrix
-    multiplication. Three learned gates &mdash; input, forget, output &mdash;
-    decide what to write onto the belt, what to erase, and what to reveal to the
-    rest of the network at each step.</p>
+  <div class="lab" id="lab">
+    <span class="callout-label">Try it &middot; one factor, forty steps</span>
+    <p>Pretend each step multiplies the gradient by the same number r. The
+    bars show how much of the signal from step 1 is left after k steps
+    (log scale; the middle line means &ldquo;unchanged&rdquo;, faded bars are off the chart).</p>
+    <svg id="lab-svg" viewBox="0 0 400 200" role="img" aria-label="Bar chart of r to the power k for k from 1 to 40">
+      <g fill="none" stroke="currentColor" stroke-width="1">
+        <path d="M30 10H392M30 190H392" stroke-dasharray="2 4"/>
+        <path d="M30 100H392" stroke-width="1.5"/>
+        <path d="M30 10V190"/>
+      </g>
+      <g font-family="Oswald, sans-serif" font-size="13" fill="currentColor" text-anchor="end">
+        <text x="26" y="15">10&#8308;</text>
+        <text x="26" y="104">1</text>
+        <text x="26" y="195">10&#8315;&#8308;</text>
+      </g>
+      <g id="lab-bars" fill="currentColor"></g>
+      <text id="lab-k" x="392" y="186" font-family="Caveat, cursive" font-size="15" text-anchor="end" fill="currentColor">step 40 &rarr;</text>
+    </svg>
+    <label for="lab-r" class="callout-label" style="margin:.4rem 0 0">Per-step factor <span style="text-transform:none">r</span> = <span id="lab-rv">0.90</span></label>
+    <input id="lab-r" type="range" min="0.5" max="1.5" step="0.01" value="0.9">
+    <div class="lab-btns">
+      <button type="button" data-r="0.9">0.9</button>
+      <button type="button" data-r="1">1.0</button>
+      <button type="button" data-r="1.1">1.1</button>
+    </div>
+    <p class="lab-read" id="lab-read" aria-live="polite"></p>
   </div>
 
   <div class="callout">
-    <span class="callout-label">The constant error carousel</span>
-    <p>Because the cell state's default update is addition, gradients flowing
-    back along it are not repeatedly squashed by multiplication. The error can
-    ride the belt across hundreds of steps intact. That protected additive path
-    is the LSTM's whole trick &mdash; and the reason long-range dependencies
-    survive training.</p>
-  </div>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">GRU</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2014</span></div>
-    <p class="entry-desc">Cho et al.'s Gated Recurrent Unit is the lighter
-    version: two gates instead of three, no separate cell state, comparable
-    performance in practice.</p>
+    <span class="callout-label">The LSTM fix</span>
+    <p>The only stable value is r = 1, and a plain RNN can't hold it. The LSTM
+    adds a second vector, the <em>cell state</em> c<sub>t</sub>, updated by
+    addition instead of by a matrix multiply:</p>
+    <p class="formula">c<sub>t</sub> = forget &middot; c<sub>t&minus;1</sub> + write &middot; (new content)</p>
+    <p>Each gate is a vector of numbers between 0 and 1 (a sigmoid output)
+    computed from the current word and the last hidden state, applied entry by
+    entry like a dimmer. Along the cell lane the gradient is multiplied only by
+    the forget gate, which the network can learn to hold near 1: the slider
+    pinned at 1.0. A third gate decides how much of the cell to reveal as
+    h<sub>t</sub>.</p>
   </div>
 
   <div class="callout">
-    <span class="callout-label">Problem solved</span>
-    <p>Long-range dependencies &mdash; by protecting gradient flow with gates,
-    not by removing the loop.</p>
+    <span class="callout-label">2 &middot; Sequential steps &rarr; self-attention</span>
+    <p>Even with gates, an RNN links word 1 to word 500 through a relay of 499
+    updates, and none of them can start before the previous one ends. GPUs sit
+    idle.</p>
+    <p>Self-attention replaces the relay with direct lookups. From each word's
+    vector, three learned matrices produce a <em>query</em> (what this word is
+    looking for), a <em>key</em> (what it offers to be matched on) and a
+    <em>value</em> (what it hands over if chosen). Stacking these for all words
+    gives matrices Q, K and V:</p>
+    <p class="formula">output = softmax( Q K<sup>&#8868;</sup> / &radic;d ) V</p>
+    <p>QK<sup>&#8868;</sup> is the table of every query dotted with every key.
+    Softmax turns each row into positive weights that sum to 1, and each word's
+    output is that weighted average of the values (d is the key length;
+    dividing by &radic;d keeps scores from saturating). Any two words are now
+    one hop apart, and it is all one matrix product.</p>
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">3 &middot; Quadratic cost &rarr; state space models</span>
+    <p>That table has one entry per pair of words. With n the sequence length,
+    it has n&sup2; entries, so the cost is O(n&sup2;): double the context,
+    quadruple the work. Books, codebases and hours of audio get expensive.</p>
+    <p>A state space model (SSM), borrowed from control theory, goes back to a
+    running state but keeps the update linear:</p>
+    <p class="formula">h<sub>t</sub> = A h<sub>t&minus;1</sub> + B x<sub>t</sub>, &nbsp; y<sub>t</sub> = C h<sub>t</sub></p>
+    <p>A, B and C are learned matrices. With no nonlinearity in the loop, the
+    unrolled output is just the input convolved with the kernel CB, CAB,
+    CA&sup2;B, &hellip;, computable for all positions at once. S4 (Gu et al.,
+    2021) also chose A so its powers fade slowly: the slider held near 1. Cost
+    is O(n), and generation keeps one fixed-size state.</p>
+    <p>Mamba (Gu and Dao, 2023) makes A, B and C depend on the current input,
+    so it chooses what to keep. That breaks the convolution, so it trains with
+    a parallel scan instead.</p>
   </div>
 </section>
 
-<!-- ================= 7. ATTENTION ================= -->
-<section id="attention">
-  <h2 class="sec"><span>VII &middot; The Fixed-Vector Bottleneck: Attention</span></h2>
+<!-- ================= COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>V &middot; Cool Things</span></h2>
   <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Regime<b>Recurrent</b> <span aria-hidden="true">&mdash;</span> with a lookback</p>
 
   <div class="entry-block">
-    <div class="entry"><span class="entry-name">Sequence-to-sequence</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2014</span></div>
-    <p class="entry-desc">For translation, Sutskever, Vinyals, and Le chained
-    two LSTMs: an encoder reads the whole input sentence and compresses it into
-    one fixed-size vector; a decoder unfolds that vector into the output
-    sentence. It worked &mdash; and had an obvious flaw. One vector simply
-    cannot hold everything about a long sentence, and the decoder has nothing
-    else to consult. Quality degraded as inputs grew.</p>
+    <div class="entry"><span class="entry-name">Weight sharing, twice</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">rhyme</span></div>
+    <p class="entry-desc">A CNN reuses one filter across space; an unrolled RNN
+    reuses one W<sub>h</sub> across time. Same trick, different axis.</p>
   </div>
-
   <div class="entry-block">
-    <div class="entry"><span class="entry-name">Attention</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2015</span></div>
-    <p class="entry-desc">Bahdanau, Cho, and Bengio let the decoder look back at
-    <em>all</em> of the encoder's hidden states, at every output step. It takes
-    a weighted average of them, with the weights computed on the fly &mdash;
-    high weight on whatever input words matter for the word being produced
-    right now. Instead of squeezing the sentence through one summary, the model
-    learns where to look.</p>
+    <div class="entry"><span class="entry-name">Transformer &asymp; CNN</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">rhyme</span></div>
+    <p class="entry-desc">Both won their domain without memory, by building
+    the right structure (convolution, or attention plus position) into one
+    parallel pass.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The fix was old</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">1970 &rarr; 1986</span></div>
+    <p class="entry-desc">Reverse-mode differentiation existed sixteen years
+    before it was called backprop.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Attention was a patch</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2015 &rarr; 2017</span></div>
+    <p class="entry-desc">It began as an add-on to recurrent translators. Two
+    years later it was the whole model.</p>
   </div>
 
   <div class="callout">
-    <span class="callout-label">Problem solved</span>
-    <p>Information loss from a fixed-size summary &mdash; replaced by direct,
-    learned access to every input position.</p>
-  </div>
-
-  <p class="aside-hand">attention began as a patch bolted onto recurrent
-  models. then someone asked: what if it's the only part we need?</p>
-</section>
-
-<!-- ================= 8. TRANSFORMER ================= -->
-<section id="transformer">
-  <h2 class="sec"><span>VIII &middot; Removing Recurrence: The Transformer</span></h2>
-  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Regime<b>Feed-forward</b> <span aria-hidden="true">&mdash;</span> the loop is cut</p>
-
-  <p>Two costs of recurrence remained. First, RNNs and LSTMs are inherently
-  sequential: step <i>t</i> needs step <i>t</i>&minus;1, so training cannot be
-  parallelized across time &mdash; a serious tax on modern hardware built for
-  parallel work. Second, even with gating, very long dependencies stay hard,
-  because information must still survive passage through many sequential steps.</p>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">&ldquo;Attention Is All You Need&rdquo;</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2017</span></div>
-    <p class="entry-desc">Vaswani et al. threw out the recurrence and kept only
-    the attention. In <em>self-attention</em>, every position in the sequence
-    attends directly to every other position. The path between any two tokens
-    &mdash; however far apart &mdash; is one hop, constant length, rather than a
-    relay proportional to their distance. Long-range dependencies become easy,
-    and, crucially, the entire sequence is processed at once, in parallel.
-    Since nothing in the architecture knows about order anymore, position is
-    reintroduced explicitly, through positional encodings added to the inputs.</p>
-  </div>
-
-  <div class="callout">
-    <span class="callout-label">The rhyme to notice</span>
-    <p>The Transformer is feed-forward again &mdash; no loop, no state threaded
-    through time. It solved the sequence problem the way the CNN solved the
-    image problem: not with memory, but with the right structural prior
-    (attention plus explicit position) baked into a single parallel pass.</p>
-  </div>
-
-  <div class="callout">
-    <span class="callout-label">Problem solved</span>
-    <p>Parallelizable training and constant-path long-range modeling &mdash;
-    which is what unlocked scaling.</p>
-  </div>
-</section>
-
-<!-- ================= 9. AFTER ================= -->
-<section id="after">
-  <h2 class="sec"><span>IX &middot; What Came After</span></h2>
-  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
-  <p class="regime">Regime<b>Both, again</b></p>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">BERT &amp; the GPT line</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2018&ndash;</span></div>
-    <p class="entry-desc">The last several years of progress are, essentially,
-    the Transformer scaled. BERT (2018) used a bidirectional encoder for
-    understanding tasks; the GPT line (2018 onward) used a decoder for
-    generation and showed that scaling parameters and data yields broad
-    capability &mdash; a regularity precise enough to be written down as
-    <em>scaling laws</em>.</p>
-  </div>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">Vision Transformers</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2021</span></div>
-    <p class="entry-desc">Dosovitskiy et al. showed that, given enough data,
-    attention beats convolution on images too. The architecture that replaced
-    the RNN began displacing the CNN as well.</p>
-  </div>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">The quadratic wall</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">open</span></div>
-    <p class="entry-desc">The Transformer carries its own unsolved problem,
-    continuing the chain: self-attention compares every position with every
-    other, so its cost grows as O(n&sup2;) in sequence length. Doubling the
-    context quadruples the work. Very long contexts &mdash; books, codebases,
-    hours of audio &mdash; get expensive fast.</p>
-  </div>
-
-  <div class="entry-block">
-    <div class="entry"><span class="entry-name">S4 &amp; Mamba</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2023&ndash;2024</span></div>
-    <p class="entry-desc">That cost is driving work on efficient attention and
-    on <em>state space models</em> such as S4 and Mamba (Gu and Dao). These
-    bring back a recurrent, linear-time formulation &mdash; a state carried
-    along the sequence, cost growing as O(n) &mdash; engineered so that
-    training can still run in parallel and the old vanishing-gradient disease
-    does not return. Memory without the quadratic bill.</p>
-  </div>
-
-  <div class="callout">
-    <span class="callout-label">The one thing to remember</span>
-    <p>The field abandoned recurrence for the perceptron's descendants, adopted
-    it for sequences, abandoned it again for the Transformer's parallelism, and
-    is now &mdash; with S4 and Mamba &mdash; revisiting the feed-forward versus
-    recurrent tradeoff from the other direction. It was never a settled
-    question. It is a dial, and each era turns it to pay for what the previous
-    era could not afford.</p>
+    <span class="callout-label">If you remember one thing</span>
+    <p>Single pass vs. running memory was never settled. It is a dial, and
+    each era turns it to pay for what the previous era couldn't afford.</p>
   </div>
 </section>
 
@@ -765,5 +661,58 @@ footer .colophon{
 </footer>
 
 </div>
+<script>
+(function(){
+  var slider = document.getElementById('lab-r');
+  var bars = document.getElementById('lab-bars');
+  var rv = document.getElementById('lab-rv');
+  var read = document.getElementById('lab-read');
+  var btns = document.querySelectorAll('#lab button[data-r]');
+  if (!slider || !bars) return;
+  var NS = 'http://www.w3.org/2000/svg';
+  var N = 40, X0 = 34, STEP = 9, W = 5, MID = 100, PER = 22.5; // 22.5px per decade, +-4 decades
+  var rects = [];
+  for (var k = 1; k <= N; k++) {
+    var r = document.createElementNS(NS, 'rect');
+    r.setAttribute('x', X0 + (k - 1) * STEP);
+    r.setAttribute('width', W);
+    bars.appendChild(r);
+    rects.push(r);
+  }
+  function fmt(v) {
+    if (v >= 1000 || v < 0.001) return v.toExponential(1).replace('e+', ' × 10^').replace('e-', ' × 10^-');
+    return v.toPrecision(2);
+  }
+  function draw(r) {
+    var lr = Math.log(r) / Math.LN10;
+    for (var k = 1; k <= N; k++) {
+      var d = Math.max(-4, Math.min(4, k * lr));
+      var h = Math.max(1, Math.abs(d) * PER);
+      var rect = rects[k - 1];
+      rect.setAttribute('y', d >= 0 ? MID - h : MID);
+      rect.setAttribute('height', h);
+      rect.setAttribute('opacity', Math.abs(k * lr) > 4 ? 0.45 : 1);
+    }
+    var end = Math.pow(r, N);
+    rv.textContent = r.toFixed(2);
+    var verdict;
+    if (end < 0.05) verdict = 'vanished: step 1 can no longer teach anything.';
+    else if (end > 20) verdict = 'exploded: training steps go wild.';
+    else verdict = 'survives: a long-range link can still be learned.';
+    read.textContent = r.toFixed(2) + '⁴⁰ ≈ ' + fmt(end) + ' — the gradient ' + verdict;
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute('aria-pressed', Math.abs(parseFloat(btns[i].getAttribute('data-r')) - r) < 1e-9 ? 'true' : 'false');
+    }
+  }
+  slider.addEventListener('input', function(){ draw(parseFloat(slider.value)); });
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener('click', function(){
+      slider.value = this.getAttribute('data-r');
+      draw(parseFloat(slider.value));
+    });
+  }
+  draw(parseFloat(slider.value) || 0.9);
+})();
+</script>
 </body>
 </html>

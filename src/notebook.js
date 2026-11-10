@@ -5,6 +5,7 @@
 // the root, so `file` is a root-relative path). Clicking a card opens it in an
 // in-modal iframe reader; the back chip returns to the grid. To add an entry,
 // drop the page in public/learning/ and append one object to NOTEBOOK_ENTRIES.
+// Each entry has a `date` (YYYY-MM-DD); cards are shown newest first.
 // ---------------------------------------------------------------------------
 
 export const NOTEBOOK_ENTRIES = [
@@ -13,20 +14,31 @@ export const NOTEBOOK_ENTRIES = [
         blurb: "Eighty years of one argument — should a network pass the signal straight through, or loop it back? From the perceptron to Mamba.",
         tags: ["deep learning", "history"],
         file: "learning/from-neurons-to-transformers.html",
+        date: "2026-08-11",
     },
     {
         title: "Combinatorial Surfaces",
         blurb: "How to say \"surface\" using nothing but sets of vertices. Simplices, links, the manifold condition, and the halfedge mesh that stores it all.",
         tags: ["geometry", "discrete diff geo"],
         file: "learning/combinatorial-surfaces.html",
+        date: "2026-09-08",
     },
     {
         title: "LoRA: Low-Rank Adaptation",
-        blurb: "Freeze GPT-3 and learn only a rank-r update ΔW = BA (r as small as 1) that matches full fine-tuning with 10,000× fewer trainable parameters.",
+        blurb: "Fine-tune a giant language model by learning only a tiny low-rank correction to each weight matrix: 10,000× fewer trainable numbers, same accuracy.",
         tags: ["paper of the day", "fine-tuning"],
         file: "learning/paper-2026-11-10-lora-low-rank-adaptation-of-large-language-models.html",
+        date: "2026-11-10",
     },
 ];
+
+const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+function formatDate(iso) {
+    if (!iso) return "";
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
 
 function escapeHtml(str) {
     return String(str ?? "").replace(/[&<>"']/g, (c) => (
@@ -44,8 +56,9 @@ export function initNotebook(modalEl) {
     const backBtn = modalEl.querySelector("#notebook-back");
 
     // ---- Card grid (entries + a ghost "more soon" placeholder) ----
-    grid.innerHTML = NOTEBOOK_ENTRIES.map((entry, i) => `
+    grid.innerHTML = SHOWN.map((entry, i) => `
         <button class="notebook-card" type="button" data-entry="${i}">
+            ${entry.date ? `<time class="notebook-card-date" datetime="${escapeHtml(entry.date)}">${escapeHtml(formatDate(entry.date))}</time>` : ""}
             <h4 class="notebook-card-title">${escapeHtml(entry.title)}</h4>
             <p class="notebook-card-blurb">${escapeHtml(entry.blurb)}</p>
             <div class="notebook-card-tags">
@@ -78,7 +91,7 @@ export function initNotebook(modalEl) {
     grid.addEventListener("click", (e) => {
         const card = e.target.closest(".notebook-card[data-entry]");
         if (!card) return;
-        openReader(NOTEBOOK_ENTRIES[Number(card.dataset.entry)]);
+        openReader(SHOWN[Number(card.dataset.entry)]);
     });
 
     backBtn.addEventListener("click", () => {
