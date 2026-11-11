@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classifying EEG for Brain–Computer Interfaces</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+/* sub-heads inside a section */
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+/* section regime line */
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+/* math inside caps rows must keep its own case */
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:2.6em;text-align:left;font-variant-numeric:tabular-nums}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench figure{margin:0}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+  .dial{gap:.6rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- an EEG trace in pen -->
+    <svg class="strip" viewBox="0 0 420 60" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
+      <path d="M0 30 L14 26 L22 34 L30 22 L38 38 L46 28 L54 31 L62 18 L70 44 L78 27 L86 33 L94 24 L102 36 L110 29 L118 12 L124 52 L130 30 L140 27 L148 35 L156 25 L164 33 L172 28 L180 31 L190 20 L198 40 L206 26 L214 34 L222 29 L230 31 L238 23 L246 37 L254 28 L262 32 L270 16 L276 48 L282 29 L292 33 L300 25 L308 35 L316 28 L324 31 L332 22 L340 38 L348 27 L356 33 L364 29 L372 31 L380 24 L388 36 L396 28 L404 32 L420 30"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; J. Neural Eng. 2018 &middot; 2,202 citations</p>
+      <h1>Reading the Scalp</h1>
+    </div>
+    <p class="tagline">A Review of Classification Algorithms for EEG-Based Brain–Computer Interfaces: A 10 Year Update</p>
+    <p class="tagline-hand">F. Lotte, L. Bougrain, A. Cichocki et al. &middot; 2018 &middot;
+    <a href="https://doi.org/10.1088/1741-2552/aab2f2">doi:10.1088/1741-2552/aab2f2</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>A survey of the classifiers invented between 2007 and 2017 for turning a few seconds of scalp brain recording into a decision about what the user intends, with a verdict on which families of methods actually help.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: two ways to measure distance</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">few, noisy, drifting</span></div>
+    <p class="entry-desc">A <em>brain–computer interface</em> (BCI) lets someone control a device by thought alone. The most common kind uses <em>EEG</em> (electroencephalography): a few to a few dozen electrodes on the scalp, each recording a voltage hundreds of times a second. The system cuts the recording into short <em>trials</em>, say the two seconds after a cue, and a classifier must decide what the user was doing in each, for example imagining moving the left hand or the right.</p>
+    <p class="entry-desc">That is hard. The signal is weak and smeared by the skull, every user calibrates on only a few dozen trials, and the statistics drift between sessions, and even within one. A 2007 review by Lotte and colleagues covered the classifiers of its time; this paper updates it with a decade of new ones.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">four new families</span></div>
+    <p class="entry-desc">The review sorts the new methods into four families. <em>Adaptive classifiers</em> keep updating their parameters during use, with or without knowing the true labels. <em>Matrix and tensor classifiers</em> classify a whole matrix per trial, typically the channel-by-channel covariance, using the geometry of positive-definite matrices (<em>Riemannian</em> methods). <em>Transfer learning</em> reuses data from other sessions or other users. <em>Deep learning</em> trains neural networks on raw or lightly processed signals. It also revisits two older tools for small training sets: <em>shrinkage LDA</em>, a linear classifier with a regularised covariance, and <em>random forests</em>, which vote over many decision trees.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">geometry beats depth (2018)</span></div>
+    <p class="entry-desc">Adaptive classifiers generally beat static ones, even when they adapt without labels. Transfer learning can help, but whether it will is unpredictable. Riemannian methods reach state-of-the-art performance on several BCI problems, and the authors say they, and tensor methods, deserve more exploration. Shrinkage LDA and random forests work well when training data is scarce. Deep learning had not yet shown a convincing improvement over these methods.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Covariance matrices, two ways</b></p>
+
+  <p>The abstract names its winners but gives no equations. What follows is the standard form of the two methods it singles out, shrinkage LDA and Riemannian classification, because both hinge on the spectrum of one object.</p>
+
+  <h3 class="sub">The objects</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(X\in\mathbb R^{C\times T}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">one trial</span></div>
+    <p class="entry-desc">One trial: \(C\) channels (electrodes) by \(T\) time samples, band-pass filtered to the rhythm of interest so each row has mean roughly 0.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(\Sigma=\tfrac1T XX^{\top}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">SPD, \(C\times C\)</span></div>
+    <p class="entry-desc">The trial's spatial covariance. Its diagonal is the power in each channel and its off-diagonal entries are how channels co-vary. It is symmetric positive semidefinite, and positive definite (SPD) once \(T\ge C\) and the rows are independent. Imagined movement shows up as a power change over the motor areas, so it lives in \(\Sigma\).</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(A\in GL(C)\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">mixing</span></div>
+    <p class="entry-desc">Each electrode hears a linear mix of underlying brain sources \(S\) (<em>volume conduction</em>): \(X = AS\), with \(A\) an unknown invertible mixing matrix, different for every head and electrode placement. Covariances then transform by <em>congruence</em>:</p>
+  </div>
+  $$\Sigma_X=\tfrac1T ASS^{\top}\!A^{\top}=A\,\Sigma_S\,A^{\top}.$$
+  <p>So the useful information is in \(\Sigma_S\), but we only ever see it through an unknown congruence. Keep that in mind.</p>
+
+  <h3 class="sub">Shrinkage LDA: fix the spectrum before you invert it</h3>
+
+  <p>LDA (linear discriminant analysis) takes a feature vector \(f\in\mathbb R^p\) per trial, for example the log-power of a few filtered channels, and assigns a class by the sign of \(w^{\top}f+b\), where \(\mu_1,\mu_2\) are the two class means, \(S\) is the pooled within-class sample covariance, and</p>
+  $$w=S^{-1}(\mu_1-\mu_2).$$
+  <p>With \(n\) training trials and \(p\) not much smaller than \(n\), \(S\)'s eigenvalues are systematically too spread out: the largest are overestimated and the smallest underestimated, possibly to 0. \(S^{-1}\) weights each eigendirection by \(1/\ell_i\), so the noisiest directions get the largest weight. Shrinkage blends \(S\) toward a multiple of the identity, where \(\nu=\operatorname{tr}(S)/p\) is the average eigenvalue and \(\lambda\in[0,1]\):</p>
+  $$\hat\Sigma=(1-\lambda)S+\lambda\nu I,\qquad S=U\Lambda U^{\top}\ \Rightarrow\ \hat\Sigma=U\big((1-\lambda)\Lambda+\lambda\nu I\big)U^{\top}.$$
+  <p>The eigenvectors are untouched; each eigenvalue moves linearly toward the mean \(\nu\). That is all shrinkage does, and it bounds the condition number. \(\lambda\) need not be cross-validated: the Ledoit–Wolf formula estimates the error-minimising \(\lambda\) from the training data in closed form.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>\(S=\begin{pmatrix}1&0.9\\0.9&1\end{pmatrix}\) has eigenvalues \(1.9\) and \(0.1\) (eigenvectors \((1,\pm1)/\sqrt2\)), so condition number 19. Here \(\nu=1\). With \(\lambda=0.5\), \(\hat\Sigma=\begin{pmatrix}1&0.45\\0.45&1\end{pmatrix}\), eigenvalues \(1.45\) and \(0.55\), condition number \(2.6\). The weight on the \((1,-1)\) direction drops from \(1/0.1=10\) to \(1/0.55\approx1.8\).</p>
+  </div>
+
+  <h3 class="sub">Riemannian classification: a distance blind to mixing</h3>
+
+  <p>Riemannian methods skip hand-made features and classify \(\Sigma\) itself. SPD matrices form an open convex cone, not a vector space, and the Frobenius distance \(\|\Sigma_1-\Sigma_2\|_F\) ignores that. The usual choice is the <em>affine-invariant</em> distance:</p>
+  $$\delta_R(\Sigma_1,\Sigma_2)=\big\|\log\!\big(\Sigma_1^{-1/2}\Sigma_2\Sigma_1^{-1/2}\big)\big\|_F=\Big(\sum_{i=1}^{C}\ln^2\lambda_i\Big)^{1/2},$$
+  <p>where \(\lambda_1,\dots,\lambda_C>0\) are the eigenvalues of \(\Sigma_1^{-1}\Sigma_2\), equivalently the generalized eigenvalues of \(\Sigma_2v=\lambda\Sigma_1v\). \(\log\) is the matrix logarithm. It measures how many “factors of \(e\)” the second ellipsoid is stretched relative to the first, direction by direction.</p>
+
+  <div class="callout">
+    <span class="callout-label">The spectral fact doing the work: invariance under congruence</span>
+    <p>For any invertible \(A\),</p>
+    $$(A\Sigma_1A^{\top})^{-1}(A\Sigma_2A^{\top})=A^{-\top}\,\big(\Sigma_1^{-1}\Sigma_2\big)\,A^{\top},$$
+    <p>which is similar to \(\Sigma_1^{-1}\Sigma_2\), so it has the same eigenvalues and \(\delta_R\) is unchanged. Since the head's mixing acts exactly as a congruence, distances between source covariances equal distances between electrode covariances. The unknown \(A\) drops out. Frobenius distance has no such property.</p>
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>\(\Sigma_1=I,\ \Sigma_2=\operatorname{diag}(4,1)\). Then \(\|\Sigma_2-\Sigma_1\|_F=3\) and \(\delta_R=\sqrt{\ln^2 4+\ln^2 1}=\ln 4\approx1.386\).</p>
+    <p>Mix with \(A=\begin{pmatrix}2&0\\1&1\end{pmatrix}\): \(A\Sigma_1A^{\top}=\begin{pmatrix}4&2\\2&2\end{pmatrix}\), \(A\Sigma_2A^{\top}=\begin{pmatrix}16&8\\8&5\end{pmatrix}\). The Frobenius distance is now \(\big\|\begin{pmatrix}12&6\\6&3\end{pmatrix}\big\|_F=15\), five times larger. \(\delta_R\) is still \(\ln4\).</p>
+  </div>
+
+  <p>Two classifiers follow. <strong>Minimum distance to Riemannian mean (MDM):</strong> for each class \(k\), compute the mean \(\bar\Sigma_k\) that minimises the summed squared distance to that class's training covariances (no closed form for more than two matrices; a short fixed-point iteration finds it), then label a new trial by its nearest mean:</p>
+  $$\bar\Sigma_k=\arg\min_{M\succ0}\sum_{i\in k}\delta_R^2(M,\Sigma_i),\qquad \hat y=\arg\min_k\,\delta_R(\Sigma,\bar\Sigma_k).$$
+  <p><strong>Tangent space:</strong> whiten by the overall mean \(\bar\Sigma\) and take the matrix log, which flattens the cone near \(\bar\Sigma\) into the vector space of symmetric matrices:</p>
+  $$s=\operatorname{upper}\!\Big(\log\big(\bar\Sigma^{-1/2}\,\Sigma\,\bar\Sigma^{-1/2}\big)\Big)\in\mathbb R^{C(C+1)/2},$$
+  <p>where “upper” stacks the upper triangle, with off-diagonals scaled by \(\sqrt2\) so that Euclidean norms of \(s\) match \(\delta_R\) to \(\bar\Sigma\). Any linear classifier, such as shrinkage LDA, then runs on \(s\).</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive 1<b>Mixing vs. two distances</b></p>
+
+  <p>Two channels, so every covariance is a 2×2 SPD matrix, drawn as its ellipse \(\{x:\ x^{\top}\Sigma^{-1}x=1\}\). The class means are \(\bar\Sigma_L=\operatorname{diag}(4,1)\) (solid) and \(\bar\Sigma_R=\operatorname{diag}(1,4)\) (dashed). A new trial \(\Sigma=\operatorname{diag}(2,\,0.5)\) (hatched) truly belongs to class L. The sliders apply a mixing \(A=\begin{pmatrix}g&0\\m&1\end{pmatrix}\) to all three: \(g\) is the gain of electrode 1, and \(m\) is how much of channel 1 leaks into channel 2.</p>
+  <p><strong>Try:</strong> raise the gain from 1 to 4, then add leak. <strong>Notice:</strong> past \(g\approx1.4\) the Frobenius distance calls the trial class R, which is wrong; the Riemannian distances never change at all. Changing an electrode's gain shouldn't change what the brain did.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="gk">gain g = <output id="gv" for="gk">1.00</output></label>
+      <input id="gk" type="range" min="25" max="400" value="100" step="5">
+    </div>
+    <div class="dial">
+      <label for="mk">leak m = <output id="mv" for="mk">0.00</output></label>
+      <input id="mk" type="range" min="-100" max="100" value="0" step="5">
+    </div>
+    <figure><canvas id="cE" width="640" height="360"></canvas>
+      <figcaption>solid: class L mean &middot; dashed: class R mean &middot; hatched: the new trial</figcaption></figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">Frobenius: to L / to R</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="eD">–</span></div>
+      <div class="entry"><span class="entry-name">Frobenius says</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="eY">–</span></div>
+      <div class="entry"><span class="entry-name">Riemannian: to L / to R</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="rD">–</span></div>
+      <div class="entry"><span class="entry-name">Riemannian says</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="rY">–</span></div>
+    </div>
+  </div>
+
+  <p class="regime" style="margin-top:2.6rem">Interactive 2<b>Shrinking a sample covariance</b></p>
+  <p>Ten channels with a known true covariance whose eigenvalues run from 3 down to 0.2 (the short ticks). We estimate it from \(T\) samples. The bars are the eigenvalues of the estimate after shrinkage by \(\lambda\), sorted; the outlines are the raw, unshrunk ones.</p>
+  <p><strong>Try:</strong> set \(T=12\) and \(\lambda=0\), then raise \(\lambda\). <strong>Notice:</strong> the raw spectrum is wider than the truth at both ends, with the smallest eigenvalue near 0 and a huge condition number. Shrinkage pulls the bars toward the average; the error against the truth falls, then rises again. The Ledoit–Wolf \(\lambda\), computed from the samples alone, usually lands near the bottom. At \(T=200\) the raw estimate is already good and the formula asks for little shrinkage.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="tk">T = <output id="tv" for="tk">12</output></label>
+      <input id="tk" type="range" min="11" max="200" value="12" step="1">
+    </div>
+    <div class="dial">
+      <label for="lk">λ = <output id="lv" for="lk">0.00</output></label>
+      <input id="lk" type="range" min="0" max="100" value="0" step="1">
+    </div>
+    <figure><canvas id="cB" width="640" height="220"></canvas>
+      <figcaption>solid: shrunk eigenvalues &middot; outline: raw &middot; tick: true eigenvalue</figcaption></figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">condition number, raw / shrunk</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="bK">–</span></div>
+      <div class="entry"><span class="entry-name">rel. error vs truth</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="bE">–</span></div>
+      <div class="entry"><span class="entry-name">Ledoit–Wolf λ</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="bL">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Connections<b>Why the geometry wins</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The classic filter uses the same eigenvalues</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">CSP</span></div>
+    <p class="entry-desc">The standard pre-2007 pipeline used <em>common spatial patterns</em> (CSP): find channel weightings \(w\) that maximise one class's power relative to the other, i.e. solve \(\Sigma_1w=\mu\,\Sigma_2w\) for the class-mean covariances, and keep the eigenvectors with the most extreme \(\mu\). Those \(\mu\) are exactly the \(\lambda_i\) inside \(\delta_R(\Sigma_2,\Sigma_1)\). CSP keeps a few extreme directions; the Riemannian distance sums \(\ln^2\) over all of them.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Averaging matrices can inflate them</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">swelling</span></div>
+    <p class="entry-desc">Average \(\operatorname{diag}(4,\tfrac14)\) and \(\operatorname{diag}(\tfrac14,4)\), both of determinant 1. The entrywise mean is \(\operatorname{diag}(2.125,2.125)\), determinant about 4.5: a class mean with far more power than any of its members. The Riemannian mean is \(I\), determinant 1. Here it is just the entrywise geometric mean of the diagonals, and in general the determinant of the Riemannian mean is the geometric mean of the determinants.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Unlabelled adaptation, for free</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">re-centring</span></div>
+    <p class="entry-desc">The abstract's surprise is that adapting <em>without labels</em> already helps. The invariance shows one simple way it can: take a new session's covariances, compute their mean \(M\) without any labels, and map \(\Sigma\mapsto M^{-1/2}\Sigma M^{-1/2}\). That is a congruence, so it preserves all distances within the session, but it moves the session's centre to \(I\). Sessions and users drifting apart then line up on a common origin.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Why deep nets hadn't won</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">tens of trials</span></div>
+    <p class="entry-desc">A calibration session yields a few dozen trials per class. MDM has one SPD mean per class to estimate and builds in the invariance; a network must learn its own invariances from the same handful of examples. That gap, more than any flaw in deep learning, is the likely reason for the abstract's verdict.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>The head mixes brain sources by an unknown invertible matrix, which acts on covariance matrices as a congruence; the eigenvalues of \(\Sigma_1^{-1}\Sigma_2\) survive every congruence, so the Riemannian classifiers, which measure distance with those eigenvalues alone, never have to learn the mixing, and that is a big part of why they reached the state of the art.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>A review of classification algorithms for EEG-based brain–computer interfaces: a 10 year update</strong>, by Fabien Lotte, Laurent Bougrain, Andrzej Cichocki, Maureen Clerc, Marco Congedo, Alain Rakotomamonjy and Florian Yger, <em>Journal of Neural Engineering</em> 15(3), 2018.
+  <a href="https://doi.org/10.1088/1741-2552/aab2f2">doi.org/10.1088/1741-2552/aab2f2</a></p>
+  <p class="signoff">No PDF was available, and the metadata record carried no abstract (the publisher withheld it). The findings above follow the paper's published abstract, which gives no numbers. The equations and examples are the standard forms of the methods it names, not transcribed from the paper. Both interactives use synthetic matrices.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3";
+
+  function hatchPattern(ctx) {
+    var t = document.createElement("canvas");
+    t.width = 7; t.height = 7;
+    var h = t.getContext("2d");
+    h.strokeStyle = INK; h.lineWidth = 1.2;
+    h.beginPath();
+    h.moveTo(-1, 1); h.lineTo(1, -1);
+    h.moveTo(0, 7); h.lineTo(7, 0);
+    h.moveTo(6, 8); h.lineTo(8, 6);
+    h.stroke();
+    return ctx.createPattern(t, "repeat");
+  }
+
+  /* ============ Interactive 1: congruence vs two distances ============ */
+  // 2x2 symmetric matrices stored as [a, b, c] = [[a,b],[b,c]].
+  var CL = [4, 0, 1], CR = [1, 0, 4], TR = [2, 0, 0.5];
+
+  function congr(S, g, m) {
+    // A = [[g,0],[m,1]];  A S A^T
+    var a = S[0], b = S[1], c = S[2];
+    var r00 = g * g * a;
+    var r01 = g * (m * a + b);
+    var r11 = m * m * a + 2 * m * b + c;
+    return [r00, r01, r11];
+  }
+  function frob(P, Q) {
+    var d0 = P[0] - Q[0], d1 = P[1] - Q[1], d2 = P[2] - Q[2];
+    return Math.sqrt(d0 * d0 + 2 * d1 * d1 + d2 * d2);
+  }
+  function riem(P, Q) {
+    // eigenvalues of P^{-1} Q via trace and determinant
+    var detP = P[0] * P[2] - P[1] * P[1];
+    var i0 = P[2] / detP, i1 = -P[1] / detP, i2 = P[0] / detP;
+    var m00 = i0 * Q[0] + i1 * Q[1], m11 = i1 * Q[1] + i2 * Q[2];
+    var tr = m00 + m11;
+    var det = (Q[0] * Q[2] - Q[1] * Q[1]) / detP;
+    var disc = Math.sqrt(Math.max(0, tr * tr / 4 - det));
+    var l1 = tr / 2 + disc, l2 = tr / 2 - disc;
+    var a = Math.log(l1), b = Math.log(l2);
+    return Math.sqrt(a * a + b * b);
+  }
+  function chol(S) {
+    var l11 = Math.sqrt(S[0]), l21 = S[1] / l11, l22 = Math.sqrt(Math.max(1e-12, S[2] - l21 * l21));
+    return [l11, l21, l22];
+  }
+
+  var cE = document.getElementById("cE");
+  var gk = document.getElementById("gk"), mk = document.getElementById("mk");
+  var patE = hatchPattern(cE.getContext("2d"));
+
+  function ellipsePath(ctx, S, cx, cy, sc) {
+    var L = chol(S);
+    ctx.beginPath();
+    for (var k = 0; k <= 96; k++) {
+      var t = 2 * Math.PI * k / 96, u = Math.cos(t), v = Math.sin(t);
+      var x = L[0] * u, y = L[1] * u + L[2] * v;
+      var px = cx + sc * x, py = cy - sc * y;
+      if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+  }
+
+  function updateE() {
+    var g = +gk.value / 100, m = +mk.value / 100;
+    document.getElementById("gv").textContent = g.toFixed(2);
+    document.getElementById("mv").textContent = m.toFixed(2);
+    var L = congr(CL, g, m), R = congr(CR, g, m), X = congr(TR, g, m);
+
+    var ctx = cE.getContext("2d"), W = cE.width, H = cE.height, cx = W / 2, cy = H / 2;
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+    var ext = 0;
+    [L, R, X].forEach(function (S) { ext = Math.max(ext, Math.sqrt(S[0]) * H / W * 1.0, Math.sqrt(S[2])); });
+    var sc = (H / 2 - 14) / ext;
+    // axes
+    ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
+    ctx.beginPath(); ctx.moveTo(10, cy + .5); ctx.lineTo(W - 10, cy + .5); ctx.moveTo(cx + .5, 8); ctx.lineTo(cx + .5, H - 8); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = INK; ctx.font = "13px Oswald, sans-serif";
+    ctx.fillText("CHANNEL 1", W - 84, cy - 8);
+    ctx.fillText("CHANNEL 2", cx + 8, 20);
+    // trial: hatched
+    ellipsePath(ctx, X, cx, cy, sc);
+    ctx.fillStyle = patE; ctx.fill();
+    ctx.lineWidth = 1.5; ctx.stroke();
+    // class L: solid
+    ellipsePath(ctx, L, cx, cy, sc);
+    ctx.lineWidth = 2.5; ctx.stroke();
+    // class R: dashed
+    ctx.setLineDash([7, 6]);
+    ellipsePath(ctx, R, cx, cy, sc);
+    ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.setLineDash([]);
+
+    var eL = frob(X, L), eR = frob(X, R), rL = riem(L, X), rR = riem(R, X);
+    document.getElementById("eD").textContent = eL.toFixed(2) + " / " + eR.toFixed(2);
+    document.getElementById("eY").textContent = eL < eR ? "class L ✓" : "class R ✗";
+    document.getElementById("rD").textContent = rL.toFixed(3) + " / " + rR.toFixed(3);
+    document.getElementById("rY").textContent = rL < rR ? "class L ✓" : "class R ✗";
+  }
+  gk.addEventListener("input", updateE);
+  mk.addEventListener("input", updateE);
+  updateE();
+
+  /* ============ Interactive 2: shrinkage of a sample covariance ============ */
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  var rand = mulberry32(20180311);
+  function gauss() {
+    var u = 0; while (u === 0) u = rand();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rand());
+  }
+
+  var C = 10, TMAX = 200;
+  var TRUE = [3, 2.2, 1.6, 1.2, 1, 0.8, 0.6, 0.45, 0.3, 0.2];
+  // Random orthogonal basis Q (Gram-Schmidt) so the truth is not axis-aligned.
+  var Q = [], i, j, k;
+  for (i = 0; i < C; i++) {
+    var v = [];
+    for (j = 0; j < C; j++) v.push(gauss());
+    for (k = 0; k < i; k++) {
+      var d = 0; for (j = 0; j < C; j++) d += v[j] * Q[k][j];
+      for (j = 0; j < C; j++) v[j] -= d * Q[k][j];
+    }
+    var n = 0; for (j = 0; j < C; j++) n += v[j] * v[j];
+    n = Math.sqrt(n);
+    Q.push(v.map(function (x) { return x / n; }));
+  }
+  // True covariance Sigma = sum_i TRUE_i q_i q_i^T
+  var SIG = [];
+  for (i = 0; i < C; i++) { SIG.push([]); for (j = 0; j < C; j++) { var s = 0; for (k = 0; k < C; k++) s += TRUE[k] * Q[k][i] * Q[k][j]; SIG[i].push(s); } }
+  var normSig = 0;
+  for (i = 0; i < C; i++) for (j = 0; j < C; j++) normSig += SIG[i][j] * SIG[i][j];
+  normSig = Math.sqrt(normSig);
+  // Samples x_t = sum_i sqrt(TRUE_i) z_i q_i
+  var SAMP = [];
+  for (var t = 0; t < TMAX; t++) {
+    var x = []; for (j = 0; j < C; j++) x.push(0);
+    for (k = 0; k < C; k++) { var z = Math.sqrt(TRUE[k]) * gauss(); for (j = 0; j < C; j++) x[j] += z * Q[k][j]; }
+    SAMP.push(x);
+  }
+
+  function symEig(A0) {
+    var n = A0.length, a = A0.map(function (r) { return r.slice(); }), p, q, r;
+    for (var sweep = 0; sweep < 60; sweep++) {
+      var off = 0;
+      for (p = 0; p < n; p++) for (q = p + 1; q < n; q++) off += a[p][q] * a[p][q];
+      if (off < 1e-22) break;
+      for (p = 0; p < n - 1; p++) for (q = p + 1; q < n; q++) {
+        if (Math.abs(a[p][q]) < 1e-15) continue;
+        var th = (a[q][q] - a[p][p]) / (2 * a[p][q]);
+        var tt = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th * th + 1));
+        var c = 1 / Math.sqrt(tt * tt + 1), s = tt * c, x1, x2;
+        for (r = 0; r < n; r++) { x1 = a[r][p]; x2 = a[r][q]; a[r][p] = c * x1 - s * x2; a[r][q] = s * x1 + c * x2; }
+        for (r = 0; r < n; r++) { x1 = a[p][r]; x2 = a[q][r]; a[p][r] = c * x1 - s * x2; a[q][r] = s * x1 + c * x2; }
+      }
+    }
+    var ev = []; for (p = 0; p < n; p++) ev.push(a[p][p]);
+    return ev.sort(function (u, w) { return w - u; });
+  }
+
+  var cache = {};
+  function stats(T) {
+    if (cache[T]) return cache[T];
+    var S = [];
+    for (i = 0; i < C; i++) { S.push([]); for (j = 0; j < C; j++) S[i].push(0); }
+    for (var t2 = 0; t2 < T; t2++) { var x2 = SAMP[t2]; for (i = 0; i < C; i++) for (j = 0; j < C; j++) S[i][j] += x2[i] * x2[j] / T; }
+    var nu = 0; for (i = 0; i < C; i++) nu += S[i][i]; nu /= C;
+    // Ledoit-Wolf
+    var d2 = 0;
+    for (i = 0; i < C; i++) for (j = 0; j < C; j++) { var e = S[i][j] - (i === j ? nu : 0); d2 += e * e; }
+    var b2 = 0;
+    for (t2 = 0; t2 < T; t2++) {
+      var x3 = SAMP[t2], acc = 0;
+      for (i = 0; i < C; i++) for (j = 0; j < C; j++) { var f = x3[i] * x3[j] - S[i][j]; acc += f * f; }
+      b2 += acc;
+    }
+    b2 /= T * T;
+    var lw = d2 > 0 ? Math.min(b2, d2) / d2 : 1;
+    var out = { S: S, nu: nu, ev: symEig(S), lw: lw };
+    cache[T] = out;
+    return out;
+  }
+
+  var cB = document.getElementById("cB");
+  var tk = document.getElementById("tk"), lk = document.getElementById("lk");
+
+  function updateB() {
+    var T = +tk.value, lam = +lk.value / 100;
+    document.getElementById("tv").textContent = T;
+    document.getElementById("lv").textContent = lam.toFixed(2);
+    var st = stats(T);
+    var sh = st.ev.map(function (l) { return (1 - lam) * l + lam * st.nu; });
+
+    var ctx = cB.getContext("2d"), W = cB.width, H = cB.height, pad = 14;
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+    var top = Math.max(st.ev[0], TRUE[0]) * 1.05;
+    var bw = (W - 2 * pad) / C, base = H - pad;
+    ctx.strokeStyle = INK; ctx.fillStyle = INK; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(pad, base + .5); ctx.lineTo(W - pad, base + .5); ctx.stroke();
+    for (k = 0; k < C; k++) {
+      var x0 = pad + k * bw;
+      var hr = (H - 2 * pad) * Math.max(0, st.ev[k]) / top;
+      var hs = (H - 2 * pad) * Math.max(0, sh[k]) / top;
+      var ht = (H - 2 * pad) * TRUE[k] / top;
+      // raw: outline (wide)
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x0 + bw * 0.12 + .75, base - hr + .75, bw * 0.76 - 1.5, Math.max(0, hr - 1.5));
+      // shrunk: solid (narrow)
+      ctx.fillRect(x0 + bw * 0.32, base - hs, bw * 0.36, Math.max(1, hs));
+      // true eigenvalue tick
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(x0 + bw * 0.02, base - ht); ctx.lineTo(x0 + bw * 0.24, base - ht);
+      ctx.moveTo(x0 + bw * 0.76, base - ht); ctx.lineTo(x0 + bw * 0.98, base - ht); ctx.stroke();
+    }
+
+    var condR = st.ev[C - 1] > 1e-9 ? st.ev[0] / st.ev[C - 1] : Infinity;
+    var condS = sh[0] / sh[C - 1];
+    document.getElementById("bK").textContent = (condR > 9999 ? "> 9999" : condR.toFixed(1)) + " / " + condS.toFixed(1);
+    var err = 0;
+    for (i = 0; i < C; i++) for (j = 0; j < C; j++) {
+      var e2 = (1 - lam) * st.S[i][j] + (i === j ? lam * st.nu : 0) - SIG[i][j];
+      err += e2 * e2;
+    }
+    document.getElementById("bE").textContent = (Math.sqrt(err) / normSig).toFixed(3);
+    document.getElementById("bL").textContent = st.lw.toFixed(2);
+  }
+  tk.addEventListener("input", updateB);
+  lk.addEventListener("input", updateB);
+  updateB();
+})();
+</script>
+</body>
+</html>

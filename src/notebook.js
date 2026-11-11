@@ -86,6 +86,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-03-a-survey-on-image-data-augmentation-for-deep-learn.html",
         date: "2026-11-03",
     },
+    {
+        title: "Classifying brain signals for brain–computer interfaces",
+        blurb: "A survey of ten years of methods for reading a user's intent from scalp brain recordings finds that classifiers which keep adapting during use, and ones that compare recordings through the geometry of their channel-to-channel covariance, work best, while deep learning had not yet beaten them.",
+        tags: ["paper of the day", "brain-computer interfaces"],
+        file: "learning/paper-2026-11-11-a-review-of-classification-algorithms-for-eeg-base.html",
+        date: "2026-11-11",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
