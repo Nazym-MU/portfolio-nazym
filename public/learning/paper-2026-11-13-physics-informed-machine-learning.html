@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics-Informed Machine Learning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.4rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex, .choices .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:4.2em;text-align:left;font-variant-numeric:tabular-nums}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.choices{
+  border:none;
+  display:flex;
+  flex-wrap:wrap;
+  gap:.4rem 1.2rem;
+  margin:.2rem 0 1rem;
+}
+.choices legend{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  margin-bottom:.4rem;
+  width:100%;
+}
+.choices label{
+  display:flex;
+  align-items:center;
+  gap:.45rem;
+  cursor:pointer;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.82rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.choices input[type=radio]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:15px;height:15px;
+  border:1.5px solid var(--ink);
+  border-radius:50%;
+  background:var(--paper);
+  display:grid;
+  place-content:center;
+  flex:none;
+}
+.choices input[type=radio]::before{
+  content:"";
+  width:7px;height:7px;
+  border-radius:50%;
+  background:var(--ink);
+  transform:scale(0);
+}
+.choices input[type=radio]:checked::before{transform:scale(1)}
+.choices input[type=radio]:focus-visible{outline:1px dotted var(--ink);outline-offset:3px}
+.bench figure{margin:0 0 1rem}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin:.6rem auto 0;
+  max-width:var(--measure);
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- a smooth hump carrying a fast wiggle: sin(pi x) + 0.15 sin(8 pi x), silhouette -->
+    <svg class="strip" viewBox="0 0 420 60" fill="currentColor" aria-hidden="true">
+      <path d="M0 60 L21 46.8 L42 42.5 L63 43.8 L84 40.3 L105 28.7 L126 17.9 L147 16.7 L168 21.9 L189 22.7 L210 15.8 L231 10 L252 14.1 L273 24.5 L294 30.6 L315 28.7 L336 27.7 L357 36 L378 50.2 L399 59.4 L420 60 Z"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; Nature Reviews Physics 2021 &middot; ~9,700 citations</p>
+      <h1>Physics-Informed Learning</h1>
+    </div>
+    <p class="tagline">Physics-informed machine learning</p>
+    <p class="tagline-hand">G. Karniadakis, I. Kevrekidis, Lu Lu et al. &middot; 2021 &middot;
+    <a href="https://doi.org/10.1038/s42254-021-00314-5">doi:10.1038/s42254-021-00314-5</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>A review of how to train machine-learning models, mostly neural networks, so that they obey known physical laws written as differential equations while also fitting whatever measurements exist.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: why the physics loss is slow</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">data or equations, rarely both</span></div>
+    <p class="entry-desc">Physics is usually simulated by solving a <em>partial differential equation</em> (PDE): an equation linking a field, such as temperature \(u(x,t)\) at position \(x\) and time \(t\), to its rates of change in space and time. Classical solvers chop the domain into a mesh and solve a huge linear system. They are excellent when the equation, coefficients and boundary values are all known. They are awkward when part of the information comes as scattered, noisy measurements, when the geometry is hard to mesh, when there are many dimensions, or for <em>inverse problems</em>: recovering an unknown coefficient or source from observations of the solution.</p>
+    <p class="entry-desc">Plain machine learning goes the other way: it fits data but needs a lot of it, and it knows nothing about conservation laws. Scientific data is usually scarce.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">the equation is training data</span></div>
+    <p class="entry-desc">Let a neural network \(u_\theta(x,t)\), with weights \(\theta\), stand for the unknown field. Automatic differentiation gives its exact derivatives, so at thousands of randomly scattered <em>collocation points</em> you can measure how badly it violates the PDE. Train on a sum of three penalties: misfit to measurements, PDE violation at the collocation points, and violation of the boundary and initial conditions. This is a <em>physics-informed neural network</em> (PINN). No mesh is needed, and an unknown coefficient in the equation can simply become one more trainable number.</p>
+    <p class="entry-desc">The review sorts ways of putting physics into a model into three kinds of bias: <strong>observational</strong> (data that already carries the physics, such as simulations or symmetry-augmented samples), <strong>inductive</strong> (architectures that satisfy a law exactly, such as built-in conservation or symmetry), and <strong>learning</strong> (penalties in the loss, as in PINNs).</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">a review, not a benchmark</span></div>
+    <p class="entry-desc">There is no single headline number. The review's case is that one formulation handles forward problems (solve the PDE), inverse problems (find hidden parameters or missing physics) and high-dimensional problems, and that it degrades gracefully with sparse, noisy data. It is equally clear about limits. Training is slow and often fails on stiff, multiscale or high-frequency solutions. For a well-posed forward problem a classical solver is usually still faster and more accurate. The theory is immature. The next section shows the linear algebra behind the training difficulty.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>A Gram matrix and an operator's spectrum</b></p>
+
+  <h3 class="sub">The setup</h3>
+  <p>Write the PDE as \(\mathcal N[u]=f\) inside a domain \(\Omega\) and \(\mathcal B[u]=g\) on its boundary \(\partial\Omega\). Here \(\mathcal N\) is a differential operator (for heat flow, \(\mathcal N[u]=u_t-\nu u_{xx}\), with \(\nu\) the diffusivity), \(f\) is a known source, and \(\mathcal B\) says what happens at the edge (for example \(\mathcal B[u]=u\), fixing the value). You also have \(N_d\) measurements \(u_i\) at points \(x_i\). The PINN loss is</p>
+  $$\mathcal L(\theta)=\frac{1}{2}\sum_{i=1}^{N_d}\big(u_\theta(x_i)-u_i\big)^2+\frac{w_r}{2}\sum_{j=1}^{N_r}\big(\mathcal N[u_\theta](x_j)-f(x_j)\big)^2+\frac{w_b}{2}\sum_{\ell=1}^{N_b}\big(\mathcal B[u_\theta](x_\ell)-g(x_\ell)\big)^2 ,$$
+  <p>where the \(x_j\) are \(N_r\) collocation points inside \(\Omega\), the \(x_\ell\) are \(N_b\) points on the boundary, and \(w_r, w_b\) are weights you choose.</p>
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 190" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1.2"/>
+        </pattern>
+      </defs>
+      <!-- domain -->
+      <rect x="20" y="20" width="150" height="140"/>
+      <!-- collocation dots -->
+      <g fill="currentColor" stroke="none">
+        <circle cx="40" cy="44" r="2.4"/><circle cx="71" cy="36" r="2.4"/><circle cx="118" cy="40" r="2.4"/><circle cx="150" cy="52" r="2.4"/>
+        <circle cx="52" cy="78" r="2.4"/><circle cx="96" cy="70" r="2.4"/><circle cx="134" cy="88" r="2.4"/><circle cx="36" cy="112" r="2.4"/>
+        <circle cx="80" cy="104" r="2.4"/><circle cx="112" cy="122" r="2.4"/><circle cx="152" cy="130" r="2.4"/><circle cx="58" cy="140" r="2.4"/>
+        <circle cx="100" cy="146" r="2.4"/><circle cx="140" cy="112" r="2.4"/>
+      </g>
+      <!-- boundary crosses -->
+      <g stroke-width="1.6">
+        <path d="M46 16l8 8M54 16l-8 8M106 16l8 8M114 16l-8 8M16 66l8 8M24 66l-8 8M16 126l8 8M24 126l-8 8M166 76l8 8M174 76l-8 8M166 136l8 8M174 136l-8 8M76 156l8 8M84 156l-8 8M136 156l8 8M144 156l-8 8"/>
+      </g>
+      <!-- data circles, hatched -->
+      <circle cx="66" cy="58" r="6" fill="url(#hatch)"/><circle cx="124" cy="66" r="6" fill="url(#hatch)"/><circle cx="92" cy="128" r="6" fill="url(#hatch)"/>
+      <text x="95" y="182" font-family="Oswald, sans-serif" font-size="12" letter-spacing="2" text-anchor="middle" fill="currentColor" stroke="none">DOMAIN &#937;, NO MESH</text>
+      <!-- legend -->
+      <circle cx="214" cy="46" r="2.6" fill="currentColor" stroke="none"/>
+      <text x="230" y="50" font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">COLLOCATION: PDE RESIDUAL</text>
+      <path d="M209 80l9 9M218 80l-9 9" stroke-width="1.6"/>
+      <text x="230" y="89" font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">BOUNDARY: CONDITION RESIDUAL</text>
+      <circle cx="214" cy="124" r="6" fill="url(#hatch)"/>
+      <text x="230" y="128" font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">SENSOR: DATA MISFIT</text>
+      <path d="M230 150h220" stroke-width="1"/>
+      <text x="230" y="170" font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">ALL THREE &#8594; ONE RESIDUAL VECTOR r</text>
+    </svg>
+    <figcaption>every marked point contributes one entry to a single residual vector; training drives it to zero.</figcaption>
+  </figure>
+
+  <h3 class="sub">The objects</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(r(\theta)\in\mathbb R^{N}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(N=N_d+N_r+N_b\)</span></div>
+    <p class="entry-desc">All residuals stacked: data misfits, then PDE residuals, then boundary residuals (each scaled by the square root of its weight). The loss is just \(\tfrac12\|r\|^2\).</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(J=\partial r/\partial\theta\in\mathbb R^{N\times P}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">dense, tall or wide</span></div>
+    <p class="entry-desc">The Jacobian, with \(P\) the number of weights. Row \(j\) is the gradient of residual \(j\) with respect to the weights. For a PDE row with linear \(\mathcal N\), that row is \(\mathcal N\) applied to the network's gradient: \(\nabla_\theta\,\mathcal N[u_\theta](x_j)=\mathcal N\big[\nabla_\theta u_\theta\big](x_j)\).</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(K=JJ^{\top}\in\mathbb R^{N\times N}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">symmetric PSD</span></div>
+    <p class="entry-desc">The Gram matrix of those gradients, called the <em>neural tangent kernel</em> (NTK) for networks. Entry \(K_{jj'}\) is how much a step that reduces residual \(j\) also moves residual \(j'\). It inherits the block structure of \(r\), and for linear \(\mathcal N\) the PDE block is the data kernel with \(\mathcal N\) applied in both arguments: \(K_{rr}(x,x')=\mathcal N_x\mathcal N_{x'}K_{uu}(x,x')\).</p>
+  </div>
+
+  <p>Train by gradient flow, \(\dot\theta=-\nabla\mathcal L=-J^{\top}r\). By the chain rule \(\dot r=J\dot\theta\), so</p>
+  $$\dot r=-K\,r,\qquad K=Q\Lambda Q^{\top}\ \Longrightarrow\ r(t)=\sum_i e^{-\lambda_i t}\,\big(q_i^{\top}r(0)\big)\,q_i .$$
+  <p>For a linear model \(K\) is constant and this is exact; for very wide networks it holds approximately. Each eigenvector \(q_i\) of \(K\) is a pattern of residuals, and it dies at rate \(\lambda_i\). With discrete steps of size \(\eta\), stability needs \(\eta&lt;2/\lambda_{\max}\), so the slowest pattern takes on the order of \(\kappa=\lambda_{\max}/\lambda_{\min}\) steps. The condition number of \(K\) sets the training time. (\(J^{\top}J\), the Gauss–Newton approximation to the Hessian in weight space, has the same nonzero eigenvalues.)</p>
+
+  <div class="callout">
+    <span class="callout-label">The spectral fact that does the work: a differential operator scales mode k by k² and the loss squares it</span>
+    <p>Take the simplest PDE: \(u''=f\) on \((0,1)\) with \(u(0)=u(1)=0\). With these boundary conditions, \(\tfrac{d^2}{dx^2}\) is a symmetric (self-adjoint) operator with eigenfunctions and eigenvalues</p>
+    $$\frac{d^2}{dx^2}\sin(k\pi x)=-(k\pi)^2\sin(k\pi x),\qquad k=1,2,\dots$$
+    <p>Use these as features: \(u_\theta=\sum_{k=1}^{m}\theta_k\sin(k\pi x)\), and let \(\theta^\star\) be the true coefficients. Using \(\int_0^1\sin^2(k\pi x)\,dx=\tfrac12\) and orthogonality, the continuous physics loss diagonalises:</p>
+    $$\tfrac12\!\int_0^1\!\big(u_\theta''-f\big)^2dx=\tfrac12(\theta-\theta^\star)^{\top}H(\theta-\theta^\star),\qquad H=\operatorname{diag}\!\Big(\tfrac{(k\pi)^4}{2}\Big)_{k=1}^{m},\qquad \kappa(H)=m^4 .$$
+    <p>Fitting \(u\) directly to data gives \(H=\tfrac12 I\) with \(\kappa=1\). Going through the operator multiplies mode \(k\) by \(k^2\), and the squared loss turns that into \(k^4\). So the PINN loss is as ill-conditioned as \(\mathcal N^*\mathcal N\), with \(\mathcal N^*\) the adjoint, and a second-order operator makes that bad fast.</p>
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>Two modes, \(m=2\): \(H=\operatorname{diag}(\pi^4/2,\ 8\pi^4)\approx\operatorname{diag}(48.7,\ 779.3)\), so \(\kappa=16\).</p>
+    <p>Gradient descent on error \(e=\theta-\theta^\star\) gives \(e\mapsto(I-\eta H)e\). The largest stable-and-fastest choice is \(\eta=1/779.3\). Then mode 2's error is wiped out in one step, but mode 1's shrinks only by a factor \(1-48.7/779.3=0.9375\) per step. Getting it below 1% takes \(\lceil\ln 0.01/\ln 0.9375\rceil=72\) steps.</p>
+    <p>With \(m=8\) modes, \(\kappa=8^4=4096\) and the same target takes about 18,900 steps. The smoothest part of the solution, usually the part you care about most, is learned last.</p>
+  </div>
+
+  <p>The same arithmetic explains the other well-known PINN pathology: <strong>imbalance between blocks</strong>. The PDE block \(K_{rr}\) carries those \(k^4\) factors and the boundary block \(K_{bb}\) does not, so \(\operatorname{tr}K_{rr}\gg\operatorname{tr}K_{bb}\). Gradient descent then satisfies the equation in the interior long before it respects the boundary conditions, and without them the solution is not unique. A common remedy in this line of work is to set the weights so the blocks have comparable traces, e.g. \(w_b\propto\operatorname{tr}K_{rr}/\operatorname{tr}K_{bb}\). Rescaling a block is a crude diagonal preconditioner of \(K\).</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It: Why the Physics Loss Is Slow</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive<b>Gradient descent, mode by mode</b></p>
+
+  <p>The setting is the callout's toy: \(u''=f\) on \((0,1)\), zero at both ends, with the eight sine modes \(k=1,\dots,8\) as features. The true solution (dashed) is a broad hump plus smaller wiggles at \(k=3, 5, 8\). Gradient descent on the physics loss starts from \(u=0\) with the largest stable step. The slider sets the number of steps on a log scale. The three options choose a <em>preconditioner</em>, a fixed diagonal rescaling of each mode's step:</p>
+  <p><strong>Plain:</strong> no rescaling, \(\kappa=4096\). <strong>Divide by \((k\pi)^2\):</strong> undoes one of the two operator factors, \(\kappa=64\). <strong>Divide by \((k\pi)^4\):</strong> undoes both, which is exactly Newton's method here, \(\kappa=1\).</p>
+  <p><strong>Try:</strong> on Plain, drag from 1 step up. <strong>Notice:</strong> the fine wiggles appear almost immediately, but the big hump needs thousands of steps; the bars show mode 1 stuck near full error. Switch to \((k\pi)^2\) and the same accuracy arrives about 64 times sooner. The fix is entirely about the spectrum of \(H\), not the network.</p>
+
+  <div class="bench">
+    <fieldset class="choices">
+      <legend>Preconditioner</legend>
+      <label><input type="radio" name="pc" value="0" checked> Plain</label>
+      <label><input type="radio" name="pc" value="2"> Divide by \((k\pi)^2\)</label>
+      <label><input type="radio" name="pc" value="4"> Divide by \((k\pi)^4\)</label>
+    </fieldset>
+    <div class="dial">
+      <label for="st">steps = <output id="sv" for="st">100</output></label>
+      <input id="st" type="range" min="0" max="50" value="20" step="1">
+    </div>
+    <figure>
+      <canvas id="cU" width="640" height="260"></canvas>
+      <figcaption>dashed: true solution &middot; solid: after this many steps</figcaption>
+    </figure>
+    <figure>
+      <canvas id="cB" width="640" height="170"></canvas>
+      <figcaption>fraction of each mode's error still left (full box = nothing learned yet)</figcaption>
+    </figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">condition number \(\kappa\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lK">–</span></div>
+      <div class="entry"><span class="entry-name">steps until mode 1 is within 1%</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lN">–</span></div>
+      <div class="entry"><span class="entry-name">rel. error in \(u\) now</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lE">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Connections<b>Methods the review surveys</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Physics-informed Gaussian processes are exact linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">block PSD kernel</span></div>
+    <p class="entry-desc">The review covers kernel methods alongside networks. If \(u\) is a Gaussian process (a random function whose values at any finite set of points are jointly Gaussian) with covariance \(k(x,x')\), and \(\mathcal L\) is a <em>linear</em> differential operator, then \(\mathcal Lu\) is Gaussian too, and</p>
+    $$\operatorname{Cov}\begin{pmatrix}u\\ \mathcal Lu\end{pmatrix}=\begin{pmatrix}k & \mathcal L_{x'}k\\ \mathcal L_xk & \mathcal L_x\mathcal L_{x'}k\end{pmatrix}\succeq 0 .$$
+    <p class="entry-desc">Observing \(f=\mathcal Lu\) at some points and \(u\) at others, the prediction is one solve against this block Gram matrix. It is the same \(\mathcal N_x\mathcal N_{x'}\) structure as the NTK's PDE block, without any training.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Operator learning is a rank-p expansion</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">DeepONet</span></div>
+    <p class="entry-desc">Instead of solving one PDE, learn the whole solution map \(G\): input function \(v\) (a source, an initial condition) to solution \(G(v)\). DeepONet, from co-author Lu Lu, writes</p>
+    $$G(v)(y)\approx\sum_{k=1}^{p}b_k(v)\,t_k(y),$$
+    <p class="entry-desc">where a "branch" network reads \(v\) at fixed sensor points and outputs coefficients \(b_k\), and a "trunk" network outputs basis functions \(t_k\) of the location \(y\). That is a learned rank-\(p\) separable expansion. For a linear compact \(G\), the best such expansion is the truncated singular value decomposition, so DeepONet is a nonlinear cousin of truncated SVD and of proper orthogonal decomposition.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Hard constraints delete a whole block</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">inductive bias</span></div>
+    <p class="entry-desc">Write \(u_\theta(x)=x(1-x)\,\mathrm{NN}_\theta(x)\), with \(\mathrm{NN}_\theta\) any network. Now \(u(0)=u(1)=0\) for every \(\theta\): the boundary residual is identically zero, \(K_{bb}\) disappears, and so does the imbalance problem. Exact constraints restrict the search to an affine family; soft penalties only push toward it.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Inverse problems cost one extra parameter</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">same code</span></div>
+    <p class="entry-desc">If the diffusivity \(\nu\) in \(u_t=\nu u_{xx}\) is unknown, append it to \(\theta\) and train on data plus residual as before. Classical inverse solvers need adjoint equations and separate code; here the forward and inverse problems are one loss. That uniformity is the review's strongest selling point.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>A PINN turns "solve this PDE" into least squares on PDE residuals at scattered points. The price is that the loss inherits the spectrum of \(\mathcal N^*\mathcal N\), with condition number growing like \(k^4\) for a second-order operator, so training is a preconditioning problem as much as a learning one.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Physics-informed machine learning</strong>, by G. Karniadakis, I. Kevrekidis, Lu Lu, P. Perdikaris, Sifan Wang and Liu Yang. <em>Nature Reviews Physics</em>, 2021.
+  <a href="https://doi.org/10.1038/s42254-021-00314-5">doi.org/10.1038/s42254-021-00314-5</a> &middot; open-access copy via <a href="https://www.osti.gov/biblio/2282016">OSTI</a></p>
+  <p class="signoff">No PDF was available, and the abstract was missing too: the publisher withheld it from the metadata. This page was written from the title, authors and venue plus the widely known content of this review and the methods it surveys. It quotes no figures from the paper; the citation count is from the metadata. The equations, worked example and interactive are a standard toy (sine modes of u&Prime; = f), not results from the paper.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var M = 8;
+  var C = [1, 0, -0.35, 0, 0.22, 0, 0, 0.15];   // true sine coefficients, k = 1..8
+  var LAM = [], k;
+  for (k = 1; k <= M; k++) LAM.push(Math.pow(k * Math.PI, 4) / 2);
+
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3", SOFT = css("--ink-soft") || "#4a463f";
+
+  var slider = document.getElementById("st");
+  var radios = document.querySelectorAll('input[name="pc"]');
+  var cU = document.getElementById("cU"), cB = document.getElementById("cB");
+
+  function power() {
+    for (var i = 0; i < radios.length; i++) if (radios[i].checked) return +radios[i].value;
+    return 0;
+  }
+  function stepsFrom(s) { return s === 0 ? 0 : Math.round(Math.pow(10, s / 10)); }
+
+  // Per-step contraction of each mode's error: 1 - mu_k / mu_max, mu_k = lam_k / (k pi)^p.
+  function factors(p) {
+    var mu = [], mx = 0, mn = Infinity;
+    for (k = 1; k <= M; k++) {
+      var m = LAM[k - 1] / Math.pow(k * Math.PI, p);
+      mu.push(m); mx = Math.max(mx, m); mn = Math.min(mn, m);
+    }
+    return { f: mu.map(function (m) { return 1 - m / mx; }), kappa: mx / mn };
+  }
+
+  function uAt(coef, x) {
+    var s = 0;
+    for (k = 1; k <= M; k++) s += coef[k - 1] * Math.sin(k * Math.PI * x);
+    return s;
+  }
+
+  var YMAX = 0;
+  for (var t = 0; t <= 400; t++) YMAX = Math.max(YMAX, Math.abs(uAt(C, t / 400)));
+  YMAX *= 1.18;
+
+  function plot(coef) {
+    var ctx = cU.getContext("2d"), W = cU.width, H = cU.height, pad = 16;
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+    var y0 = H / 2;
+    function X(x) { return pad + x * (W - 2 * pad); }
+    function Y(v) { return y0 - v / YMAX * (H / 2 - pad); }
+    // axis
+    ctx.strokeStyle = SOFT; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, y0 + 0.5); ctx.lineTo(W - pad, y0 + 0.5); ctx.stroke();
+    // end pins at u = 0
+    ctx.fillStyle = INK;
+    ctx.beginPath(); ctx.arc(X(0), y0, 4, 0, 2 * Math.PI); ctx.arc(X(1), y0, 4, 0, 2 * Math.PI); ctx.fill();
+    function curve(c, dashed, width) {
+      ctx.save();
+      ctx.strokeStyle = INK; ctx.lineWidth = width;
+      if (dashed) ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      for (var i = 0; i <= 400; i++) {
+        var x = i / 400, px = X(x), py = Y(uAt(c, x));
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+    curve(C, true, 1.6);
+    curve(coef, false, 2.6);
+  }
+
+  function bars(rem) {
+    var ctx = cB.getContext("2d"), W = cB.width, H = cB.height;
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+    var padX = 18, top = 12, bottom = 30, bw = (W - 2 * padX) / M, h = H - top - bottom;
+    ctx.font = "500 15px Oswald, sans-serif";
+    ctx.textAlign = "center";
+    for (k = 0; k < M; k++) {
+      var x = padX + k * bw + bw * 0.2, w = bw * 0.6;
+      ctx.strokeStyle = INK; ctx.lineWidth = 1.5;
+      ctx.strokeRect(x + 0.75, top + 0.75, w - 1.5, h - 1.5);
+      var fh = h * rem[k];
+      ctx.fillStyle = INK;
+      if (fh > 0.5) ctx.fillRect(x, top + h - fh, w, fh);
+      ctx.fillStyle = INK;
+      ctx.fillText("k=" + (k + 1), x + w / 2, H - 9);
+    }
+  }
+
+  function fmt(n) { return n.toLocaleString("en-US"); }
+
+  function update() {
+    var p = power(), n = stepsFrom(+slider.value);
+    var F = factors(p);
+    var rem = F.f.map(function (f) { return n === 0 ? 1 : Math.pow(f, n); });
+    var coef = C.map(function (c, i) { return c * (1 - rem[i]); });
+    document.getElementById("sv").textContent = fmt(n);
+    plot(coef);
+    bars(rem);
+    var num = 0, den = 0;
+    for (k = 0; k < M; k++) { num += Math.pow(C[k] * rem[k], 2); den += C[k] * C[k]; }
+    document.getElementById("lK").textContent = fmt(Math.round(F.kappa));
+    var need = F.kappa <= 1 + 1e-9 ? 1 : Math.ceil(Math.log(0.01) / Math.log(1 - 1 / F.kappa));
+    document.getElementById("lN").textContent = fmt(need);
+    document.getElementById("lE").textContent = Math.sqrt(num / den).toFixed(3);
+  }
+
+  slider.addEventListener("input", update);
+  for (var i = 0; i < radios.length; i++) radios[i].addEventListener("change", update);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+  update();
+})();
+</script>
+</body>
+</html>

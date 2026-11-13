@@ -93,6 +93,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-11-a-review-of-classification-algorithms-for-eeg-base.html",
         date: "2026-11-11",
     },
+    {
+        title: "Physics-informed machine learning",
+        blurb: "A review of training neural networks to obey known physical laws as well as fit measurements, so one method can both simulate a system and recover its unknown parameters from scarce, noisy data.",
+        tags: ["paper of the day", "scientific ml"],
+        file: "learning/paper-2026-11-13-physics-informed-machine-learning.html",
+        date: "2026-11-13",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
