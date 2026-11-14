@@ -100,6 +100,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-13-physics-informed-machine-learning.html",
         date: "2026-11-13",
     },
+    {
+        title: "Quantum machine learning",
+        blurb: "A review of how quantum computers could speed up machine learning by holding a billion-entry data vector in about thirty quantum bits and doing linear algebra on it directly, and of the fine print (loading the data, reading out the answer) that decides whether the speedup survives.",
+        tags: ["paper of the day", "quantum"],
+        file: "learning/paper-2026-11-14-quantum-machine-learning.html",
+        date: "2026-11-14",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));

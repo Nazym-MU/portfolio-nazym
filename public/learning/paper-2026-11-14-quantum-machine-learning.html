@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Machine Learning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.2rem, 7vw, 4.2rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+/* sub-heads inside a section */
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+/* section regime line */
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+/* math inside caps rows must keep its own case */
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+  min-width:5.6em;
+}
+.dial label .katex{text-transform:none;letter-spacing:0}
+.dial output{display:inline-block;min-width:1.4em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.sq{aspect-ratio:1 / 1;max-width:360px;margin:0 auto}
+.bench figure{margin:0 auto}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- doubling bars: each extra qubit doubles the dimension (silhouette) -->
+    <svg class="strip" viewBox="0 0 420 60" fill="currentColor" aria-hidden="true">
+      <rect x="20" y="59" width="40" height="1"/><rect x="72" y="58" width="40" height="2"/>
+      <rect x="124" y="56" width="40" height="4"/><rect x="176" y="52" width="40" height="8"/>
+      <rect x="228" y="45" width="40" height="15"/><rect x="280" y="31" width="40" height="29"/>
+      <rect x="332" y="2" width="40" height="58"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; Nature 2017 &middot; review</p>
+      <h1>Quantum Machine Learning</h1>
+    </div>
+    <p class="tagline">Linear algebra on vectors too large to write down</p>
+    <p class="tagline-hand">Jacob Biamonte, Peter Wittek, Nicola Pancotti et al. &middot; 2017 &middot; Nature &middot; about 3,050 citations &middot;
+    <a href="https://arxiv.org/abs/1611.09347">arXiv:1611.09347</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>This review surveys the quantum algorithms that could speed up machine learning. Nearly all of them are linear algebra routines (solving a linear system, finding the top eigenvectors of a covariance matrix) run on a vector that is stored in the state of a few dozen quantum bits. The paper lays out where the speedups come from and the conditions under which they disappear.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: inverting a matrix, rotating to an answer</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">cost grows with N</span></div>
+    <p class="entry-desc">Much of machine learning is linear algebra on big vectors and matrices: fitting a line by least squares solves a linear system, principal component analysis finds the top eigenvectors of a covariance matrix, and a support vector machine (a classifier that separates two classes with a maximum-margin hyperplane) solves a quadratic problem built from inner products. On an ordinary computer each of these takes time at least proportional to the dimension \(N\) of the data, usually a higher power of it.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(N = 2^n\)</span></div>
+    <p class="entry-desc">A quantum bit, or <em>qubit</em>, is a physical system whose state is a unit vector in \(\mathbb C^2\). The joint state of \(n\) qubits is a unit vector in \(\mathbb C^{2^n}\). So 30 qubits hold a vector with about a billion complex entries. A quantum computer acts on that vector by unitary matrices, and some useful ones (in particular \(e^{iAt}\) for a sparse matrix \(A\)) can be applied in a number of steps that grows like \(\log N\) instead of \(N\).</p>
+    <p class="entry-desc">Quantum machine learning stores the data vector in the qubits' state and does the linear algebra there.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\log N\) or \(\sqrt N\), with conditions</span></div>
+    <p class="entry-desc">The review sorts the known speedups into two kinds. Algorithms built on a quantum linear-system solver (least squares, principal components, support vector machines) can run in time polynomial in \(\log N\), an exponential saving. Algorithms built on quantum search (training a perceptron, sampling for Bayesian inference) need about \(\sqrt N\) steps where a classical search needs \(N\), a quadratic saving.</p>
+    <p class="entry-desc">The exponential ones come with conditions. The data must already be loadable into a quantum state quickly, the matrix must be sparse or low-rank and well-conditioned, and the answer comes out as a quantum state from which you can measure only a few summary numbers, not all \(N\) entries. The paper is frank that if any of these fails, the speedup can vanish, and that hardware large enough to test them did not yet exist.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Spectral theorem, run on hardware</b></p>
+
+  <h3 class="sub">The objects</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(|x\rangle\in\mathbb C^{N}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">unit vector</span></div>
+    <p class="entry-desc">The notation \(|x\rangle\) (a “ket”) means a column vector of unit length; \(\langle x|\) is its conjugate transpose. A data vector \(x=(x_0,\dots,x_{N-1})\) is stored as</p>
+    $$|x\rangle=\frac{1}{\|x\|}\sum_{i=0}^{N-1}x_i\,|i\rangle ,$$
+    <p class="entry-desc">where \(|i\rangle\) is the \(i\)-th standard basis vector. The entries \(x_i/\|x\|\) are called <em>amplitudes</em>. With \(N=2^n\), the space is the tensor product \(\mathbb C^2\otimes\dots\otimes\mathbb C^2\) of \(n\) qubits, and the index \(i\) is read as an \(n\)-bit string. The length \(\|x\|\) is lost and must be kept separately.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(U\in\mathbb C^{N\times N}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">unitary</span></div>
+    <p class="entry-desc">Every step of a quantum computation multiplies the state by a unitary matrix (\(U^\dagger U=I\)), built as a product of small unitaries that each touch one or two qubits. Length is preserved, so the state stays a unit vector. Non-unitary maps, such as \(A^{-1}\), cannot be applied directly. This constraint shapes every algorithm below.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(A=A^\dagger\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">Hermitian, sparse</span></div>
+    <p class="entry-desc">The problem's matrix: \(N\times N\), Hermitian, with at most \(s\) nonzero entries per row (its <em>sparsity</em>) and condition number \(\kappa\), the ratio of its largest to smallest eigenvalue in absolute value. A Hermitian \(A\) gives a unitary \(e^{iAt}\), and when \(A\) is sparse a quantum computer can apply \(e^{iAt}\) in about \(s^2 t\log N\) steps. This is called <em>Hamiltonian simulation</em>. A non-Hermitian \(A\) is first embedded in the Hermitian block matrix \(\begin{pmatrix}0&A\\A^\dagger&0\end{pmatrix}\).</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(\rho\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">PSD, trace 1</span></div>
+    <p class="entry-desc">A <em>density matrix</em> describes a random mixture of states. For \(M\) data vectors \(|x_1\rangle,\dots,|x_M\rangle\) picked uniformly at random it is \(\rho=\frac1M\sum_j|x_j\rangle\langle x_j|\): positive semidefinite, trace one, and equal to the (uncentred) covariance matrix of the normalised data. Its top eigenvectors are the principal components.</p>
+  </div>
+
+  <h3 class="sub">The fact doing the work: functions of a matrix act eigenvalue by eigenvalue</h3>
+
+  <p>Write the spectral decomposition \(A=\sum_j\lambda_j\,|u_j\rangle\langle u_j|\), with real eigenvalues \(\lambda_j\) and orthonormal eigenvectors \(|u_j\rangle\). Then</p>
+  $$e^{iAt}=\sum_j e^{i\lambda_jt}\,|u_j\rangle\langle u_j|,\qquad A^{-1}=\sum_j\frac{1}{\lambda_j}\,|u_j\rangle\langle u_j| .$$
+  <p>Both have the same eigenvectors; only the function applied to \(\lambda_j\) differs. The quantum linear-system algorithm of Harrow, Hassidim and Lloyd (2009, called HHL), which the review treats as its central building block, turns the first into the second. Given the state \(|b\rangle\) and the ability to apply \(e^{iAt}\), it prepares a state proportional to \(A^{-1}|b\rangle\), the solution of \(Ax=b\).</p>
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 150" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1.2"/>
+        </pattern>
+      </defs>
+      <g font-family="Oswald, sans-serif" font-size="13" letter-spacing="1.5" fill="currentColor" stroke="none" text-anchor="middle">
+        <text x="68" y="52">READ EACH</text><text x="68" y="70">EIGENVALUE</text>
+        <text x="240" y="52">SHRINK BY</text><text x="240" y="70">1 / EIGENVALUE</text>
+        <text x="412" y="52">ERASE THE</text><text x="412" y="70">EIGENVALUE</text>
+        <text x="68" y="118">STEP 1</text><text x="240" y="118">STEP 2</text><text x="412" y="118">STEP 3</text>
+        <text x="68" y="138" font-size="11">uses exp(iAt)</text><text x="240" y="138" font-size="11">succeeds only sometimes</text><text x="412" y="138" font-size="11">step 1 backwards</text>
+      </g>
+      <rect x="10" y="26" width="116" height="62"/>
+      <rect x="182" y="26" width="116" height="62" fill="url(#hatch)" fill-opacity=".35"/>
+      <rect x="354" y="26" width="116" height="62"/>
+      <path d="M130 57h46M168 50l8 7-8 7M302 57h46M340 50l8 7-8 7"/>
+    </svg>
+    <figcaption>the three steps of the linear-system solver. only the hatched one is not unitary.</figcaption>
+  </figure>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Step 1 &middot; read the eigenvalues</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">phase estimation</span></div>
+    <p class="entry-desc">Expand the input in \(A\)'s eigenbasis: \(|b\rangle=\sum_j\beta_j|u_j\rangle\). Nobody computes the \(\beta_j\); the expansion simply exists. A standard routine called <em>phase estimation</em> applies \(e^{iAt}\) for several values of \(t\). On the eigenvector \(|u_j\rangle\) this only multiplies by the number \(e^{i\lambda_jt}\), and a quantum Fourier transform converts that phase into a binary estimate of \(\lambda_j\), written into a second group of qubits (a “register”). By linearity the whole state becomes</p>
+    $$\sum_j\beta_j\,|u_j\rangle\otimes|\lambda_j\rangle .$$
+    <p class="entry-desc">Each eigen-component now carries a label holding its own eigenvalue, without the algorithm ever knowing the eigenvectors.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Step 2 &middot; multiply by \(1/\lambda_j\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">rotate, then measure</span></div>
+    <p class="entry-desc">Add one extra qubit and rotate it by an angle that depends on the label, with \(C\) a constant no larger than the smallest \(|\lambda_j|\):</p>
+    $$|0\rangle\;\mapsto\;\sqrt{1-\tfrac{C^2}{\lambda_j^2}}\;|0\rangle+\frac{C}{\lambda_j}\,|1\rangle .$$
+    <p class="entry-desc">This is unitary. Now measure the extra qubit. If the outcome is 1, what remains is the part of the state multiplied by \(C/\lambda_j\). If it is 0, start over. Dividing by \(\lambda_j\) is not unitary, so it is done as one block of a larger unitary, followed by a measurement that keeps that block.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Step 3 &middot; erase the labels</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">uncompute</span></div>
+    <p class="entry-desc">Run phase estimation backwards so the eigenvalue register returns to \(|0\rangle\) and factors out. What is left is</p>
+    $$\sum_j\frac{\beta_j}{\lambda_j}\,|u_j\rangle\;\propto\;A^{-1}|b\rangle .$$
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>\(A=\begin{pmatrix}1.5&0.5\\0.5&1.5\end{pmatrix}\) has eigenvalues \(2\) and \(1\), with eigenvectors \(u_1=\tfrac{1}{\sqrt2}\binom11\) and \(u_2=\tfrac{1}{\sqrt2}\binom{1}{-1}\). So \(\kappa=2\). Take \(b=\binom10=\tfrac{1}{\sqrt2}u_1+\tfrac{1}{\sqrt2}u_2\).</p>
+    <p>Dividing each coefficient by its eigenvalue: \(x=\tfrac{1}{2\sqrt2}u_1+\tfrac{1}{\sqrt2}u_2=\binom{0.75}{-0.25}\). Check: \(Ax=\binom{1}{0}\).</p>
+    <p>With \(C=1\), the extra qubit reads 1 with probability \(\big(\tfrac{1}{\sqrt2}\cdot\tfrac12\big)^2+\big(\tfrac{1}{\sqrt2}\cdot 1\big)^2=\tfrac58\). The output state is \(\tfrac{1}{\sqrt{10}}\binom{3}{-1}\): the direction of \(x\), without its length.</p>
+  </div>
+
+  <p>Let \(\varepsilon\) be the allowed error in the output state. The solver's running time is about</p>
+  $$\frac{s^2\,\kappa^2}{\varepsilon}\,\log N\qquad\text{against roughly}\qquad N\,s\,\sqrt{\kappa}\,\log\tfrac1\varepsilon$$
+  <p>for conjugate gradient, the standard classical method for sparse positive definite systems. The dependence on \(N\) is exponentially better, the dependence on \(\kappa\) and \(\varepsilon\) is worse. The \(\kappa\) comes from two places: resolving eigenvalues as small as \(1/\kappa\) needs \(e^{iAt}\) for \(t\) up to about \(\kappa\), and Step 2 succeeds with probability as low as \(1/\kappa^2\) (first interactive below).</p>
+
+  <h3 class="sub">Principal components: letting the data be the matrix</h3>
+
+  <p>For principal component analysis the matrix is the covariance \(\rho\), which is dense, so sparse Hamiltonian simulation does not apply. The quantum version (Lloyd, Mohseni and Rebentrost, 2014) builds \(e^{-i\rho t}\) directly out of copies of the state \(\rho\). Let \(S\) be the <em>swap</em> operator on \(\mathbb C^N\otimes\mathbb C^N\), defined by \(S\,|i\rangle|j\rangle=|j\rangle|i\rangle\). It is a permutation matrix, so it is sparse, and it is both Hermitian and unitary. Take one copy of \(\rho\) next to any state \(\sigma\), apply \(e^{-iS\Delta t}\) for a short time \(\Delta t\), and discard the first copy (the partial trace \(\operatorname{tr}_1\), which sums out the first tensor factor):</p>
+  $$\operatorname{tr}_1\!\Big[e^{-iS\Delta t}\,(\rho\otimes\sigma)\,e^{iS\Delta t}\Big]=\sigma-i\,\Delta t\,[\rho,\sigma]+O(\Delta t^2)\;\approx\;e^{-i\rho\Delta t}\,\sigma\,e^{i\rho\Delta t},$$
+  <p>where \([\rho,\sigma]=\rho\sigma-\sigma\rho\). Each copy of \(\rho\) used up advances \(\sigma\) by a small step of the evolution generated by \(\rho\) itself. Repeating with \(t^2/\varepsilon\) copies gives \(e^{-i\rho t}\) to accuracy \(\varepsilon\). Feed that to phase estimation as in Step 1 and you get the eigenvalues and eigenvectors of \(\rho\). If \(\rho\) is close to low-rank, the large eigenvalues are resolved in time polynomial in \(\log N\).</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: the swap on two qubits</span>
+    <p>For \(N=2\), in the basis \(|00\rangle,|01\rangle,|10\rangle,|11\rangle\):</p>
+    <p>\(S=\begin{pmatrix}1&0&0&0\\0&0&1&0\\0&1&0&0\\0&0&0&1\end{pmatrix}\), with eigenvalue \(+1\) on the three symmetric vectors and \(-1\) on \(\tfrac{1}{\sqrt2}(|01\rangle-|10\rangle)\).</p>
+    <p>Since \(S^2=I\), the exponential series collapses: \(e^{-iS\Delta t}=\cos(\Delta t)\,I-i\sin(\Delta t)\,S\). That is a partial swap, which is why it is cheap to apply.</p>
+  </div>
+
+  <h3 class="sub">The square-root speedups: two reflections make a rotation</h3>
+
+  <p>The other family rests on Grover's search. Among \(N\) basis vectors one, \(|w\rangle\), is “marked” (say, the model parameters that classify every training point correctly). Start in the uniform superposition \(|s\rangle=\tfrac{1}{\sqrt N}\sum_i|i\rangle\). Everything happens in the real two-dimensional plane spanned by \(|w\rangle\) and \(|s\rangle\). One iteration applies two reflections, \(I-2|w\rangle\langle w|\) and \(2|s\rangle\langle s|-I\). The product of two reflections in a plane is a rotation by twice the angle between their mirrors, here \(2\theta\) with \(\sin\theta=\langle w|s\rangle=1/\sqrt N\). After \(k\) iterations the probability of measuring the marked item is</p>
+  $$P_k=\sin^2\!\big((2k+1)\,\theta\big),$$
+  <p>which reaches nearly 1 at \(k\approx\tfrac{\pi}{4}\sqrt N\). A classical search needs about \(N/2\) lookups.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive 1<b>Why the condition number costs you</b></p>
+
+  <p>A \(2\times2\) symmetric matrix \(A\) with eigenvalue \(1\) along \(u_1\) and \(1/\kappa\) along \(u_2\) (the dashed axes). The thin arrow is the input \(b\); the thick arrow is the direction of \(x=A^{-1}b\), which is what the quantum solver outputs. One slider sets \(\kappa\), the other turns \(b\).</p>
+  <p><strong>Try:</strong> leave \(b\) at 45° and raise \(\kappa\). Then turn \(b\) to 0°, so it lies along \(u_1\). <strong>Notice:</strong> inversion stretches the small-eigenvalue direction, so the thick arrow snaps toward \(u_2\) as \(\kappa\) grows. And when \(b\) sits on \(u_1\), the success probability of Step 2 falls to exactly \(1/\kappa^2\): the algorithm has to shrink that component by \(1/\kappa\) to stay consistent with the other one, even though it is absent. The starting position (\(\kappa=2\), 45°) reproduces the \(5/8\) of the worked example.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="kap">\(\kappa\) = <output id="kapv" for="kap">2</output></label>
+      <input id="kap" type="range" min="1" max="20" value="2" step="1">
+    </div>
+    <div class="dial">
+      <label for="phi">b at <output id="phiv" for="phi">45</output>°</label>
+      <input id="phi" type="range" min="0" max="180" value="45" step="1">
+    </div>
+    <figure><canvas id="cH" class="sq" width="640" height="640"></canvas><figcaption>thin: input \(b\) &middot; thick: output direction \(A^{-1}b\)</figcaption></figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">share of \(b\) on \(u_1\), \(u_2\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="hB">–</span></div>
+      <div class="entry"><span class="entry-name">share of output on \(u_1\), \(u_2\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="hX">–</span></div>
+      <div class="entry"><span class="entry-name">success probability of step 2</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="hP">–</span></div>
+      <div class="entry"><span class="entry-name">average attempts needed</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="hR">–</span></div>
+    </div>
+  </div>
+
+  <p class="regime" style="margin-top:2.6rem">Interactive 2<b>Search as a rotation</b></p>
+
+  <p>The plane from the last subsection. The horizontal axis is the uniform mix of all unmarked items, the vertical axis is the marked item \(|w\rangle\). The arrow is the state after \(k\) Grover iterations; dots mark where it has been. The square of its height is the probability of finding the marked item.</p>
+  <p><strong>Try:</strong> set 2 qubits and \(k=1\). Then set 10 qubits and drag \(k\) from 0 to 30. <strong>Notice:</strong> with \(N=4\) the first step is 30° and each iteration adds 60°, so one iteration lands exactly on the answer. With \(N=1024\) the peak is at \(k=25\), where 25 classical lookups would succeed 2.4% of the time. Past the peak the arrow keeps turning and the probability falls again: it is a rotation, so more iterations is not better.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="gq">qubits = <output id="gqv" for="gq">4</output></label>
+      <input id="gq" type="range" min="2" max="10" value="4" step="1">
+    </div>
+    <div class="dial">
+      <label for="gk">k = <output id="gkv" for="gk">0</output></label>
+      <input id="gk" type="range" min="0" max="30" value="0" step="1">
+    </div>
+    <figure><canvas id="cG" class="sq" width="640" height="640"></canvas><figcaption>each iteration turns the state by \(2\theta\), with \(\sin\theta=1/\sqrt N\)</figcaption></figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">items \(N\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gN">–</span></div>
+      <div class="entry"><span class="entry-name">turn per iteration</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gT">–</span></div>
+      <div class="entry"><span class="entry-name">chance of the marked item, quantum</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gP">–</span></div>
+      <div class="entry"><span class="entry-name">chance after \(k\) classical lookups</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gC">–</span></div>
+      <div class="entry"><span class="entry-name">best \(k\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gO">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>And the fine print</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The answer is a state, not a list of numbers</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">output problem</span></div>
+    <p class="entry-desc">The solver hands you \(|x\rangle\), and a measurement returns index \(i\) with probability \(|x_i|^2\), destroying the state. Reading out all \(N\) entries would take at least \(N\) runs and cancel the speedup. What is cheap is a single number of the form \(\langle x|M|x\rangle\) for a Hermitian \(M\), such as the overlap of the solution with a test vector. The algorithms are useful when the question you care about has that shape, for example “which side of the hyperplane is this new point on?”</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Loading the data may cost what you saved</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">input problem</span></div>
+    <p class="entry-desc">Preparing \(|b\rangle\) from \(N\) classical numbers takes time proportional to \(N\) in general. The \(\log N\) claims assume a <em>quantum random access memory</em> (qRAM), a proposed device that returns stored data in superposition over all addresses at once in about \(\log N\) steps. It still needs on the order of \(N\) physical components and had not been built at scale. The review lists this with three other caveats: the output problem above, the true gate count once error correction is included, and the difficulty of proving that no classical algorithm does as well.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The data is its own Hamiltonian</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">swap trick</span></div>
+    <p class="entry-desc">In quantum mechanics a Hermitian matrix \(H\) (the Hamiltonian) generates time evolution \(e^{-iHt}\), and normally \(H\) is a fixed description of the hardware. The principal component algorithm uses copies of a <em>state</em> \(\rho\) as the generator instead. The same matrix is both the thing being analysed and the operator doing the analysing, and the only gate ever applied is a partial swap that knows nothing about the data.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The last caveat turned out to matter</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">after the paper</span></div>
+    <p class="entry-desc">A year after this review, Ewin Tang showed that for recommendation systems (predicting which products a user will like from a low-rank table of preferences), a classical algorithm with a comparable data-access assumption, sampling rows with probability proportional to their squared length, matches the quantum one up to polynomial factors. Similar “dequantised” algorithms followed for low-rank principal components and low-rank linear systems. The exponential advantage for sparse, well-conditioned, high-rank systems still stands.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>A quantum computer can apply a function of a matrix eigenvalue by eigenvalue to a \(2^n\)-dimensional vector held in \(n\) qubits, which is what makes \(\log N\)-time linear algebra possible, but only for matrices that are sparse or low-rank and well-conditioned, with data that loads quickly and questions answerable by a few measurements.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Quantum machine learning</strong>, by Jacob Biamonte, Peter Wittek, Nicola Pancotti, Patrick Rebentrost, Nathan Wiebe and Seth Lloyd. Nature 549, 195–202 (2017); arXiv 2016.
+  <a href="https://arxiv.org/abs/1611.09347">arxiv.org/abs/1611.09347</a></p>
+  <p class="signoff">The paper's PDF could not be opened when this page was made. It is written from the abstract and from the algorithms the review surveys (Harrow–Hassidim–Lloyd 2009, Lloyd–Mohseni–Rebentrost 2014, Grover 1996), not checked line by line against the review's text. Running times are those of the original algorithm papers. The interactives are toy calculations, not quantum hardware.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3", SOFT = css("--ink-soft") || "#4a463f";
+  var W = 640, C = 320, R = 232;
+  function $(id) { return document.getElementById(id); }
+
+  function clear(ctx) {
+    ctx.setLineDash([]);
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(0, 0, W, W);
+    ctx.strokeStyle = INK;
+    ctx.fillStyle = INK;
+    ctx.lineCap = "round";
+  }
+  function pt(a, r) { return [C + r * Math.cos(a), C - r * Math.sin(a)]; }
+  function circle(ctx) {
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(C, C, R, 0, 2 * Math.PI); ctx.stroke();
+  }
+  function axis(ctx, a) {
+    var p = pt(a, R + 26), q = pt(a + Math.PI, R + 26);
+    ctx.save();
+    ctx.setLineDash([6, 8]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.lineTo(p[0], p[1]); ctx.stroke();
+    ctx.restore();
+  }
+  function arrow(ctx, a, r, lw) {
+    var p = pt(a, r), h = 10 + 3 * lw;
+    ctx.lineWidth = lw;
+    ctx.beginPath(); ctx.moveTo(C, C); ctx.lineTo(p[0], p[1]); ctx.stroke();
+    var sx = Math.cos(a), sy = -Math.sin(a);
+    ctx.beginPath();
+    ctx.moveTo(p[0] + sx * h * 0.6, p[1] + sy * h * 0.6);
+    ctx.lineTo(p[0] - sx * h + sy * h * 0.6, p[1] - sy * h - sx * h * 0.6);
+    ctx.lineTo(p[0] - sx * h - sy * h * 0.6, p[1] - sy * h + sx * h * 0.6);
+    ctx.closePath(); ctx.fill();
+  }
+  function label(ctx, text, a, r, size) {
+    var p = pt(a, r);
+    ctx.font = "500 " + (size || 26) + "px Oswald, sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = INK;
+    ctx.fillText(text, p[0], p[1]);
+  }
+  function pct(x) { return (100 * x).toFixed(x < 0.1 && x > 0 ? 1 : 0) + "%"; }
+
+  /* ---------- 1. linear-system solver in the plane ---------- */
+  var kap = $("kap"), phi = $("phi"), cH = $("cH").getContext("2d");
+  var A0 = 20 * Math.PI / 180;           // tilt of the eigenbasis on the page
+
+  function drawH() {
+    var k = +kap.value, f = +phi.value * Math.PI / 180;
+    var b1 = Math.cos(f), b2 = Math.sin(f);
+    var x1 = b1, x2 = k * b2;             // A^{-1} b in the eigenbasis (eigenvalues 1, 1/k)
+    var n = Math.sqrt(x1 * x1 + x2 * x2);
+    var ax = Math.atan2(x2, x1);
+    var p = b1 * b1 / (k * k) + b2 * b2;  // ancilla = 1, with C = smallest eigenvalue
+
+    $("kapv").textContent = k;
+    $("phiv").textContent = phi.value;
+
+    clear(cH);
+    circle(cH);
+    axis(cH, A0); axis(cH, A0 + Math.PI / 2);
+    label(cH, "u\u2081", A0, R + 50, 26);
+    label(cH, "u\u2082", A0 + Math.PI / 2, R + 50, 26);
+    label(cH, "\u03BB = 1", A0 + Math.PI, R + 44, 20);
+    label(cH, "\u03BB = 1/\u03BA", A0 - Math.PI / 2, R + 44, 20);
+
+    arrow(cH, A0 + ax, R, 7);
+    arrow(cH, A0 + f, R * 0.66, 2.5);
+    label(cH, "b", A0 + f + 0.16, R * 0.66, 28);
+    label(cH, "x", A0 + ax - 0.1, R * 0.86, 28);
+
+    $("hB").textContent = pct(b1 * b1) + " , " + pct(b2 * b2);
+    $("hX").textContent = pct(x1 * x1 / (n * n)) + " , " + pct(x2 * x2 / (n * n));
+    $("hP").textContent = p.toFixed(3);
+    $("hR").textContent = (1 / p).toFixed(1);
+  }
+  kap.addEventListener("input", drawH);
+  phi.addEventListener("input", drawH);
+
+  /* ---------- 2. Grover rotation ---------- */
+  var gq = $("gq"), gk = $("gk"), cG = $("cG").getContext("2d");
+
+  function drawG() {
+    var n = +gq.value, k = +gk.value, N = Math.pow(2, n);
+    var th = Math.asin(1 / Math.sqrt(N));
+    var a = (2 * k + 1) * th;
+    var P = Math.sin(a) * Math.sin(a);
+    var best = Math.max(0, Math.round(Math.PI / (4 * th) - 0.5));
+
+    $("gqv").textContent = n;
+    $("gkv").textContent = k;
+
+    clear(cG);
+    circle(cG);
+    axis(cG, 0); axis(cG, Math.PI / 2);
+    label(cG, "MARKED", Math.PI / 2, R + 52, 20);
+    cG.save();
+    cG.translate(C + R + 52, C); cG.rotate(Math.PI / 2);
+    cG.font = "500 20px Oswald, sans-serif"; cG.textAlign = "center"; cG.textBaseline = "middle";
+    cG.fillText("UNMARKED", 0, 0);
+    cG.restore();
+
+    // where the state has been
+    for (var j = 0; j < k; j++) {
+      var q = pt((2 * j + 1) * th, R);
+      cG.beginPath(); cG.arc(q[0], q[1], 5, 0, 2 * Math.PI); cG.fill();
+    }
+    // height = amplitude on the marked item
+    var tip = pt(a, R);
+    cG.save();
+    cG.setLineDash([3, 6]); cG.lineWidth = 1.5;
+    cG.beginPath(); cG.moveTo(tip[0], tip[1]); cG.lineTo(tip[0], C); cG.stroke();
+    cG.restore();
+    arrow(cG, a, R, 5);
+
+    $("gN").textContent = N;
+    $("gT").textContent = (2 * th * 180 / Math.PI).toFixed(1) + "\u00B0";
+    $("gP").textContent = pct(P);
+    $("gC").textContent = pct(Math.min(1, k / N));
+    $("gO").textContent = best;
+  }
+  gq.addEventListener("input", drawG);
+  gk.addEventListener("input", drawG);
+
+  function all() { drawH(); drawG(); }
+  all();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(all);
+})();
+</script>
+</body>
+</html>
