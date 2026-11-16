@@ -107,6 +107,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-14-quantum-machine-learning.html",
         date: "2026-11-14",
     },
+    {
+        title: "Transformers are state space models",
+        blurb: "Shows that recurrent language models with a fixed-size memory and a softmax-free form of attention compute the same structured matrix, and uses that to build Mamba-2, a recurrent model 2–8 times faster than its predecessor that keeps pace with Transformers.",
+        tags: ["paper of the day", "sequence models"],
+        file: "learning/paper-2026-11-16-transformers-are-ssms-generalized-models-and-effic.html",
+        date: "2026-11-16",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));

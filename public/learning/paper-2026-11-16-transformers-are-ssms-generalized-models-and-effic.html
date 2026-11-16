@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformers are SSMs: State Space Duality</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.4rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- table ---------- */
+.tablewrap{max-width:var(--measure);margin:1.4rem auto;overflow-x:auto}
+table.costs{
+  border-collapse:collapse;
+  width:100%;
+  font-family:var(--font-head);
+  font-size:.82rem;
+  letter-spacing:.04em;
+}
+table.costs th, table.costs td{
+  border-bottom:1px solid var(--ink);
+  padding:.35rem .5rem;
+  text-align:center;
+}
+table.costs th{font-weight:600;text-transform:uppercase;letter-spacing:.12em}
+table.costs td:first-child, table.costs th:first-child{text-align:left}
+table.costs .katex{font-size:1em}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 .8rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:2.2em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.toggles{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.6rem 1.4rem;
+  align-items:center;
+  margin:.2rem 0 1rem;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.85rem;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+.toggles label{display:inline-flex;align-items:center;gap:.45rem;cursor:pointer}
+.toggles input[type=checkbox]{accent-color:var(--ink);width:16px;height:16px}
+.toggles select, .toggles button{
+  font-family:var(--font-head);
+  font-size:.85rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  background:var(--paper);
+  color:var(--ink);
+  border:1px solid var(--ink);
+  border-radius:0;
+  padding:.15rem .5rem;
+  cursor:pointer;
+}
+.toggles button:hover{background:var(--paper-inset)}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.sq{aspect-ratio:1 / 1;max-width:440px;margin:0 auto}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- lower-triangular staircase (silhouette) -->
+    <svg class="strip" viewBox="0 0 420 60" fill="currentColor" aria-hidden="true">
+      <rect x="10" y="56" width="22" height="4"/><rect x="40" y="52" width="22" height="8"/>
+      <rect x="70" y="48" width="22" height="12"/><rect x="100" y="44" width="22" height="16"/>
+      <rect x="130" y="40" width="22" height="20"/><rect x="160" y="36" width="22" height="24"/>
+      <rect x="190" y="32" width="22" height="28"/><rect x="220" y="28" width="22" height="32"/>
+      <rect x="250" y="24" width="22" height="36"/><rect x="280" y="20" width="22" height="40"/>
+      <rect x="310" y="16" width="22" height="44"/><rect x="340" y="12" width="22" height="48"/>
+      <rect x="370" y="8" width="22" height="52"/><rect x="400" y="4" width="20" height="56"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; ICML 2024</p>
+      <h1>State Space Duality</h1>
+    </div>
+    <p class="tagline">Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality</p>
+    <p class="tagline-hand">Tri Dao and Albert Gu &middot; 2024 &middot;
+    <a href="https://arxiv.org/abs/2405.21060">arXiv:2405.21060</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>The paper shows that a recurrent sequence model with a fixed-size memory and a softmax-free version of attention are two algorithms for multiplying by the same lower-triangular matrix. That matrix has a special structure: every block below the diagonal is low-rank. The authors then use this structure to build Mamba-2, which is faster than its predecessor.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: ranks below the diagonal</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">two camps, two costs</span></div>
+    <p class="entry-desc">A language model reads a sequence of tokens (word pieces) and mixes information between positions. Transformers do this mixing with <em>attention</em>, which scores every pair of positions. For a sequence of length \(T\), training cost grows like \(T^2\). While generating text, the model has to keep a cache of everything it has seen, and that cache grows with \(T\).</p>
+    <p class="entry-desc"><em>State space models</em> (SSMs) take the other approach. They are recurrent: they carry a fixed-size memory (the <em>state</em>) and update it once per token, so their cost is linear in \(T\). Mamba (2023), an SSM, matched Transformers at small and medium scale. But its update is a sequential scan, which can't use the GPU's matrix-multiply units (tensor cores) that make Transformers fast. Its cost also grows with the size of the state, which pushed it toward small states.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">one matrix, two algorithms</span></div>
+    <p class="entry-desc">Both models are linear maps along the time axis: output \(y = Mx\) for a \(T\times T\) lower-triangular matrix \(M\). For an SSM, every block of \(M\) on or below the diagonal has rank at most the state size. Matrices with this property are called <em>semiseparable</em>. If the SSM's memory decays by a single number per step, \(M\) is exactly a masked attention matrix with the softmax removed.</p>
+    <p class="entry-desc">Running the recurrence and running attention are then just two ways to multiply by \(M\): one costs time linear in \(T\), the other quadratic. The paper's algorithm (SSD, for <em>state space duality</em>) cuts \(M\) into blocks. It handles the blocks on the diagonal attention-style and the low-rank blocks below them through the state. Almost all of the work becomes ordinary matrix multiplication.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2–8× faster</span></div>
+    <p class="entry-desc">SSD runs 2–8× faster than Mamba's optimized scan and allows states 8× larger with little slowdown. It overtakes FlashAttention-2 (a highly optimized softmax attention) at a sequence length of about 2,000 tokens and is 6× faster at about 16,000.</p>
+    <p class="entry-desc">The resulting model, Mamba-2, has 2.7 billion weights and was trained on 300 billion tokens of the Pile (a public text corpus). Its average accuracy on seven standard zero-shot benchmarks is 60.2. Mamba-2.8B scores 59.9, and Pythia-6.9B scores 58.3. Pythia is a Transformer family trained on the same data, and this one is more than twice Mamba-2's size.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Semiseparable matrices</b></p>
+
+  <p>Take one channel of the input: a sequence of numbers \(x_0,\dots,x_{T-1}\), one per token. The SSM keeps a state vector \(h_t\in\mathbb R^N\), where \(N\) is the <em>state size</em> (16 in Mamba, 64 or more in Mamba-2). Each step uses three time-dependent parameters: \(A_t\in\mathbb R^{N\times N}\) (how the old state carries over), \(B_t\in\mathbb R^{N}\) (how the new input is written into the state) and \(C_t\in\mathbb R^{N}\) (how the output is read out).</p>
+  $$h_t = A_t\,h_{t-1} + B_t\,x_t,\qquad y_t = C_t^{\top}h_t .$$
+  <p>In Mamba, \(A_t,B_t,C_t\) are computed from the input itself. This makes the model <em>selective</em>: it can choose what to store and what to forget. So the full model is nonlinear. Once those parameters are fixed, though, the map from \(x\) to \(y\) is linear, and that linear map is the object of study.</p>
+
+  <h3 class="sub">Unroll the recurrence: the matrix \(M\)</h3>
+  <p>Starting from \(h_{-1}=0\) and substituting repeatedly gives</p>
+  $$y_t=\sum_{s\le t} C_t^{\top}A_tA_{t-1}\cdots A_{s+1}B_s\,x_s
+  \quad\Longrightarrow\quad y=Mx,\qquad
+  M_{ts}=\begin{cases}C_t^{\top}A_t\cdots A_{s+1}B_s & t\ge s\\[2pt] 0 & t&lt;s.\end{cases}$$
+  <p>\(M\) is \(T\times T\) and lower triangular, because output \(t\) never sees future inputs. In the model, the input has \(P\) channels (the <em>head dimension</em>, 64 or 128 in Mamba-2), stacked as a \(T\times P\) matrix \(X\). All \(P\) channels share the same \(M\), so the layer computes \(Y = MX\).</p>
+
+  <div class="callout">
+    <span class="callout-label">The fact doing the work: every block below the diagonal has rank ≤ N</span>
+    <p>Take any block of \(M\) that lies entirely on or below the diagonal: rows \(r_0,\dots,r_1\) and columns \(c_0,\dots,c_1\) with \(r_0\ge c_1\). Its entries factor through the moment \(c_1\):</p>
+    $$M_{\text{rows},\text{cols}}=
+    \underbrace{\begin{pmatrix}C_{r_0}^{\top}A_{r_0}\cdots A_{c_1+1}\\ \vdots\\ C_{r_1}^{\top}A_{r_1}\cdots A_{c_1+1}\end{pmatrix}}_{\text{rows}\times N}
+    \underbrace{\begin{pmatrix}A_{c_1}\cdots A_{c_0+1}B_{c_0} & \cdots & B_{c_1}\end{pmatrix}}_{N\times\text{cols}} .$$
+    <p>The right factor writes the earlier inputs into the state \(h_{c_1}\), and the left factor reads the later outputs from it. Every path from past to future passes through one \(N\)-dimensional vector, so the block has rank at most \(N\).</p>
+    <p>A lower-triangular matrix with this property is called <em>\(N\)-semiseparable</em>. The converse also holds (Prop. 3.4): every \(N\)-semiseparable matrix comes from some SSM with state size \(N\), and can be stored in \(O(NT)\) numbers instead of \(T^2\). So <strong>an SSM with state size \(N\) and an \(N\)-semiseparable matrix are the same object</strong> (Theorem 3.5).</p>
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: N = 1, T = 3</span>
+    <p>Take \(A_t = a_t\) as scalars and \(B_t=C_t=1\), with \(a_1=0.5,\ a_2=0.8\). Then \(M_{ts}=a_t\cdots a_{s+1}\):</p>
+    $$M=\begin{pmatrix}1&0&0\\0.5&1&0\\0.4&0.8&1\end{pmatrix},\qquad
+    \begin{pmatrix}0.5&1\\0.4&0.8\end{pmatrix}=\begin{pmatrix}1\\0.8\end{pmatrix}\begin{pmatrix}0.5&1\end{pmatrix}.$$
+    <p>The \(2\times2\) block in rows 1–2 and columns 0–1 has determinant \(0.4-0.4=0\), so its rank is 1 even though it touches the diagonal.</p>
+    <p>Multiplying by \(M\) needs no \(T^2\) work, because \(M^{-1}\) is bidiagonal:</p>
+    $$M^{-1}=\begin{pmatrix}1&0&0\\-0.5&1&0\\0&-0.8&1\end{pmatrix}
+    \quad\Longleftrightarrow\quad y_t = a_t\,y_{t-1}+x_t .$$
+    <p>For \(x=(1,1,1)\): \(y_0 = 1\), \(y_1 = 0.5\cdot1+1 = 1.5\), \(y_2 = 0.8\cdot1.5+1 = 2.2\). That matches the last row of \(M\) applied to \(x\): \(0.4+0.8+1\). Running the recurrence is forward substitution with a bidiagonal matrix.</p>
+  </div>
+
+  <h3 class="sub">Shrink \(A_t\) to a scalar: out comes attention</h3>
+  <p>Mamba-2 restricts the transition to a scalar times the identity, \(A_t=a_tI_N\) with \(a_t\in[0,1]\). Mamba used a diagonal \(A_t\). Write \(a_{t:s}=a_ta_{t-1}\cdots a_{s+1}\), the product of the decays after step \(s\) up to step \(t\) (equal to 1 when \(t=s\)). Stack the \(C_t^{\top}\) as rows of \(C\in\mathbb R^{T\times N}\), and the \(B_s^{\top}\) likewise into \(B\). The scalars then pull out of each entry:</p>
+  $$M_{ts}=\underbrace{a_{t:s}}_{L_{ts}}\cdot\underbrace{C_t^{\top}B_s}_{(CB^{\top})_{ts}}
+  \qquad\Longrightarrow\qquad M = L\circ (CB^{\top}),$$
+  <p>Here \(\circ\) is the entrywise (Hadamard) product, and \(L\) is the lower-triangular mask with \(L_{ts}=a_{t:s}\), a 1-semiseparable matrix like the tiny example. Compare masked attention, \(Y=(L\circ QK^{\top})V\), where \(Q,K,V\) are the queries, keys and values. The two have the same form, with \(C\leftrightarrow Q\), \(B\leftrightarrow K\), \(X\leftrightarrow V\). The softmax is gone, and the mask \(L\) takes the role that positional encodings play in a Transformer.</p>
+  <p>The structure also checks out from the attention side. \(CB^{\top}\) is a \(T\times T\) Gram matrix of rank at most \(N\), and for any two matrices of the same shape, \(\operatorname{rank}(R\circ S)\le\operatorname{rank}R\cdot\operatorname{rank}S\). So every block of \(L\circ CB^{\top}\) below the diagonal has rank at most \(1\cdot N\).</p>
+  <p>Familiar masks are special cases. With \(a_t=1\), \(L\) is the all-ones lower triangle, and you get <em>linear attention</em>, whose recurrence is a cumulative sum. A constant \(a_t=\gamma\) gives the Toeplitz decay \(\gamma^{t-s}\) (RetNet). An input-dependent \(a_t\) gives SSD.</p>
+
+  <h3 class="sub">Same function, two contraction orders</h3>
+  <p>The quadratic order is attention. Form the \(T\times T\) matrix, mask it, and apply it:</p>
+  $$G=CB^{\top},\qquad M=L\circ G,\qquad Y=MX\qquad\big(O(T^2N+T^2P)\big).$$
+  <p>The linear order is the recurrence. Write \(x_s\in\mathbb R^P\) for row \(s\) of \(X\). First expand each input into a \(P\times N\) outer product, then apply \(L\) along time, then contract:</p>
+  $$Z_s=x_sB_s^{\top},\qquad H_t=a_tH_{t-1}+Z_t,\qquad y_t=H_tC_t\qquad\big(O(TPN)\big).$$
+  <p>The middle step is multiplication by \(L\) for each of the \(PN\) entries of the state \(H_t\). It is linear in \(T\) only because \(L^{-1}\) is bidiagonal.</p>
+
+  <div class="callout">
+    <span class="callout-label">Theorem 5.2: fast autoregressive attention must be an SSM</span>
+    <p>Suppose a masked attention can generate each new output from a fixed number \(k\) of past outputs: \(y_t=\mu_tx_t+\ell_{t1}y_{t-1}+\dots+\ell_{tk}y_{t-k}\). Then \(L^{-1}\) is lower triangular and banded with bandwidth \(k+1\). Banded matrices are semiseparable, and the inverse of an \(N\)-semiseparable matrix is at most \((N+1)\)-semiseparable (a consequence of the Woodbury identity). So \(L\) is semiseparable, which by Theorem 3.5 makes it an SSM. Any efficient causal attention of this kind is a state space model in disguise.</p>
+  </div>
+
+  <h3 class="sub">The SSD algorithm: a block decomposition of \(M\)</h3>
+  <p>Cut the sequence into chunks of length \(Q\). This tiles \(M\) into \(Q\times Q\) blocks.</p>
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 290" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1.2"/>
+        </pattern>
+      </defs>
+      <!-- outer matrix -->
+      <rect x="20" y="20" width="252" height="252" stroke-width="1.5"/>
+      <!-- chunk grid -->
+      <path d="M104 20v252M188 20v252M20 104h252M20 188h252" stroke-width="1" stroke-dasharray="3 4"/>
+      <!-- diagonal blocks: hatched lower staircase -->
+      <path d="M20 20h28v28h28v28h28v28H20z" fill="url(#hatch)" stroke-width="1.5"/>
+      <path d="M104 104h28v28h28v28h28v28H104z" fill="url(#hatch)" stroke-width="1.5"/>
+      <path d="M188 188h28v28h28v28h28v28H188z" fill="url(#hatch)" stroke-width="1.5"/>
+      <!-- off-diagonal blocks: outlined -->
+      <rect x="26" y="110" width="72" height="72" stroke-width="2"/>
+      <rect x="26" y="194" width="72" height="72" stroke-width="2"/>
+      <rect x="110" y="194" width="72" height="72" stroke-width="2"/>
+      <g font-family="Oswald, sans-serif" font-size="13" letter-spacing="1" fill="currentColor" stroke="none" text-anchor="middle">
+        <text x="62" y="150">rank ≤ N</text>
+        <text x="62" y="234">rank ≤ N</text>
+        <text x="146" y="234">rank ≤ N</text>
+      </g>
+      <!-- legend -->
+      <rect x="296" y="52" width="22" height="22" fill="url(#hatch)" stroke-width="1.5"/>
+      <g font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">
+        <text x="328" y="62">WITHIN A CHUNK</text>
+        <text x="328" y="78">attention form, matmuls</text>
+      </g>
+      <rect x="296" y="122" width="22" height="22" stroke-width="2"/>
+      <g font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">
+        <text x="328" y="132">BETWEEN CHUNKS</text>
+        <text x="328" y="148">low rank, via the state</text>
+      </g>
+      <path d="M300 196h40M330 190l10 6-10 6" stroke-width="1.5"/>
+      <g font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">
+        <text x="300" y="222">STATES PASSED</text>
+        <text x="300" y="238">chunk to chunk: T/Q steps</text>
+      </g>
+    </svg>
+    <figcaption>T = 9, Q = 3. Diagonal blocks are small attention problems. Every block below them factors through an N-dimensional state.</figcaption>
+  </figure>
+
+  <p>For chunks \(j>i\), the block \(M^{(j,i)}\) factors exactly like the callout above:</p>
+  $$M^{(j,i)}=\underbrace{\big[a_{t:jQ-1}\,C_t^{\top}\big]_{t\in\text{chunk }j}}_{Q\times N}\;\cdot\;\underbrace{a_{jQ-1:(i+1)Q-1}}_{\text{scalar}}\;\cdot\;\underbrace{\big[a_{(i+1)Q-1:s}\,B_s^{\top}\big]_{s\in\text{chunk }i}^{\top}}_{N\times Q}.$$
+  <p>These three factors give four steps:</p>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">1 · Diagonal blocks</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\((Q\times N)(N\times Q)\)</span></div>
+    <p class="entry-desc">Each chunk's output from its own inputs, using quadratic attention inside the chunk. All chunks run in parallel.</p>
+    <div class="entry"><span class="entry-name">2 · Right factors</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\((N\times Q)(Q\times P)\)</span></div>
+    <p class="entry-desc">Each chunk's final state, assuming it started from zero.</p>
+    <div class="entry"><span class="entry-name">3 · Centre factors</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">scan of length \(T/Q\)</span></div>
+    <p class="entry-desc">The true state at each chunk boundary, from \(H_j=(\text{decay over chunk } j)\,H_{j-1}+S_j\), where \(S_j\) is chunk \(j\)'s own final state from step 2. This is a 1-semiseparable multiplication again, but \(Q\) times shorter.</p>
+    <div class="entry"><span class="entry-name">4 · Left factors</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\((Q\times N)(N\times P)\)</span></div>
+    <p class="entry-desc">What each chunk's outputs receive from the incoming state.</p>
+  </div>
+
+  <p>With \(N=P=Q\) (64 in practice), every heavy step is a batch of \(N\times N\) matrix products: \(O(TN^2)\) arithmetic, \(O(TN)\) memory, all on tensor cores. Table from §6.3, assuming \(P=N\):</p>
+  <div class="tablewrap">
+    <table class="costs">
+      <thead><tr><th></th><th>Attention</th><th>SSM scan</th><th>SSD</th></tr></thead>
+      <tbody>
+        <tr><td>State size</td><td>\(T\)</td><td>\(N\)</td><td>\(N\)</td></tr>
+        <tr><td>Training FLOPs</td><td>\(T^2N\)</td><td>\(TN^2\)</td><td>\(TN^2\)</td></tr>
+        <tr><td>Per generated token</td><td>\(TN\)</td><td>\(N^2\)</td><td>\(N^2\)</td></tr>
+        <tr><td>Memory (naive)</td><td>\(T^2\)</td><td>\(TN^2\)</td><td>\(TN\)</td></tr>
+        <tr><td>Uses matmul units</td><td>yes</td><td>no</td><td>yes</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It: Ranks Below the Diagonal</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive<b>A 12 × 12 SSD matrix</b></p>
+
+  <p>This is a real SSD matrix \(M=L\circ(CB^{\top})\) for \(T=12\), with random \(B_t,C_t\in\mathbb R^N\) and decays \(a_t\). Darker cells have larger entries: solid ink for positive, hatching for negative. Dashed lines mark chunks of length \(Q\). Each label <em>r</em> is the numerically computed rank of the block below the diagonal. The page also computes \(y=Mx\) three ways (recurrence, full matrix, chunked SSD) for a random \(x\) and reports how far apart the answers are.</p>
+  <p><strong>Try:</strong> set \(N=1\) and \(Q=3\), then raise \(N\) to 4, then switch \(Q\) to 6. Tick “input-dependent decay”, then “cut at t = 6”. <strong>Notice:</strong> each off-diagonal block's rank equals \(\min(N,Q)\) and never exceeds it, while the diagonal blocks stay full rank. Letting \(a_t\) vary with the input doesn't change the ranks, which is why selective SSMs are still semiseparable. Setting \(a_6=0\) drops the blocks that span the cut to rank 0: \(M\) becomes block diagonal, two independent sequences. The three algorithms agree to about \(10^{-16}\).</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="nIn">N = <output id="nOut" for="nIn">2</output></label>
+      <input id="nIn" type="range" min="1" max="4" value="2" step="1">
+    </div>
+    <div class="dial">
+      <label for="aIn">a = <output id="aOut" for="aIn">0.85</output></label>
+      <input id="aIn" type="range" min="30" max="100" value="85" step="1">
+    </div>
+    <div class="toggles">
+      <label for="qIn">Q
+        <select id="qIn">
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+          <option value="6">6</option>
+        </select>
+      </label>
+      <label><input id="varyIn" type="checkbox"> input-dependent decay</label>
+      <label><input id="cutIn" type="checkbox"> cut at t = 6</label>
+      <button id="shuffle" type="button">new B, C</button>
+    </div>
+    <canvas id="cM" class="sq" width="480" height="480" aria-label="Heat map of the 12 by 12 matrix M with block ranks"></canvas>
+    <p class="aside-hand" style="margin:.6rem auto 0">solid: positive &middot; hatched: negative &middot; dots: the zero upper triangle</p>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">largest off-diagonal block rank</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="sMax">–</span></div>
+      <div class="entry"><span class="entry-name">diagonal block ranks</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="sDiag">–</span></div>
+      <div class="entry"><span class="entry-name">numbers defining M vs entries on/below diagonal</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="sPar">–</span></div>
+      <div class="entry"><span class="entry-name">recurrence vs full matrix, max gap</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="sRec">–</span></div>
+      <div class="entry"><span class="entry-name">chunked SSD vs full matrix, max gap</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="sSSD">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>From the paper</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Even a dense SSM is cheap</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">Theorem 3.7</span></div>
+    <p class="entry-desc">With fully dense \(A_t\), just writing the parameters down takes \(TN^2\) numbers. Yet because the matrix is \(N\)-semiseparable, it compresses to \(O(TN)\) numbers. So after a preprocessing step, any SSM runs in \(O(TN)\) time, matching the lower bound set by \(B\) and \(C\) alone. The authors connect this to a classical fact: almost every real \(N\times N\) matrix is diagonalizable over \(\mathbb C\), so almost every dense real SSM is equivalent to a diagonal complex one. That is why diagonal SSMs became the standard choice.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(a_t=0\) is a free document separator</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">no padding</span></div>
+    <p class="entry-desc">Setting one decay to zero kills every entry of \(L\) that crosses that position, which makes \(M\) block diagonal. So sequences of different lengths can be concatenated into one long sequence, with no padding and no special masks. The same block decomposition splits a long sequence across GPUs: each GPU computes its chunk and passes one \(N\times P\) state to the next. For attention, the communication instead grows quadratically with the number of GPUs.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Closure under composition</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">N + P</span></div>
+    <p class="entry-desc">The product of an \(N\)-semiseparable and a \(P\)-semiseparable matrix is \((N+P)\)-semiseparable, and so is their sum. So two SSMs chained together, or run in parallel and added, form a single SSM whose state sizes add.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">A little attention goes a long way</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">≈ 10%</span></div>
+    <p class="entry-desc">The comparison uses a 350-million-weight, 48-layer model, scored by perplexity (lower means the model predicts text better). Pure Mamba-2 scores 8.60 and the Transformer baseline 8.68. Swapping 6 of the 48 layers for softmax attention gives 8.26. The authors' guess: the SSM layers compress context into a fixed state, while a few attention layers provide exact lookup of earlier tokens, which no fixed-size state can do.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>A state space model with state size \(N\) is a lower-triangular matrix whose blocks below the diagonal all have rank at most \(N\). The recurrence and (softmax-free, masked) attention are just two ways to multiply by that matrix, and Mamba-2 gets its speed by mixing them blockwise so that nearly all the work is matrix multiplication.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality</strong>, by Tri Dao (Princeton) and Albert Gu (Carnegie Mellon), 2024.
+  <a href="https://arxiv.org/abs/2405.21060">arxiv.org/abs/2405.21060</a></p>
+  <p class="signoff">Written from the full text (arXiv v1, May 2024). Numbers are from the paper's text, tables and figures. The interactive uses random parameters, not trained weights.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var T = 12, NMAX = 4, CUT = 6;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  var seed = 20240531, Bv, Cv, X, jit;
+  function generate() {
+    var rand = mulberry32(seed);
+    function gauss() {
+      var u = 0; while (u === 0) u = rand();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rand());
+    }
+    Bv = []; Cv = []; X = []; jit = [];
+    for (var t = 0; t < T; t++) {
+      var b = [], c = [];
+      for (var n = 0; n < NMAX; n++) { b.push(gauss()); c.push(gauss()); }
+      Bv.push(b); Cv.push(c);
+      X.push(gauss());
+      jit.push(2 * rand() - 1);
+    }
+  }
+
+  var nIn = document.getElementById("nIn"), aIn = document.getElementById("aIn");
+  var qIn = document.getElementById("qIn"), varyIn = document.getElementById("varyIn");
+  var cutIn = document.getElementById("cutIn"), shuffle = document.getElementById("shuffle");
+  var canvas = document.getElementById("cM");
+
+  function decays(base, vary, cut) {
+    var a = [];
+    for (var t = 0; t < T; t++) {
+      var v = vary ? base + 0.25 * jit[t] : base;
+      a.push(Math.min(1, Math.max(0.15, v)));
+    }
+    if (cut) a[CUT] = 0;
+    return a;
+  }
+  // product a[i] * ... * a[j] inclusive; 1 if i > j
+  function prod(a, i, j) { var p = 1; for (var k = i; k <= j; k++) p *= a[k]; return p; }
+  function dot(u, v, N) { var s = 0; for (var n = 0; n < N; n++) s += u[n] * v[n]; return s; }
+
+  function buildM(N, a) {
+    var M = [];
+    for (var t = 0; t < T; t++) {
+      M.push([]);
+      for (var s = 0; s < T; s++) M[t].push(t >= s ? prod(a, s + 1, t) * dot(Cv[t], Bv[s], N) : 0);
+    }
+    return M;
+  }
+
+  // Numerical rank: equilibrate rows and columns (rank-preserving), then
+  // Gaussian elimination with partial pivoting and a relative tolerance.
+  function rank(A) {
+    var m = A.length, n = A[0].length, R = A.map(function (r) { return r.slice(); }), i, j, k;
+    for (i = 0; i < m; i++) {
+      var rm = 0; for (j = 0; j < n; j++) rm = Math.max(rm, Math.abs(R[i][j]));
+      if (rm > 0) for (j = 0; j < n; j++) R[i][j] /= rm;
+    }
+    for (j = 0; j < n; j++) {
+      var cm = 0; for (i = 0; i < m; i++) cm = Math.max(cm, Math.abs(R[i][j]));
+      if (cm > 0) for (i = 0; i < m; i++) R[i][j] /= cm;
+    }
+    var r = 0;
+    for (var c = 0; c < n && r < m; c++) {
+      var p = r, best = Math.abs(R[r][c]);
+      for (i = r + 1; i < m; i++) if (Math.abs(R[i][c]) > best) { best = Math.abs(R[i][c]); p = i; }
+      if (best <= 1e-9) continue;
+      var tmp = R[r]; R[r] = R[p]; R[p] = tmp;
+      for (i = r + 1; i < m; i++) {
+        var f = R[i][c] / R[r][c];
+        for (k = c; k < n; k++) R[i][k] -= f * R[r][k];
+      }
+      r++;
+    }
+    return r;
+  }
+  function block(M, r0, c0, Q) {
+    var B = [];
+    for (var i = 0; i < Q; i++) { B.push([]); for (var j = 0; j < Q; j++) B[i].push(M[r0 + i][c0 + j]); }
+    return B;
+  }
+
+  // Three ways to compute y = M x.
+  function viaMatrix(M) {
+    var y = [];
+    for (var t = 0; t < T; t++) { var s = 0; for (var u = 0; u < T; u++) s += M[t][u] * X[u]; y.push(s); }
+    return y;
+  }
+  function viaRecurrence(N, a) {
+    var h = [], y = [], n;
+    for (n = 0; n < N; n++) h.push(0);
+    for (var t = 0; t < T; t++) {
+      for (n = 0; n < N; n++) h[n] = a[t] * h[n] + Bv[t][n] * X[t];
+      y.push(dot(Cv[t], h, N));
+    }
+    return y;
+  }
+  function viaChunks(N, a, Q) {
+    var y = [], H = [], n, t, s;
+    for (n = 0; n < N; n++) H.push(0);
+    for (var c = 0; c < T / Q; c++) {
+      var start = c * Q, end = start + Q - 1;
+      for (t = start; t <= end; t++) {
+        var v = 0;
+        for (s = start; s <= t; s++) v += prod(a, s + 1, t) * dot(Cv[t], Bv[s], N) * X[s];   // diagonal block
+        v += prod(a, start, t) * dot(Cv[t], H, N);                                           // left factor
+        y.push(v);
+      }
+      var S = [];
+      for (n = 0; n < N; n++) {
+        var acc = 0;
+        for (s = start; s <= end; s++) acc += prod(a, s + 1, end) * Bv[s][n] * X[s];       // right factor
+        S.push(acc);
+      }
+      var decay = prod(a, start, end);
+      for (n = 0; n < N; n++) H[n] = decay * H[n] + S[n];                                   // centre factor
+    }
+    return y;
+  }
+  function maxGap(u, v) { var g = 0; for (var i = 0; i < u.length; i++) g = Math.max(g, Math.abs(u[i] - v[i])); return g; }
+
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", SOFT = css("--ink-soft") || "#4a463f", PAPER = css("--paper") || "#f4efe3";
+
+  var ctx = canvas.getContext("2d");
+  var pat = (function () {
+    var t = document.createElement("canvas"); t.width = 6; t.height = 6;
+    var h = t.getContext("2d");
+    h.strokeStyle = INK; h.lineWidth = 1.4;
+    h.beginPath();
+    h.moveTo(-1, 1); h.lineTo(1, -1);
+    h.moveTo(0, 6); h.lineTo(6, 0);
+    h.moveTo(5, 7); h.lineTo(7, 5);
+    h.stroke();
+    return ctx.createPattern(t, "repeat");
+  })();
+
+  function draw(M, Q, ranks) {
+    var W = canvas.width, cell = W / T, t, s, mx = 0;
+    for (t = 0; t < T; t++) for (s = 0; s <= t; s++) mx = Math.max(mx, Math.abs(M[t][s]));
+    ctx.globalAlpha = 1; ctx.setLineDash([]);
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, W);
+    for (t = 0; t < T; t++) for (s = 0; s < T; s++) {
+      if (s > t) {
+        ctx.globalAlpha = 1; ctx.fillStyle = SOFT;
+        ctx.beginPath(); ctx.arc((s + 0.5) * cell, (t + 0.5) * cell, 1.6, 0, 2 * Math.PI); ctx.fill();
+        continue;
+      }
+      var v = mx ? M[t][s] / mx : 0;
+      ctx.globalAlpha = Math.min(1, Math.sqrt(Math.abs(v)));
+      ctx.fillStyle = v >= 0 ? INK : pat;
+      ctx.fillRect(s * cell, t * cell, cell, cell);
+    }
+    ctx.globalAlpha = 1;
+    // chunk grid
+    ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
+    for (var k = Q; k < T; k += Q) {
+      ctx.beginPath(); ctx.moveTo(k * cell, 0); ctx.lineTo(k * cell, W); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, k * cell); ctx.lineTo(W, k * cell); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // rank labels on off-diagonal blocks
+    var fs = Math.max(13, Math.min(20, Q * cell * 0.22));
+    ctx.font = "600 " + fs + "px Oswald, sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ranks.forEach(function (r) {
+      var cx = (r.i * Q + Q / 2) * cell, cy = (r.j * Q + Q / 2) * cell;
+      var label = "r " + r.rank, w = ctx.measureText(label).width + 12, h = fs + 8;
+      ctx.fillStyle = PAPER; ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
+      ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.strokeRect(cx - w / 2, cy - h / 2, w, h);
+      ctx.fillStyle = INK; ctx.fillText(label, cx, cy + 1);
+    });
+    ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.strokeRect(1, 1, W - 2, W - 2);
+  }
+
+  function update() {
+    var N = +nIn.value, base = +aIn.value / 100, Q = +qIn.value;
+    document.getElementById("nOut").textContent = N;
+    document.getElementById("aOut").textContent = base.toFixed(2);
+    var a = decays(base, varyIn.checked, cutIn.checked);
+    var M = buildM(N, a), nb = T / Q, ranks = [], diag = [], mxr = 0;
+    for (var j = 0; j < nb; j++) {
+      diag.push(rank(block(M, j * Q, j * Q, Q)));
+      for (var i = 0; i < j; i++) {
+        var r = rank(block(M, j * Q, i * Q, Q));
+        ranks.push({ i: i, j: j, rank: r });
+        mxr = Math.max(mxr, r);
+      }
+    }
+    draw(M, Q, ranks);
+    var yM = viaMatrix(M);
+    document.getElementById("sMax").textContent = mxr + "  (N = " + N + ", Q = " + Q + ")";
+    document.getElementById("sDiag").textContent = diag.join(", ");
+    document.getElementById("sPar").textContent = (T * (2 * N + 1)) + " vs " + (T * (T + 1) / 2);
+    document.getElementById("sRec").textContent = maxGap(yM, viaRecurrence(N, a)).toExponential(1);
+    document.getElementById("sSSD").textContent = maxGap(yM, viaChunks(N, a, Q)).toExponential(1);
+  }
+
+  [nIn, aIn].forEach(function (el) { el.addEventListener("input", update); });
+  [qIn, varyIn, cutIn].forEach(function (el) { el.addEventListener("change", update); });
+  shuffle.addEventListener("click", function () { seed = (seed * 1103515245 + 12345) >>> 0; generate(); update(); });
+
+  generate();
+  update();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+})();
+</script>
+</body>
+</html>
