@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rethinking Generalization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.4rem, 7vw, 4.2rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:2.6em;text-align:left;font-variant-numeric:tabular-nums}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.btnrow{display:flex;flex-wrap:wrap;gap:.6rem;margin:.2rem 0 1rem}
+.btnrow button{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  background:var(--paper);
+  color:var(--ink);
+  border:1.5px solid var(--ink);
+  padding:.45em .9em .4em;
+  cursor:pointer;
+}
+.btnrow button:hover{background:var(--paper-inset)}
+.btnrow button:focus-visible{outline:1px dotted var(--ink);outline-offset:3px}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+  touch-action:manipulation;
+}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- interpolating zigzag through labelled points (silhouette) -->
+    <svg class="strip" viewBox="0 0 420 60" aria-hidden="true">
+      <polyline points="6,52 34,10 62,48 90,14 118,44 146,8 174,50 202,20 230,46 258,6 286,40 314,16 342,52 370,12 398,42 414,30" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+      <g fill="currentColor">
+        <circle cx="34" cy="10" r="5"/><circle cx="90" cy="14" r="5"/><circle cx="146" cy="8" r="5"/>
+        <circle cx="202" cy="20" r="5"/><circle cx="258" cy="6" r="5"/><circle cx="314" cy="16" r="5"/><circle cx="370" cy="12" r="5"/>
+      </g>
+      <g fill="#f4efe3" stroke="currentColor" stroke-width="2">
+        <circle cx="62" cy="48" r="5"/><circle cx="118" cy="44" r="5"/><circle cx="174" cy="50" r="5"/>
+        <circle cx="230" cy="46" r="5"/><circle cx="286" cy="40" r="5"/><circle cx="342" cy="52" r="5"/><circle cx="398" cy="42" r="5"/>
+      </g>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; ICLR 2017</p>
+      <h1>Rethinking Generalization</h1>
+    </div>
+    <p class="tagline">Understanding Deep Learning Requires Rethinking Generalization</p>
+    <p class="tagline-hand">Chiyuan Zhang, Samy Bengio, Moritz Hardt et al. &middot; 2016 &middot;
+    <a href="https://arxiv.org/abs/1611.03530">arXiv:1611.03530</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>The paper trains standard image classifiers on photos whose labels have been replaced by random ones, finds that the networks memorise them perfectly, and concludes that the usual theories, which explain good performance on new data by limits on what a model <em>can</em> fit, cannot be what makes these networks work.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: memorise, then choose</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">more weights than data</span></div>
+    <p class="entry-desc">A model's <em>generalization error</em> is the gap between its error on the examples it was trained on and its error on fresh examples. Learning theory explains a small gap in one of two ways: the family of models is too limited to fit arbitrary data (measured by quantities like VC dimension or Rademacher complexity), or <em>regularization</em>, an extra penalty or restriction during training such as shrinking the weights, keeps it from doing so.</p>
+    <p class="entry-desc">Image-recognition networks strain both explanations. The small Inception network used here has 1.6 million weights and is trained on 50,000 images, yet it scores well on images it has never seen.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">a randomization test</span></div>
+    <p class="entry-desc">Keep the network, the optimiser and every setting fixed, and change only the data: replace each training image's label with one drawn uniformly at random, independent of the image. Nothing about the images can predict these labels, so nothing learned from them can carry over to new images. If the model family were too limited to fit arbitrary data, training should fail here.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">100% train, 9.78% test</span></div>
+    <p class="entry-desc">It doesn't fail. On CIFAR-10 (50,000 small photos in 10 classes) Inception reaches 100% training accuracy on random labels and 9.78% test accuracy, which is chance. The same network on the true labels, with every regularizer switched off, still scores 85.75% on test images. It even fits pure Gaussian-noise images, and random labels take only a small constant factor longer to fit.</p>
+    <p class="entry-desc">So the same model family can generalise or not depending only on the labels. Any explanation based only on the family, or only on regularization, misses the cause. The paper backs this with a theorem: a two-layer network with \(2n+d\) weights can fit <em>any</em> labels on \(n\) points in \(d\) dimensions.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Triangular systems &amp; min-norm solutions</b></p>
+
+  <p>The paper is mostly experiments, but its three formal pieces are linear algebra: complexity as a correlation with a random sign vector; a lower-triangular matrix that makes memorisation easy; and the row space of the data matrix, which decides <em>which</em> perfect fit gradient descent returns.</p>
+
+  <h3 class="sub">1 &middot; A model family as a set of vectors in \(\mathbb R^n\)</h3>
+
+  <p>Fix the training inputs \(x_1,\dots,x_n\). Each model \(h\) in the family \(\mathcal H\) becomes one vector \((h(x_1),\dots,h(x_n))\in\mathbb R^n\), its predictions on the sample. The <em>empirical Rademacher complexity</em> asks how well the family can align with a random sign vector \(\sigma\in\{\pm1\}^n\) (independent fair coin flips):</p>
+  $$\hat{\mathfrak R}_n(\mathcal H)=\mathbb E_\sigma\Big[\sup_{h\in\mathcal H}\tfrac1n\textstyle\sum_{i=1}^n\sigma_i\,h(x_i)\Big].$$
+  <p>Geometrically it is the average width of that set of vectors in a random sign direction. Standard bounds say test error is at most training error plus about \(2\hat{\mathfrak R}_n\) (plus a term shrinking like \(1/\sqrt n\)). The random-label experiment is this definition run literally: if the network can produce every sign pattern, choose \(h(x_i)=\sigma_i\) and \(\hat{\mathfrak R}_n=1\), the maximum for outputs in \([-1,1]\). The bound becomes “error \(\le\) 2”, which says nothing.</p>
+
+  <h3 class="sub">2 &middot; Memorising any labels: a triangular system (Theorem 1)</h3>
+
+  <p>The network has one hidden layer with \(n\) <em>ReLU</em> units (\(\mathrm{ReLU}(s)=\max\{s,0\}\)). All units share one direction \(a\in\mathbb R^d\); unit \(j\) has its own offset \(b_j\) and output weight \(w_j\):</p>
+  $$c(z)=\sum_{j=1}^n w_j\,\max\{\langle a,z\rangle-b_j,\,0\}, \qquad \#\text{weights}=d+n+n=2n+d .$$
+  <p>Given \(n\) distinct points \(z_i\in\mathbb R^d\) and any targets \(y\in\mathbb R^n\):</p>
+  <p><strong>Step 1, project.</strong> Pick \(a\) so the numbers \(x_i=\langle a,z_i\rangle\) are distinct. Almost every \(a\) works: the bad ones lie on the finitely many hyperplanes \(\langle a,z_i-z_j\rangle=0\). Relabel so \(x_1&lt;\dots&lt;x_n\).</p>
+  <p><strong>Step 2, interleave.</strong> Put one offset just left of each point: \(b_1&lt;x_1&lt;b_2&lt;x_2&lt;\dots&lt;b_n&lt;x_n\). Unit \(j\) is then “on” at \(x_i\) exactly when \(i\ge j\).</p>
+  <p><strong>Step 3, solve.</strong> The fitting conditions \(c(z_i)=y_i\) are linear in \(w\):</p>
+  $$Aw=y,\qquad A_{ij}=\max\{x_i-b_j,\,0\}=\begin{cases}x_i-b_j>0 & j\le i\\ 0 & j>i.\end{cases}$$
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 130" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M20 90h440"/>
+      <!-- offsets b (ticks) and points x (dots) interleaved -->
+      <g stroke-width="2">
+        <path d="M70 82v16M170 82v16M270 82v16M370 82v16"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="110" cy="90" r="6"/><circle cx="210" cy="90" r="6"/><circle cx="310" cy="90" r="6"/><circle cx="410" cy="90" r="6"/>
+      </g>
+      <g font-family="Oswald, sans-serif" font-size="13" fill="currentColor" stroke="none" text-anchor="middle">
+        <text x="70" y="116">b₁</text><text x="170" y="116">b₂</text><text x="270" y="116">b₃</text><text x="370" y="116">b₄</text>
+        <text x="110" y="116">x₁</text><text x="210" y="116">x₂</text><text x="310" y="116">x₃</text><text x="410" y="116">x₄</text>
+      </g>
+      <!-- hinge of unit 2 -->
+      <path d="M20 70h150l210-56" stroke-dasharray="5 4" stroke-width="1.6"/>
+      <text x="300" y="20" font-family="Caveat, cursive" font-size="18" fill="currentColor" stroke="none">unit 2: max(t − b₂, 0)</text>
+      <text x="40" y="60" font-family="Caveat, cursive" font-size="16" fill="currentColor" stroke="none">off at x₁</text>
+    </svg>
+    <figcaption>every hinge switches on just before “its” point, so point i sees only units 1…i: the matrix is lower triangular.</figcaption>
+  </figure>
+
+  <p>\(A\) is lower triangular with diagonal entries \(x_i-b_i&gt;0\), so \(\det A=\prod_i(x_i-b_i)\ne0\) and \(w=A^{-1}y\) exists for every \(y\), random labels included. The weights are found by forward substitution. That is the whole proof (the paper's Lemma 1). It also gives depth-\(k\) versions with only \(O(n/k)\) units per layer.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example, and a subtlety in Lemma 1</span>
+    <p>\(x=(1,2,3)\), \(b=(0.5,1.5,2.5)\), labels \(y=(1,-1,1)\):</p>
+    $$A=\begin{pmatrix}0.5&0&0\\1.5&0.5&0\\2.5&1.5&0.5\end{pmatrix},\qquad w=\begin{pmatrix}2\\-8\\16\end{pmatrix}.$$
+    <p>Forward substitution: \(0.5w_1=1\Rightarrow w_1=2\); \(3-0.5\cdot8=-1\checkmark\); \(5-12+8=1\checkmark\).</p>
+    <p>The paper says \(A\)'s smallest eigenvalue, \(\min_i(x_i-b_i)\), can be used to bound the weights. Here every eigenvalue is \(0.5\), so \(1/\lambda_{\min}=2\). But \(\|w\|=18\) while \(\|y\|=\sqrt3\), so \(\|A^{-1}\|_2\ge 18/\sqrt3\approx10.4\). \(A\) is far from <em>normal</em> (it doesn't commute with \(A^{\top}\)), and for non-normal matrices eigenvalues don't control the inverse. The smallest <em>singular value</em> does, and it can be much smaller than the smallest eigenvalue. The first interactive shows this gap.</p>
+  </div>
+
+  <h3 class="sub">3 &middot; Which perfect fit? The row space decides (Section 5)</h3>
+
+  <p>Even a linear model has the same puzzle. Let \(X\in\mathbb R^{n\times d}\) be the data matrix (row \(i\) is \(x_i^{\top}\)) with \(d\ge n\) and rank \(n\), and \(y\in\mathbb R^n\) the labels. Then \(Xw=y\) has an affine space of solutions of dimension \(d-n\), all with zero training loss. Which one generalises?</p>
+
+  <p><strong>Curvature can't tell.</strong> For a loss of the form \(\tfrac1n\sum_i\mathrm{loss}(w^{\top}x_i,y_i)\), the Hessian (matrix of second derivatives) at any exact fit is</p>
+  $$\nabla^2=\tfrac1n X^{\top}\operatorname{diag}(\beta)\,X,\qquad \beta_i=\partial_z^2\,\mathrm{loss}(z,y_i)\big|_{z=y_i}.$$
+  <p>It is the same \(d\times d\) PSD matrix at every solution, with rank \(\le n&lt;d\). Its null space is \(\ker X\), the \(d-n\) flat directions along which you can slide between solutions. So “flat minima generalise” can't separate them.</p>
+
+  <p><strong>Gradient descent can.</strong> Stochastic gradient descent (SGD) updates \(w_{t+1}=w_t-\eta_t e_t x_{i_t}\): step size \(\eta_t\), times the loss's derivative \(e_t\) on the sampled example \(x_{i_t}\), times that example. Every step adds a multiple of a data point. Starting from \(w_0=0\), the iterate stays in the row space of \(X\): \(w=X^{\top}\alpha\). Combined with \(Xw=y\):</p>
+  $$XX^{\top}\alpha=y,\qquad w^\star=X^{\top}(XX^{\top})^{-1}y=X^{+}y .$$
+  <p>\(K=XX^{\top}\) is the \(n\times n\) <em>Gram matrix</em> of inner products \(\langle x_i,x_j\rangle\), symmetric positive definite when \(X\) has rank \(n\). \(X^{+}\) is the Moore–Penrose pseudoinverse. The decomposition doing the work is \(\mathbb R^d=\operatorname{row}(X)\oplus\ker X\), an orthogonal sum. Any solution is \(w^\star+v\) with \(v\in\ker X\), and by Pythagoras</p>
+  $$\|w^\star+v\|^2=\|w^\star\|^2+\|v\|^2,$$
+  <p>so SGD from zero returns the <strong>minimum-norm</strong> interpolant without any explicit penalty. That is <em>implicit regularization</em>. Swap \(\langle x_i,x_j\rangle\) for a kernel \(k(x_i,x_j)\) and this is the kernel trick.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>\(n=1,\ d=2\): \(x=(1,2)\), \(y=5\). The solutions form the line \(w_1+2w_2=5\). Here \(K=\|x\|^2=5\), \(\alpha=1\), \(w^\star=(1,2)\), \(\|w^\star\|=\sqrt5\). The fit \((5,0)\) is also exact, and \((5,0)=w^\star+(4,-2)\) with \((4,-2)\perp x\): \(25=5+20\). Both have zero training error; SGD from zero lands on \((1,2)\).</p>
+  </div>
+
+  <p>This works surprisingly well. Solving \(K\alpha=y\) exactly on MNIST (70,000 handwritten digits; a 30&nbsp;GB kernel matrix, solved in under 3 minutes with a standard LAPACK call) gives 1.2% test error with no regularization, and 0.6% after a Gabor wavelet transform of the images. But minimum norm isn't the full answer: the wavelet solution has the <em>larger</em> norm (about 390 vs 220) and half the error. Norm only means something relative to a choice of features.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It: Memorise, Then Choose</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive 1<b>Theorem 1's network</b></p>
+
+  <p>Eight points sit at \(x_i=i\), each labelled \(+1\) (filled) or \(-1\) (hollow). Unit \(j\)'s hinge sits at \(b_j=j-g\), a gap \(g\) left of its point. The curve is the two-layer network \(c(t)\) obtained by solving the triangular system \(Aw=y\). <strong>Try:</strong> tap points to flip labels, press <em>random labels</em> a few times, then slide \(g\) down towards 0. <strong>Notice:</strong> the curve hits every label whatever you do, so there are zero training mistakes. As \(g\) shrinks, the smallest eigenvalue \(g\) falls gently while the smallest singular value collapses and \(\|w\|\) explodes. Random labels need far bigger weights than a simple pattern.</p>
+
+  <div class="bench">
+    <div class="btnrow">
+      <button type="button" id="b1r">Random labels</button>
+      <button type="button" id="b1s">Two blocks</button>
+      <button type="button" id="b1a">Alternating</button>
+    </div>
+    <div class="dial">
+      <label for="g1">g = <output id="g1v" for="g1">0.50</output></label>
+      <input id="g1" type="range" min="0.05" max="0.95" value="0.5" step="0.01">
+    </div>
+    <canvas id="c1" width="640" height="300" aria-label="Network output curve through eight labelled points"></canvas>
+    <p class="aside-hand" style="margin:.5rem auto 0">ticks under the axis: hinges b_j &middot; tap a point to flip it</p>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">training mistakes</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="m1">0 / 8</span></div>
+      <div class="entry"><span class="entry-name">smallest eigenvalue of \(A\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="e1">–</span></div>
+      <div class="entry"><span class="entry-name">smallest singular value of \(A\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="s1">–</span></div>
+      <div class="entry"><span class="entry-name">weight size \(\|w\|_2\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="w1">–</span></div>
+    </div>
+  </div>
+
+  <p class="regime" style="margin-top:2.4rem">Interactive 2<b>Same fit, different model</b></p>
+
+  <p>A linear model with \(d=14\) features (cosines \(\cos(k\pi t)/(1+k)\), \(k=0,\dots,13\), damped at high frequency) is fitted to \(n=6\) points from the dashed curve. At slider 0 you see the minimum-norm fit \(w^\star\) that SGD from zero finds. The slider adds \(s\,v\), where \(v\) is a unit vector in \(\ker X\), an 8-dimensional null space. <strong>Try:</strong> drag the slider, then press <em>new direction</em>. <strong>Notice:</strong> training error stays 0 for every \(s\); only the behaviour between the points changes. \(\|w\|^2\) rises as exactly \(\|w^\star\|^2+s^2\) (Pythagoras), and test error is usually lowest near \(s=0\).</p>
+
+  <div class="bench">
+    <div class="btnrow">
+      <button type="button" id="b2n">New direction</button>
+      <button type="button" id="b2z">Back to min-norm</button>
+    </div>
+    <div class="dial">
+      <label for="s2">s = <output id="s2v" for="s2">0.00</output></label>
+      <input id="s2" type="range" min="-5" max="5" value="0" step="0.05">
+    </div>
+    <canvas id="c2" width="640" height="300" aria-label="Interpolating curves through six points"></canvas>
+    <p class="aside-hand" style="margin:.5rem auto 0">dashed: the true function &middot; solid: the fitted model</p>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">training error (max miss)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="t2">–</span></div>
+      <div class="entry"><span class="entry-name">\(\|w\|^2\) vs \(\|w^\star\|^2+s^2\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="n2">–</span></div>
+      <div class="entry"><span class="entry-name">test error (rms on a fine grid)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="r2">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>From the paper's tables</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">A million random labels, memorised</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">95.20%</span></div>
+    <p class="entry-desc">On ImageNet (1.28 million photos, 1000 classes), Inception V3 with random labels and no regularization reaches 95.20% training accuracy with no retuning, and 0.11% on test images, where chance is 0.1%. It still reaches about 90% with dropout and weight decay switched on.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Regularization is a tuning knob, not the cause</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">85.75 → 89.05</span></div>
+    <p class="entry-desc">On CIFAR-10, switching on random cropping and weight decay lifts Inception's test accuracy only from 85.75% to 89.05%. On ImageNet, removing all regularizers drops top-1 accuracy from 77.84% to 59.80%, still 600× chance. Data augmentation alone recovers 72.95%: building in known symmetries of images helps more than penalising weights.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Kernels have the same paradox</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">PD Gram matrix</span></div>
+    <p class="entry-desc">A Gaussian kernel \(k(x,x')=e^{-\|x-x'\|^2/2s^2}\) has a strictly positive definite Gram matrix on any distinct points, so \(K\alpha=y\) is solvable for <em>every</em> labelling. A convex, well-understood model is just as able to memorise noise, and on MNIST it generalises anyway. The puzzle is not about deep learning; it is about interpolation.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Stability can't see the labels</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">label-blind</span></div>
+    <p class="entry-desc"><em>Uniform stability</em> bounds how much a trained model can change when one training example is swapped. It is defined as a worst case over all datasets, so it is the same for true and random labels. Yet one case generalises and the other doesn't, so any bound built only on it must be loose.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>A network big enough to fit random labels perfectly still generalises on real ones, so the answer must lie in <em>which</em> of the many perfect fits training picks. In linear models, SGD started from zero stays in the data's row space and picks the minimum-norm one.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Understanding Deep Learning Requires Rethinking Generalization</strong>, by Chiyuan Zhang, Samy Bengio, Moritz Hardt, Benjamin Recht and Oriol Vinyals (MIT, Google Brain, UC Berkeley, Google DeepMind), 2016; ICLR 2017.
+  <a href="https://arxiv.org/abs/1611.03530">arxiv.org/abs/1611.03530</a></p>
+  <p class="signoff">Written from the full text (arXiv v2, Feb 2017). All numbers are from the paper. The remark on eigenvalues vs singular values in Lemma 1 is ours. Both interactives use small synthetic data.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3", SOFT = css("--ink-soft") || "#4a463f";
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  var rand = mulberry32(1611035);
+  function gauss() {
+    var u = 0; while (u === 0) u = rand();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rand());
+  }
+  function fmt(v) {
+    if (!isFinite(v)) return "∞";
+    if (Math.abs(v) >= 1e4 || (Math.abs(v) < 1e-3 && v !== 0)) return v.toExponential(2);
+    return v.toFixed(Math.abs(v) >= 100 ? 0 : 3);
+  }
+  function clear(ctx, W, H) { ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H); }
+
+  // Solve a symmetric/general system by Gaussian elimination with partial pivoting.
+  function solve(M0, b0) {
+    var n = b0.length, M = M0.map(function (r) { return r.slice(); }), b = b0.slice(), i, j, k;
+    for (k = 0; k < n; k++) {
+      var p = k;
+      for (i = k + 1; i < n; i++) if (Math.abs(M[i][k]) > Math.abs(M[p][k])) p = i;
+      var tr = M[k]; M[k] = M[p]; M[p] = tr; var tb = b[k]; b[k] = b[p]; b[p] = tb;
+      for (i = k + 1; i < n; i++) {
+        var f = M[i][k] / M[k][k];
+        for (j = k; j < n; j++) M[i][j] -= f * M[k][j];
+        b[i] -= f * b[k];
+      }
+    }
+    var x = new Array(n);
+    for (i = n - 1; i >= 0; i--) {
+      var s = b[i];
+      for (j = i + 1; j < n; j++) s -= M[i][j] * x[j];
+      x[i] = s / M[i][i];
+    }
+    return x;
+  }
+
+  /* ================= Interactive 1: Theorem 1 ================= */
+  var N = 8;
+  var labels = [1, 1, -1, 1, -1, -1, 1, -1];
+  var g1 = document.getElementById("g1"), c1 = document.getElementById("c1");
+  var ctx1 = c1.getContext("2d");
+  var T0 = 0, T1 = N + 0.7;
+
+  function buildA(g) {
+    var A = [], i, j;
+    for (i = 0; i < N; i++) {
+      A.push([]);
+      for (j = 0; j < N; j++) A[i].push(Math.max((i + 1) - ((j + 1) - g), 0));
+    }
+    return A;
+  }
+  function forward(A, y) {
+    var w = [], i, j;
+    for (i = 0; i < N; i++) {
+      var s = y[i];
+      for (j = 0; j < i; j++) s -= A[i][j] * w[j];
+      w.push(s / A[i][i]);
+    }
+    return w;
+  }
+  // smallest singular value of A = 1 / largest singular value of A^{-1}
+  function sigmaMin(A) {
+    var inv = [], i, j, k;
+    for (i = 0; i < N; i++) inv.push([]);
+    for (k = 0; k < N; k++) {
+      var e = []; for (i = 0; i < N; i++) e.push(i === k ? 1 : 0);
+      var col = forward(A, e);
+      for (i = 0; i < N; i++) inv[i][k] = col[i];
+    }
+    var v = []; for (i = 0; i < N; i++) v.push(1 + 0.1 * i);
+    var lam = 0;
+    for (var it = 0; it < 200; it++) {
+      var u = [], z = [];
+      for (i = 0; i < N; i++) { var s = 0; for (j = 0; j < N; j++) s += inv[i][j] * v[j]; u.push(s); }
+      for (i = 0; i < N; i++) { var s2 = 0; for (j = 0; j < N; j++) s2 += inv[j][i] * u[j]; z.push(s2); }
+      var nz = Math.sqrt(z.reduce(function (a, x) { return a + x * x; }, 0));
+      lam = nz;
+      v = z.map(function (x) { return x / nz; });
+    }
+    return 1 / Math.sqrt(lam);
+  }
+
+  function draw1() {
+    var g = +g1.value;
+    document.getElementById("g1v").textContent = g.toFixed(2);
+    var A = buildA(g), w = forward(A, labels);
+    var b = []; for (var j = 0; j < N; j++) b.push((j + 1) - g);
+    function c(t) { var s = 0; for (var j = 0; j < N; j++) s += w[j] * Math.max(t - b[j], 0); return s; }
+
+    var W = c1.width, H = c1.height, pad = 22;
+    var samples = [], M = 1.4, k;
+    for (k = 0; k <= 600; k++) { var t = T0 + (T1 - T0) * k / 600, v = c(t); samples.push([t, v]); M = Math.max(M, Math.abs(v)); }
+    M *= 1.08;
+    function X(t) { return pad + (W - 2 * pad) * (t - T0) / (T1 - T0); }
+    function Y(v) { return H / 2 - (H / 2 - pad) * v / M; }
+    clear(ctx1, W, H);
+    // axis and ±1 guides
+    ctx1.strokeStyle = INK; ctx1.lineWidth = 1;
+    ctx1.beginPath(); ctx1.moveTo(pad, Y(0) + 0.5); ctx1.lineTo(W - pad, Y(0) + 0.5); ctx1.stroke();
+    ctx1.save(); ctx1.setLineDash([2, 4]); ctx1.strokeStyle = SOFT;
+    [1, -1].forEach(function (lv) { ctx1.beginPath(); ctx1.moveTo(pad, Y(lv)); ctx1.lineTo(W - pad, Y(lv)); ctx1.stroke(); });
+    ctx1.restore();
+    // hinge ticks
+    ctx1.lineWidth = 1.5;
+    for (j = 0; j < N; j++) { ctx1.beginPath(); ctx1.moveTo(X(b[j]), Y(0) - 6); ctx1.lineTo(X(b[j]), Y(0) + 6); ctx1.stroke(); }
+    // curve
+    ctx1.lineWidth = 2; ctx1.beginPath();
+    samples.forEach(function (p, i) { if (i) ctx1.lineTo(X(p[0]), Y(p[1])); else ctx1.moveTo(X(p[0]), Y(p[1])); });
+    ctx1.stroke();
+    // points
+    for (var i = 0; i < N; i++) {
+      ctx1.beginPath(); ctx1.arc(X(i + 1), Y(labels[i]), 7, 0, 2 * Math.PI);
+      ctx1.fillStyle = labels[i] > 0 ? INK : PAPER; ctx1.fill();
+      ctx1.lineWidth = 2; ctx1.strokeStyle = INK; ctx1.stroke();
+    }
+    ctx1.fillStyle = INK; ctx1.font = "13px Oswald, sans-serif";
+    ctx1.fillText("scale ±" + fmt(M), pad + 2, pad - 6);
+
+    var mistakes = 0;
+    for (i = 0; i < N; i++) if (Math.sign(c(i + 1)) !== labels[i]) mistakes++;
+    document.getElementById("m1").textContent = mistakes + " / " + N;
+    document.getElementById("e1").textContent = g.toFixed(2);
+    document.getElementById("s1").textContent = fmt(sigmaMin(A));
+    document.getElementById("w1").textContent = fmt(Math.sqrt(w.reduce(function (a, x) { return a + x * x; }, 0)));
+    draw1.X = X; draw1.Y = Y;
+  }
+
+  g1.addEventListener("input", draw1);
+  document.getElementById("b1r").addEventListener("click", function () {
+    for (var i = 0; i < N; i++) labels[i] = rand() < 0.5 ? -1 : 1; draw1();
+  });
+  document.getElementById("b1s").addEventListener("click", function () {
+    for (var i = 0; i < N; i++) labels[i] = i < N / 2 ? 1 : -1; draw1();
+  });
+  document.getElementById("b1a").addEventListener("click", function () {
+    for (var i = 0; i < N; i++) labels[i] = i % 2 ? -1 : 1; draw1();
+  });
+  c1.addEventListener("click", function (ev) {
+    var r = c1.getBoundingClientRect(), sx = c1.width / r.width;
+    var px = (ev.clientX - r.left) * sx, best = -1, bd = 1e9;
+    for (var i = 0; i < N; i++) { var d = Math.abs(draw1.X(i + 1) - px); if (d < bd) { bd = d; best = i; } }
+    if (best >= 0 && bd < 30) { labels[best] = -labels[best]; draw1(); }
+  });
+
+  /* ================= Interactive 2: min-norm interpolation ================= */
+  var D = 14, ts = [0.05, 0.22, 0.4, 0.55, 0.73, 0.92];
+  function f(t) { return Math.sin(2 * Math.PI * t) + 0.5 * t; }
+  function phi(t) { var r = []; for (var k = 0; k < D; k++) r.push(Math.cos(k * Math.PI * t) / (1 + k)); return r; }
+  var Xm = ts.map(phi), yv = ts.map(f), n2 = ts.length;
+  function XXt() {
+    var K = [], i, j, k;
+    for (i = 0; i < n2; i++) { K.push([]); for (j = 0; j < n2; j++) { var s = 0; for (k = 0; k < D; k++) s += Xm[i][k] * Xm[j][k]; K[i].push(s); } }
+    return K;
+  }
+  var K = XXt();
+  function Xt(a) { var w = []; for (var k = 0; k < D; k++) { var s = 0; for (var i = 0; i < n2; i++) s += Xm[i][k] * a[i]; w.push(s); } return w; }
+  function Xv(w) { return Xm.map(function (row) { var s = 0; for (var k = 0; k < D; k++) s += row[k] * w[k]; return s; }); }
+  var wStar = Xt(solve(K, yv));
+  var wStar2 = wStar.reduce(function (a, x) { return a + x * x; }, 0);
+  var v;
+  function newDir() {
+    var r = []; for (var k = 0; k < D; k++) r.push(gauss());
+    var beta = solve(K, Xv(r)), pr = Xt(beta);
+    v = r.map(function (x, k) { return x - pr[k]; });
+    var nv = Math.sqrt(v.reduce(function (a, x) { return a + x * x; }, 0));
+    v = v.map(function (x) { return x / nv; });
+  }
+  newDir();
+
+  var s2 = document.getElementById("s2"), c2 = document.getElementById("c2"), ctx2 = c2.getContext("2d");
+  function draw2() {
+    var s = +s2.value;
+    document.getElementById("s2v").textContent = s.toFixed(2);
+    var w = wStar.map(function (x, k) { return x + s * v[k]; });
+    function model(t) { var p = phi(t), a = 0; for (var k = 0; k < D; k++) a += p[k] * w[k]; return a; }
+    var W = c2.width, H = c2.height, pad = 22, lo = -2.2, hi = 2.6;
+    function X(t) { return pad + (W - 2 * pad) * t; }
+    function Y(val) { return pad + (H - 2 * pad) * (hi - Math.max(lo, Math.min(hi, val))) / (hi - lo); }
+    clear(ctx2, W, H);
+    ctx2.strokeStyle = INK; ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.moveTo(pad, Y(0) + 0.5); ctx2.lineTo(W - pad, Y(0) + 0.5); ctx2.stroke();
+    // true function, dashed
+    ctx2.save(); ctx2.setLineDash([6, 5]); ctx2.lineWidth = 1.5; ctx2.beginPath();
+    var k, se = 0, G = 400;
+    for (k = 0; k <= G; k++) { var t = k / G; if (k) ctx2.lineTo(X(t), Y(f(t))); else ctx2.moveTo(X(t), Y(f(t))); }
+    ctx2.stroke(); ctx2.restore();
+    // model, solid
+    ctx2.lineWidth = 2.2; ctx2.beginPath();
+    for (k = 0; k <= G; k++) {
+      var t2 = k / G, m = model(t2), e = m - f(t2); se += e * e;
+      if (k) ctx2.lineTo(X(t2), Y(m)); else ctx2.moveTo(X(t2), Y(m));
+    }
+    ctx2.stroke();
+    // training points
+    ts.forEach(function (t, i) {
+      ctx2.beginPath(); ctx2.arc(X(t), Y(yv[i]), 6.5, 0, 2 * Math.PI);
+      ctx2.fillStyle = INK; ctx2.fill();
+    });
+    var fit = Xv(w), miss = 0;
+    fit.forEach(function (p, i) { miss = Math.max(miss, Math.abs(p - yv[i])); });
+    var w2 = w.reduce(function (a, x) { return a + x * x; }, 0);
+    document.getElementById("t2").textContent = miss < 5e-10 ? "0.000" : fmt(miss);
+    document.getElementById("n2").textContent = w2.toFixed(3) + " = " + (wStar2 + s * s).toFixed(3);
+    document.getElementById("r2").textContent = Math.sqrt(se / (G + 1)).toFixed(3);
+  }
+  s2.addEventListener("input", draw2);
+  document.getElementById("b2n").addEventListener("click", function () { newDir(); draw2(); });
+  document.getElementById("b2z").addEventListener("click", function () { s2.value = 0; draw2(); });
+
+  draw1();
+  draw2();
+})();
+</script>
+</body>
+</html>

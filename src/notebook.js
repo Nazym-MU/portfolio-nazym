@@ -114,6 +114,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-16-transformers-are-ssms-generalized-models-and-effic.html",
         date: "2026-11-16",
     },
+    {
+        title: "Rethinking generalization",
+        blurb: "Shows that standard image-recognition networks can perfectly memorise training photos whose labels were replaced at random, so the usual explanations, which credit good performance on new data to limits on what a model can fit, cannot be why these networks work.",
+        tags: ["paper of the day", "generalization"],
+        file: "learning/paper-2026-11-17-understanding-deep-learning-requires-rethinking-ge.html",
+        date: "2026-11-17",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
