@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Machine Learning in Feature Hilbert Spaces</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:16px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+/* sub-heads inside a section */
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+/* section regime line */
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+/* math inside caps rows must keep its own case */
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:2.4em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.bench figure{margin:.8rem 0 0}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.tap{cursor:pointer;touch-action:manipulation}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.btns{display:flex;gap:.6rem;flex-wrap:wrap;margin:.9rem 0 0}
+.btn{
+  font-family:var(--font-head);
+  font-weight:500;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.78rem;
+  background:var(--paper);
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.35em .9em;
+  cursor:pointer;
+}
+.btn:active{background:var(--paper-inset)}
+.btn:focus-visible{outline:1px dotted var(--ink);outline-offset:3px}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- squeezed-vacuum photon amplitudes: only even levels occupied (silhouette) -->
+    <svg class="strip" viewBox="0 0 420 60" fill="currentColor" aria-hidden="true">
+      <rect x="4" y="4" width="22" height="56"/><rect x="34" y="59" width="22" height="1"/>
+      <rect x="64" y="24" width="22" height="36"/><rect x="94" y="59" width="22" height="1"/>
+      <rect x="124" y="32" width="22" height="28"/><rect x="154" y="59" width="22" height="1"/>
+      <rect x="184" y="37" width="22" height="23"/><rect x="214" y="59" width="22" height="1"/>
+      <rect x="244" y="40" width="22" height="20"/><rect x="274" y="59" width="22" height="1"/>
+      <rect x="304" y="43" width="22" height="17"/><rect x="334" y="59" width="22" height="1"/>
+      <rect x="364" y="45" width="22" height="15"/><rect x="394" y="59" width="22" height="1"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; Physical Review Letters 2019</p>
+      <h1>Feature Hilbert Spaces</h1>
+    </div>
+    <p class="tagline">Quantum Machine Learning in Feature Hilbert Spaces</p>
+    <p class="tagline-hand">Maria Schuld &amp; Nathan Killoran (Xanadu) &middot; 2018 &middot;
+    <a href="https://arxiv.org/abs/1803.07128">arXiv:1803.07128</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>The paper argues that loading data into a quantum state is the same thing a kernel method does: it maps each input into a huge vector space, where the overlap between two states measures how similar the inputs are. It then builds classifiers on that idea, using squeezed light as the example.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: Gram spectra and any labelling</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">two huge spaces</span></div>
+    <p class="entry-desc">A <em>kernel method</em> (the support vector machine is the best-known one) classifies data by sending each input into a high-dimensional, sometimes infinite-dimensional, <em>feature space</em>. There a flat boundary, a hyperplane, can separate classes that were tangled in the original space. The method never builds the feature vectors. It needs only the inner product of every pair of them, a similarity score called the <em>kernel</em>.</p>
+    <p class="entry-desc">Quantum computers also work inside enormous spaces without writing them down. The state of \(n\) qubits is a vector of \(2^n\) complex numbers, and one mode of light lives in an infinite-dimensional space. Yet in 2018 quantum machine learning had barely touched kernels. It also had a practical problem: quantum operations are linear, so building the nonlinear models machine learning relies on was awkward.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">encoding = feature map</span></div>
+    <p class="entry-desc">Preparing a quantum state \(|\phi(x)\rangle\) that depends on an input \(x\) <em>is</em> a feature map: a nonlinear map from inputs into a huge vector space. So the overlap \(\langle\phi(x)|\phi(x')\rangle\) of two such states is automatically a valid kernel, and all of kernel theory applies. The nonlinearity sits in the encoding, so the circuits themselves can stay linear.</p>
+    <p class="entry-desc">That gives two classifiers. <strong>Implicit:</strong> the quantum device only estimates overlaps, and an ordinary classical support vector machine does the rest. <strong>Explicit:</strong> a trainable quantum circuit, followed by a measurement, draws the decision boundary directly in the quantum state space.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">always separable</span></div>
+    <p class="entry-desc">The example encodes each number as the phase of <em>squeezed</em> light, a standard optical state. The paper tests it on three toy 2-D datasets: two concentric rings ("circles"), two interlocking crescents ("moons") and separate clusters ("blobs"). A support vector machine using this kernel scores 0.88/0.92, 0.99/1.00 and 1.00/1.00 (training/test accuracy). A trainable 2-mode optical circuit with 32 parameters reaches 0.99/0.98 on moons.</p>
+    <p class="entry-desc">The paper also proves that this encoding makes the states of any distinct inputs linearly independent. So <em>every</em> labelling of a training set is separable by a hyperplane. A perceptron reaches 100% training accuracy on blobs while test accuracy stays at 0.80. These are simulations: squeezed states can be simulated efficiently on ordinary computers, so the paper is a framework, not a demonstration of quantum advantage.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Gram matrices &amp; a Vandermonde</b></p>
+
+  <p>The training data is \(M\) inputs \(x^1,\dots,x^M\) from an input set \(\mathcal X\) (here, vectors in \(\mathbb R^N\)), with labels \(y^m\in\{-1,+1\}\). The feature space \(\mathcal F\) is a complex Hilbert space, and its inner product \(\langle a|b\rangle\) is conjugate-linear in the first slot.</p>
+
+  <h3 class="sub">The objects</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(U_\phi(x)\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">unitary, depends on x</span></div>
+    <p class="entry-desc">The <em>feature-embedding circuit</em>. It acts on the all-zero (vacuum) state and produces the feature vector \(|\phi(x)\rangle = U_\phi(x)|0\dots0\rangle\), a unit vector in \(\mathcal F\). The map \(x\mapsto|\phi(x)\rangle\) is nonlinear in \(x\), but every operator applied <em>after</em> it acts linearly on the state.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(K\in\mathbb C^{M\times M}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">Hermitian PSD</span></div>
+    <p class="entry-desc">The Gram matrix of the training states, \(K_{mm'}=\kappa(x^m,x^{m'})=\langle\phi(x^m)|\phi(x^{m'})\rangle\). If \(\Phi\) is the operator whose columns are the feature vectors, then \(K=\Phi^\dagger\Phi\), where \(\dagger\) means conjugate transpose. So \(K\) is Hermitian and positive semidefinite, with a unit diagonal because the states are normalised. Its rank is the dimension of the span of the feature vectors.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(W(\theta)\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">trainable unitary</span></div>
+    <p class="entry-desc">The <em>model circuit</em>, with parameters \(\theta\). Applied to vacuum, it gives \(|w\rangle=W|0\dots0\rangle\), the normal vector of a hyperplane in \(\mathcal F\). The linear model is \(f(x)=\langle w|\phi(x)\rangle\). The decision boundary is where \(|w\rangle\perp|\phi(x)\rangle\).</p>
+  </div>
+
+  <p>Two facts carry all the classical theory. First, every feature map gives a kernel: for any coefficients \(c_m\in\mathbb C\),</p>
+  $$\sum_{m,m'} \bar c_m\, c_{m'}\, K_{mm'} \;=\; \Big\|\sum_m c_m\,|\phi(x^m)\rangle\Big\|^2 \;\ge 0,$$
+  <p>with equality only if \(\sum_m c_m|\phi(x^m)\rangle=0\). So <strong>\(K\) is positive definite exactly when the feature vectors are linearly independent.</strong> Remember this; it is the fact the whole paper turns on.</p>
+  <p>Second, the <em>representer theorem</em>: when you fit a model by minimising a loss plus a penalty that grows with \(\|f\|\), the best \(f\) is a combination of kernels centred on the training points,</p>
+  $$f^*(x)=\sum_{m=1}^{M}\alpha_m\,\kappa(x,x^m).$$
+  <p>Training only has to find the \(M\) numbers \(\alpha_m\), and it only ever sees \(K\). So the quantum device's whole job is to estimate entries of \(K\) (for example with a <em>swap test</em>, a short circuit whose measurement statistics give \(|\langle a|b\rangle|^2\)). That is the implicit approach.</p>
+
+  <h3 class="sub">Tensor products multiply kernels</h3>
+
+  <p>If each feature gets its own subsystem, the state is a tensor product. The rule \(\langle a\otimes b\,|\,c\otimes d\rangle=\langle a|c\rangle\langle b|d\rangle\) turns the kernel into a product. The paper's catalogue of standard encodings:</p>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">bit string \(\to\) basis state \(|i\rangle\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\kappa=\delta_{ij}\)</span></div>
+    <div class="entry"><span class="entry-name">unit \(x\in\mathbb R^{2^n}\) \(\to\) amplitudes \(\sum_i x_i|i\rangle\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\kappa=x^{\top}x'\)</span></div>
+    <div class="entry"><span class="entry-name">\(d\) copies \(|\psi_x\rangle^{\otimes d}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\kappa=(x^{\top}x')^d\)</span></div>
+    <div class="entry"><span class="entry-name">\(\bigotimes_i(\cos x_i,\ \sin x_i)\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\kappa=\prod_i\cos(x_i-x_i')\)</span></div>
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: product encoding, N = 2 features</span>
+    <p>\(x=(0,\tfrac\pi4)\mapsto\binom{1}{0}\otimes\binom{.707}{.707}=(.707,\ .707,\ 0,\ 0)\).</p>
+    <p>\(x'=(\tfrac\pi3,\tfrac\pi4)\mapsto\binom{.5}{.866}\otimes\binom{.707}{.707}=(.354,\ .354,\ .612,\ .612)\).</p>
+    <p>Inner product in \(\mathbb R^4\): \(.707\cdot.354\cdot2=0.5=\cos\tfrac\pi3\cdot\cos 0\). With \(N\) features the vectors live in \(\mathbb R^{2^N}\), yet the kernel costs \(N\) cosines.</p>
+  </div>
+
+  <h3 class="sub">The squeezing feature map</h3>
+
+  <p>A mode of light has <em>Fock space</em> \(\ell^2(\mathbb N)\) as its state space. Its orthonormal basis \(|n\rangle\) means "exactly \(n\) photons". The annihilation operator \(\hat a|n\rangle=\sqrt n\,|n-1\rangle\) is a weighted backward shift, and its adjoint \(\hat a^\dagger\) is the matching forward shift. The <em>squeeze operator</em></p>
+  $$S(z)=\exp\!\big[\tfrac12(\bar z\,\hat a^2-z\,\hat a^{\dagger2})\big],\qquad z=re^{i\varphi},$$
+  <p>is unitary, because its exponent is anti-Hermitian. It moves photons only in pairs, so the <em>squeezed vacuum</em> \(S(z)|0\rangle\) lives on even levels only:</p>
+  $$|(r,\varphi)\rangle=\frac{1}{\sqrt{\cosh r}}\sum_{n=0}^{\infty}\frac{\sqrt{(2n)!}}{2^n n!}\,\big(-e^{i\varphi}\tanh r\big)^n\,|2n\rangle.$$
+  <p>The feature map fixes the squeezing strength \(r=c\) (a hyperparameter) and writes the input into the phase: \(x\mapsto|(c,x)\rangle\). A vector input \(x\in\mathbb R^N\) uses one mode per feature, \(|(c,x)\rangle=\bigotimes_i|(c,x_i)\rangle\). Write \(t=\tanh c\). Taking the inner product term by term and using \(\sum_n\binom{2n}{n}(w/4)^n=(1-w)^{-1/2}\) gives the kernel in closed form:</p>
+  $$\kappa(x,x')=\prod_{i=1}^{N}\frac{\operatorname{sech}c}{\sqrt{1-e^{i(x_i'-x_i)}\,t^2}}.$$
+  <p>Each factor depends only on the phase difference \(x_i'-x_i\), taken mod \(2\pi\). It equals 1 when the phases agree and is smallest when they differ by \(\pi\). Larger \(c\) makes the peak narrower.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: c = ln 3, so tanh c = 0.8 and sech c = 0.6</span>
+    <p>\(|(c,0)\rangle\approx 0.775|0\rangle-0.438|2\rangle+0.304|4\rangle-0.222|6\rangle+\cdots\). Using phase \(\pi\) flips the sign of every other term.</p>
+    <p>\(\kappa(0,\pi)=0.6/\sqrt{1+0.64}=0.469\). The four terms shown already give \(0.600-0.192+0.092-0.049=0.452\).</p>
+  </div>
+
+  <h3 class="sub">The fact that does the work: a Vandermonde determinant</h3>
+
+  <p>The paper proves that distinct phases \(\varphi^1,\dots,\varphi^M\) give linearly independent squeezed states. Stack the states as rows of a matrix \(\mathsf M\) (size \(M\times\infty\)), with entries in the Fock basis. Then scale rows by \(D_1=\operatorname{diag}(\sqrt{\cosh r_j})\) and columns by \(D_2=\operatorname{diag}\big(n!/\sqrt{(2n)!}\big)\). Both are invertible diagonal matrices, so neither changes the rank. What remains is a pure power pattern:</p>
+  $$V=D_1\,\mathsf M\,D_2,\qquad V_{jn}=z_j^{\,n},\qquad z_j=-\tfrac12\,e^{i\varphi_j}\tanh c .$$
+  <p>Keep only the first \(M\) columns, \(n=0,\dots,M-1\). That square block is a Vandermonde matrix, with</p>
+  $$\det V_{M\times M}=\prod_{j<k}(z_k-z_j)\neq0\iff\text{the } z_j \text{ are distinct}.$$
+  <p>The \(z_j\) sit on a circle of radius \(\tfrac12\tanh c\) at angles \(\varphi_j+\pi\). They are distinct exactly when the phases are distinct mod \(2\pi\), which is the only way two inputs can collide. An invertible \(M\times M\) block means \(\mathsf M\) has full row rank, so the states are independent.</p>
+  <p class="aside-hand">the paper writes det V &gt; 0; the entries are complex, so the right statement is det V &ne; 0.</p>
+
+  <figure>
+    <svg viewBox="0 0 440 210" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <!-- axes -->
+      <path d="M20 100h200M120 15v175" stroke-width="1"/>
+      <text x="216" y="92" font-family="Oswald, sans-serif" font-size="11" fill="currentColor" stroke="none">Re</text>
+      <text x="126" y="24" font-family="Oswald, sans-serif" font-size="11" fill="currentColor" stroke="none">Im</text>
+      <!-- circle radius = 1/2 tanh c -->
+      <circle cx="120" cy="100" r="70" stroke-dasharray="4 4" stroke-width="1.5"/>
+      <!-- nodes -->
+      <circle cx="50" cy="100" r="6" fill="currentColor"/>
+      <circle cx="120" cy="170" r="6" fill="currentColor"/>
+      <circle cx="190" cy="100" r="6" fill="currentColor"/>
+      <text x="44" y="124" font-family="Oswald, sans-serif" font-size="11" text-anchor="middle" fill="currentColor" stroke="none">φ = 0</text>
+      <text x="152" y="190" font-family="Oswald, sans-serif" font-size="11" text-anchor="start" fill="currentColor" stroke="none">φ = π/2</text>
+      <text x="196" y="124" font-family="Oswald, sans-serif" font-size="11" text-anchor="middle" fill="currentColor" stroke="none">φ = π</text>
+      <!-- chords: the Vandermonde factors -->
+      <path d="M50 100L120 170L190 100" stroke-width="1"/>
+      <path d="M50 100Q120 70 190 100" stroke-width="1" stroke-dasharray="2 3"/>
+      <text x="120" y="66" font-family="Oswald, sans-serif" font-size="11" text-anchor="middle" fill="currentColor" stroke="none">radius ½ tanh c</text>
+      <!-- legend -->
+      <text x="250" y="70" font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">det V = PRODUCT OF</text>
+      <text x="250" y="90" font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">ALL CHORD VECTORS</text>
+      <path d="M250 100h170" stroke-width="1"/>
+      <text x="250" y="122" font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">ZERO ONLY IF TWO</text>
+      <text x="250" y="142" font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none">NODES COINCIDE</text>
+    </svg>
+    <figcaption>each input becomes a node on a circle; the determinant is the product of the chords between nodes.</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: three phases, tanh c = 0.8</span>
+    <p>\(\varphi=0,\tfrac\pi2,\pi\) give nodes \(z=-0.4,\ -0.4i,\ 0.4\), and</p>
+    $$V=\begin{pmatrix}1&-0.4&0.16\\1&-0.4i&-0.16\\1&0.4&0.16\end{pmatrix},$$
+    <p>\(\det V=(0.4-0.4i)(0.8)(0.4+0.4i)=0.8\cdot0.32=0.256\neq0\). Nudge \(\varphi_2\) toward \(0\) and the first chord \(z_2-z_1\) shrinks: the determinant goes to zero continuously, and the two states become nearly parallel.</p>
+  </div>
+
+  <p><strong>Several modes.</strong> If \(\{v(s)\}\) is a linearly independent family, so is every family of tensor products \(v(s_1)\otimes\cdots\otimes v(s_N)\) indexed by distinct tuples \((s_1,\dots,s_N)\). So distinct input vectors still give independent states. The paper argues this from the overlaps being nonzero, which is not enough on its own; the tensor-product fact is what makes it true.</p>
+
+  <div class="callout">
+    <span class="callout-label">Why independence means every labelling is separable</span>
+    <p>Independent features mean \(K\) is invertible. Look for \(|w\rangle=\sum_m\beta_m|\phi(x^m)\rangle\). The conditions \(f(x^k)=\langle w|\phi(x^k)\rangle=y^k\) for all \(k\) form the \(M\times M\) system \(\sum_m\bar\beta_m K_{mk}=y^k\). Its matrix is \(K^{\top}\), which is invertible, so for <em>any</em> labels \(y\) there is a \(|w\rangle\) hitting them exactly. Then \(\operatorname{sign}\operatorname{Re} f(x^m)=y^m\) for every \(m\).</p>
+    <p>This is the Gram-matrix form of the paper's Appendix C rank argument, and it is why the perceptron in Fock space always reaches 100% training accuracy.</p>
+  </div>
+
+  <h3 class="sub">The explicit classifier: a linear functional on density operators</h3>
+
+  <figure class="wide">
+    <svg viewBox="0 0 520 120" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M10 35h400M10 85h400" stroke-width="1.5"/>
+      <rect x="40" y="20" width="90" height="30" fill="#f4efe3"/>
+      <rect x="40" y="70" width="90" height="30" fill="#f4efe3"/>
+      <text x="85" y="40" font-family="Oswald, sans-serif" font-size="12" text-anchor="middle" fill="currentColor" stroke="none">S(c, x₁)</text>
+      <text x="85" y="90" font-family="Oswald, sans-serif" font-size="12" text-anchor="middle" fill="currentColor" stroke="none">S(c, x₂)</text>
+      <rect x="190" y="14" width="140" height="92" fill="#f4efe3"/>
+      <text x="260" y="58" font-family="Oswald, sans-serif" font-size="14" text-anchor="middle" fill="currentColor" stroke="none">W(θ)</text>
+      <text x="260" y="78" font-family="Oswald, sans-serif" font-size="10" letter-spacing="1" text-anchor="middle" fill="currentColor" stroke="none">4 BLOCKS · 32 PARAMS</text>
+      <!-- meters -->
+      <rect x="370" y="20" width="40" height="30" fill="#f4efe3"/>
+      <rect x="370" y="70" width="40" height="30" fill="#f4efe3"/>
+      <path d="M376 44a14 14 0 0 1 28 0M390 44l9-14" stroke-width="1.5"/>
+      <path d="M376 94a14 14 0 0 1 28 0M390 94l9-14" stroke-width="1.5"/>
+      <text x="420" y="40" font-family="Oswald, sans-serif" font-size="11" fill="currentColor" stroke="none">n₁</text>
+      <text x="420" y="90" font-family="Oswald, sans-serif" font-size="11" fill="currentColor" stroke="none">n₂</text>
+      <text x="445" y="58" font-family="Oswald, sans-serif" font-size="11" fill="currentColor" stroke="none">p(2,0)</text>
+      <text x="445" y="74" font-family="Oswald, sans-serif" font-size="11" fill="currentColor" stroke="none">p(0,2)</text>
+      <text x="85" y="116" font-family="Oswald, sans-serif" font-size="10" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">FEATURE MAP</text>
+      <text x="260" y="120" font-family="Oswald, sans-serif" font-size="10" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">MODEL CIRCUIT</text>
+    </svg>
+    <figcaption>two modes of light: squeeze in the data, apply a trained unitary, count photons.</figcaption>
+  </figure>
+
+  <p>For a 2-D input, each coordinate squeezes its own mode. Then the trainable unitary \(W(\theta)\) acts, and a photon counter on each mode reads out photon numbers. The paper's two class scores are the probabilities of seeing photon counts \((2,0)\) and \((0,2)\), normalised to sum to one. Each probability is a quadratic form in the state:</p>
+  $$o_0=\big|\langle 2,0|\,W(\theta)\,|\phi(x)\rangle\big|^2=\operatorname{Tr}\!\big(O_\theta\,\rho_x\big),\qquad O_\theta=W^\dagger\,|2,0\rangle\langle2,0|\,W,\quad \rho_x=|\phi(x)\rangle\langle\phi(x)|.$$
+  <p>\(O_\theta\) is a rank-one orthogonal projector, rotated by the unitary. So the score is <em>linear</em> in the density operator \(\rho_x\), the rank-one projector onto the feature state. Only the final normalisation \(o_0/(o_0+o_1)\) is nonlinear.</p>
+  <p>Each block of \(W\) is a beamsplitter (\(e^{u(e^{iv}\hat a_1^\dagger\hat a_2-e^{-iv}\hat a_1\hat a_2^\dagger)}\), which mixes the modes) followed by one-mode gates whose generators are polynomials of degree 1, 2 and 3 in the position-like operator \(\hat x\) (displacement, quadratic phase, cubic phase). The cubic gate is the only non-Gaussian gate in the set, and it is what makes such a circuit hard to simulate classically.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive<b>One mode, real numbers</b></p>
+
+  <h3 class="sub">1 &middot; The kernel and the spectrum of its Gram matrix</h3>
+  <p>Take \(N\) inputs evenly spaced around the circle of phases, \(x_j=2\pi j/N\), and squeeze each into one mode with strength \(c\). The top panel plots the kernel against the phase difference \(\Delta\): \(|\kappa|\) solid, \(\operatorname{Re}\kappa\) dashed. Dots mark the differences that occur between your inputs. The bottom panel shows the eigenvalues of the \(N\times N\) Gram matrix \(K\) on a log scale.</p>
+  <p><strong>Try:</strong> set \(N=12\), then slide \(c\) from 3 down to 0.3. <strong>Notice:</strong> no bar ever reaches zero, because \(K\) is strictly positive definite for every \(c\). That is the Vandermonde result. At small \(c\), though, the spectrum spans many orders of magnitude: the states are independent but nearly parallel, and \(K\) is badly conditioned. At large \(c\) the kernel becomes a sharp spike, the spectrum flattens, and \(K\) approaches the identity. The eigenvalues always sum to \(N\), the trace of \(K\).</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="cA">c = <output id="cAv" for="cA">1.50</output></label>
+      <input id="cA" type="range" min="0.3" max="3" value="1.5" step="0.05">
+    </div>
+    <div class="dial">
+      <label for="nA">N = <output id="nAv" for="nA">8</output></label>
+      <input id="nA" type="range" min="2" max="12" value="8" step="1">
+    </div>
+    <figure>
+      <canvas id="kProf" width="640" height="240"></canvas>
+      <figcaption>kernel against the phase difference Δ, from −π to π</figcaption>
+    </figure>
+    <figure>
+      <canvas id="kSpec" width="640" height="200"></canvas>
+      <figcaption>eigenvalues of K, log scale (gridlines every factor of 10⁴)</figcaption>
+    </figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">largest eigenvalue</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="aMax">–</span></div>
+      <div class="entry"><span class="entry-name">smallest eigenvalue</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="aMin">–</span></div>
+      <div class="entry"><span class="entry-name">sum (= trace = N)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="aSum">–</span></div>
+    </div>
+  </div>
+
+  <h3 class="sub">2 &middot; Any labelling, separated</h3>
+  <p>Seven inputs sit at fixed phases. Filled dots are labelled \(+1\) and open dots \(-1\). The curve is the representer-theorem model \(f(x)=\sum_m\alpha_m\,k(x,x^m)\) with the real kernel \(k=|\kappa|^2\). The weights \(\alpha\) solve \(G\alpha=y\), where \(G\) is the \(7\times7\) Gram matrix of \(k\). The strip along the bottom is the classifier: solid ink where \(f&gt;0\), hatched where \(f&lt;0\).</p>
+  <p><strong>Try:</strong> tap dots to flip their labels, or press "alternate" for the hardest pattern. Then move \(c\). <strong>Notice:</strong> the curve passes exactly through every label, whatever the labelling. That is linear separability in Fock space. At large \(c\) it is a set of isolated bumps with \(f\approx0\) in between: pure memorisation, which is why the perceptron's perfect training score said nothing about test accuracy. At small \(c\), \(G\) is nearly singular, the weights \(\alpha\) explode, and the curve swings wildly between the points.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="cB">c = <output id="cBv" for="cB">1.20</output></label>
+      <input id="cB" type="range" min="0.3" max="3" value="1.2" step="0.05">
+    </div>
+    <figure>
+      <canvas id="sep" class="tap" width="640" height="300"></canvas>
+      <figcaption>f(x) on the circle of phases; tap a dot to flip its label</figcaption>
+    </figure>
+    <div class="btns">
+      <button type="button" class="btn" id="bAlt">alternate</button>
+      <button type="button" class="btn" id="bRnd">random labels</button>
+    </div>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">smallest eigenvalue of G</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="bMin">–</span></div>
+      <div class="entry"><span class="entry-name">largest |α|</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="bAl">–</span></div>
+      <div class="entry"><span class="entry-name">training points correct</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="bOk">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>And one derivation</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The Gram spectrum is the photon distribution, folded</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">circulant</span></div>
+    <p class="entry-desc">This one is derived for this page; it is not in the paper. The kernel depends only on \(x'-x\), so for evenly spaced phases \(K\) is a Hermitian <em>circulant</em> matrix, diagonalised by the discrete Fourier transform. Expanding \(\kappa\) as a Fourier series in the phase difference, the coefficient of \(e^{in\Delta}\) is \(p_n=|\langle 2n|(c,x)\rangle|^2\), the probability of finding \(2n\) photons. That gives</p>
+    $$\lambda_m=N\!\!\sum_{n\equiv m\ (\mathrm{mod}\ N)}\!\! p_n,\qquad m=0,\dots,N-1.$$
+    <p class="entry-desc">Every eigenvalue is \(N\) times a sum of positive probabilities, so \(K\succ0\) can be read off directly, and \(\sum_m\lambda_m=N\sum_n p_n=N\). Weak squeezing puts nearly all probability on \(n=0\), so one eigenvalue is about \(N\) and the rest are tiny: exactly what interactive 1 shows.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">A huge Hilbert space is not an advantage</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">Gaussian = easy</span></div>
+    <p class="entry-desc">The squeezing kernel lives in infinite dimensions, yet it is a one-line formula; the paper's own simulations evaluate it classically. Squeezed states are <em>Gaussian</em> states, and those can be simulated efficiently on ordinary computers. A quantum kernel only earns its keep if \(\langle0|V_\phi(x)^\dagger V_\phi(x')|0\rangle\) is hard to compute classically, for example when the circuit \(V_\phi\) includes a non-Gaussian cubic phase gate. The paper leaves open which such kernels are also <em>useful</em>.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(|\kappa|^2\) is a kernel too</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">Schur product</span></div>
+    <p class="entry-desc">Hardware estimates \(|\langle\phi(x)|\phi(x')\rangle|^2\), not the complex overlap. That is still a valid kernel, in two ways. Entrywise, its Gram matrix is \(K\circ\bar K\), the elementwise product of two positive definite matrices, which is positive definite by the Schur product theorem. As a feature map, it equals \(\operatorname{Tr}(\rho_x\rho_{x'})\), the Hilbert–Schmidt inner product of density operators. The real feature vector is \(\rho_x\), the same object the explicit classifier is linear in.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">A non-normal operator gives the Gaussian kernel</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">coherent states</span></div>
+    <p class="entry-desc">Every complex number \(\alpha\) is an eigenvalue of the annihilation operator \(\hat a\), with eigenvector the <em>coherent state</em> \(|\alpha\rangle\). Because \(\hat a\) is not normal, eigenvectors for different eigenvalues need not be orthogonal: \(|\langle\alpha|\beta\rangle|^2=e^{-|\alpha-\beta|^2}\), the Gaussian (radial basis function) kernel. The paper's appendix contrasts this with the position operator, whose generalised eigenvectors are orthogonal. There the "kernel" is a Dirac delta, which is not square-integrable, so \(L^2\) is not a reproducing-kernel Hilbert space.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>Encoding data into quantum states is a feature map, so state overlaps form a positive semidefinite Gram matrix that any kernel method can use. For squeezed states a Vandermonde determinant makes that matrix strictly positive definite, so every labelling is separable: lots of expressive power, but by itself neither generalisation nor quantum advantage.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Quantum Machine Learning in Feature Hilbert Spaces</strong>, by Maria Schuld and Nathan Killoran (Xanadu), 2018; published in Physical Review Letters, 2019.
+  <a href="https://arxiv.org/abs/1803.07128">arxiv.org/abs/1803.07128</a></p>
+  <p class="signoff">Written from the full text (arXiv v1). Accuracies are read from the paper's figures. The circulant-spectrum derivation and both interactives were made for this page, using the paper's closed-form one-mode kernel.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3", SOFT = css("--ink-soft") || "#4a463f";
+  var TAU = 2 * Math.PI;
+
+  function hatchPattern(ctx) {
+    var t = document.createElement("canvas");
+    t.width = 6; t.height = 6;
+    var h = t.getContext("2d");
+    h.strokeStyle = INK; h.lineWidth = 1.4;
+    h.beginPath();
+    h.moveTo(-1, 1); h.lineTo(1, -1);
+    h.moveTo(0, 6); h.lineTo(6, 0);
+    h.moveTo(5, 7); h.lineTo(7, 5);
+    h.stroke();
+    return ctx.createPattern(t, "repeat");
+  }
+  function clear(ctx, W, H) { ctx.globalAlpha = 1; ctx.setLineDash([]); ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H); }
+  function wrap(d) { d = ((d + Math.PI) % TAU + TAU) % TAU - Math.PI; return d; }
+
+  // One-mode squeezing kernel  kappa(Delta) = sech c / sqrt(1 - t^2 e^{i Delta}).
+  function kappa(c, d) {
+    var t2 = Math.pow(Math.tanh(c), 2), s = 1 / Math.cosh(c);
+    var re = 1 - t2 * Math.cos(d), im = -t2 * Math.sin(d);
+    var r = Math.sqrt(Math.hypot(re, im)), a = Math.atan2(im, re) / 2;
+    return { re: s * Math.cos(a) / r, im: -s * Math.sin(a) / r, abs: s / r };
+  }
+  // Real kernel |kappa|^2.
+  function k2(c, d) {
+    var t = Math.tanh(c), t2 = t * t, s = 1 / Math.cosh(c);
+    return s * s / Math.sqrt(1 - 2 * t2 * Math.cos(d) + t2 * t2);
+  }
+
+  /* ---------------- bench 1 ---------------- */
+  var cA = document.getElementById("cA"), nA = document.getElementById("nA");
+  var prof = document.getElementById("kProf"), spec = document.getElementById("kSpec");
+
+  // Eigenvalues of the circulant Gram matrix: lambda_m = N * sum_{n = m mod N} p_n,
+  // p_n = sech c * C(2n,n)/4^n * t^{2n}  (photon-pair distribution).
+  function spectrum(c, N) {
+    var t2 = Math.pow(Math.tanh(c), 2), s = 1 / Math.cosh(c);
+    var lam = [], m, n, a = 1, p = 1;
+    for (m = 0; m < N; m++) lam.push(0);
+    for (n = 0; n < 200000; n++) {
+      var w = s * a * p;
+      lam[n % N] += w;
+      if (w < 1e-20 && n > N) break;
+      a *= (2 * n + 1) / (2 * n + 2);
+      p *= t2;
+    }
+    return lam.map(function (v) { return N * v; });
+  }
+
+  function drawProfile(c, N) {
+    var ctx = prof.getContext("2d"), W = prof.width, H = prof.height, pad = 22;
+    clear(ctx, W, H);
+    function X(d) { return pad + (d + Math.PI) / TAU * (W - 2 * pad); }
+    function Y(v) { return H - pad - v * (H - 2 * pad); }
+    ctx.strokeStyle = INK; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, Y(0) + .5); ctx.lineTo(W - pad, Y(0) + .5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(X(0) + .5, pad - 8); ctx.lineTo(X(0) + .5, H - pad); ctx.stroke();
+    ctx.fillStyle = INK; ctx.font = "13px Oswald, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("−π", X(-Math.PI) + 8, H - 6); ctx.fillText("0", X(0), H - 6); ctx.fillText("π", X(Math.PI) - 6, H - 6);
+    ctx.textAlign = "left"; ctx.fillText("1", X(0) + 6, Y(1) + 4);
+    ctx.setLineDash([2, 4]);
+    ctx.beginPath(); ctx.moveTo(pad, Y(1) + .5); ctx.lineTo(W - pad, Y(1) + .5); ctx.stroke();
+    var i, d, steps = 400;
+    // Re kappa dashed
+    ctx.setLineDash([6, 5]); ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    for (i = 0; i <= steps; i++) { d = -Math.PI + TAU * i / steps; var k = kappa(c, d); if (i) ctx.lineTo(X(d), Y(k.re)); else ctx.moveTo(X(d), Y(k.re)); }
+    ctx.stroke();
+    // |kappa| solid
+    ctx.setLineDash([]); ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    for (i = 0; i <= steps; i++) { d = -Math.PI + TAU * i / steps; var kk = kappa(c, d).abs; if (i) ctx.lineTo(X(d), Y(kk)); else ctx.moveTo(X(d), Y(kk)); }
+    ctx.stroke();
+    // sample differences
+    for (i = 0; i < N; i++) {
+      d = wrap(TAU * i / N);
+      var v = kappa(c, d).abs;
+      ctx.beginPath(); ctx.arc(X(d), Y(v), 5, 0, TAU);
+      ctx.fillStyle = INK; ctx.fill();
+      if (Math.abs(d + Math.PI) < 1e-9) { ctx.beginPath(); ctx.arc(X(Math.PI), Y(v), 5, 0, TAU); ctx.fill(); }
+    }
+  }
+
+  function fmt(v) {
+    if (v >= 0.01) return v.toFixed(3);
+    return v.toExponential(2).replace("e-", "×10⁻").replace(/⁻(\d+)/, function (_, e) {
+      var sup = "⁰¹²³⁴⁵⁶⁷⁸⁹"; return "⁻" + e.split("").map(function (ch) { return sup[+ch]; }).join("");
+    });
+  }
+
+  function drawSpectrum(lam) {
+    var ctx = spec.getContext("2d"), W = spec.width, H = spec.height, pad = 14, N = lam.length;
+    clear(ctx, W, H);
+    var lo = -16, hi = Math.log10(12) + 0.1;
+    function Y(v) { var l = Math.max(lo, Math.log10(v)); return H - pad - (l - lo) / (hi - lo) * (H - 2 * pad); }
+    ctx.strokeStyle = INK; ctx.lineWidth = 1;
+    ctx.setLineDash([2, 4]);
+    [0, -4, -8, -12].forEach(function (e) {
+      var y = Y(Math.pow(10, e)) + .5;
+      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    ctx.fillStyle = INK; ctx.font = "12px Oswald, sans-serif"; ctx.textAlign = "right";
+    ctx.fillText("1", W - pad, Y(1) - 4);
+    ctx.fillText("10⁻⁸", W - pad, Y(1e-8) - 4);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(pad, H - pad + .5); ctx.lineTo(W - pad - 40, H - pad + .5); ctx.stroke();
+    var bw = (W - 2 * pad - 40) / N;
+    for (var m = 0; m < N; m++) {
+      var top = Y(lam[m]), x = pad + m * bw + bw * .18, w = bw * .64;
+      ctx.fillRect(x, top, w, H - pad - top);
+    }
+  }
+
+  function updateA() {
+    var c = +cA.value, N = +nA.value;
+    document.getElementById("cAv").textContent = c.toFixed(2);
+    document.getElementById("nAv").textContent = N;
+    var lam = spectrum(c, N);
+    drawProfile(c, N);
+    drawSpectrum(lam);
+    var mx = Math.max.apply(null, lam), mn = Math.min.apply(null, lam);
+    var sum = lam.reduce(function (a, b) { return a + b; }, 0);
+    document.getElementById("aMax").textContent = fmt(mx);
+    document.getElementById("aMin").textContent = fmt(mn);
+    document.getElementById("aSum").textContent = sum.toFixed(3);
+  }
+  cA.addEventListener("input", updateA);
+  nA.addEventListener("input", updateA);
+
+  /* ---------------- bench 2 ---------------- */
+  var cB = document.getElementById("cB"), sep = document.getElementById("sep");
+  var XS = [-2.6, -1.8, -1.1, -0.3, 0.5, 1.4, 2.3];
+  var Ylab = [1, 1, -1, -1, 1, -1, 1];
+  var M = XS.length, sepPat = null;
+
+  function solve(A, b) {
+    var n = b.length, i, j, k, Mx = A.map(function (r, i2) { return r.concat([b[i2]]); });
+    for (k = 0; k < n; k++) {
+      var piv = k;
+      for (i = k + 1; i < n; i++) if (Math.abs(Mx[i][k]) > Math.abs(Mx[piv][k])) piv = i;
+      var tmp = Mx[k]; Mx[k] = Mx[piv]; Mx[piv] = tmp;
+      for (i = k + 1; i < n; i++) {
+        var f = Mx[i][k] / Mx[k][k];
+        for (j = k; j <= n; j++) Mx[i][j] -= f * Mx[k][j];
+      }
+    }
+    var x = new Array(n);
+    for (i = n - 1; i >= 0; i--) {
+      var s = Mx[i][n];
+      for (j = i + 1; j < n; j++) s -= Mx[i][j] * x[j];
+      x[i] = s / Mx[i][i];
+    }
+    return x;
+  }
+
+  // Cyclic Jacobi eigenvalues of a real symmetric matrix.
+  function eigSym(A0) {
+    var n = A0.length, A = A0.map(function (r) { return r.slice(); }), p, q, k;
+    for (var sweep = 0; sweep < 100; sweep++) {
+      var off = 0;
+      for (p = 0; p < n; p++) for (q = p + 1; q < n; q++) off += A[p][q] * A[p][q];
+      if (off < 1e-30) break;
+      for (p = 0; p < n - 1; p++) for (q = p + 1; q < n; q++) {
+        if (Math.abs(A[p][q]) < 1e-300) continue;
+        var th = (A[q][q] - A[p][p]) / (2 * A[p][q]);
+        var t = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th * th + 1));
+        var c = 1 / Math.sqrt(t * t + 1), s = t * c, x, y;
+        for (k = 0; k < n; k++) { x = A[k][p]; y = A[k][q]; A[k][p] = c * x - s * y; A[k][q] = s * x + c * y; }
+        for (k = 0; k < n; k++) { x = A[p][k]; y = A[q][k]; A[p][k] = c * x - s * y; A[q][k] = s * x + c * y; }
+      }
+    }
+    var ev = []; for (p = 0; p < n; p++) ev.push(A[p][p]);
+    return ev;
+  }
+
+  var geo = { pad: 24, ymax: 2.5 };
+  function SX(x) { return geo.pad + (x + Math.PI) / TAU * (sep.width - 2 * geo.pad); }
+
+  function updateB() {
+    var c = +cB.value;
+    document.getElementById("cBv").textContent = c.toFixed(2);
+    var G = [], i, j;
+    for (i = 0; i < M; i++) { G.push([]); for (j = 0; j < M; j++) G[i].push(k2(c, XS[i] - XS[j])); }
+    var alpha = solve(G, Ylab);
+    var ev = eigSym(G);
+    function f(x) { var s = 0; for (var m = 0; m < M; m++) s += alpha[m] * k2(c, x - XS[m]); return s; }
+
+    var ctx = sep.getContext("2d"), W = sep.width, H = sep.height, pad = geo.pad;
+    if (!sepPat) sepPat = hatchPattern(ctx);
+    clear(ctx, W, H);
+    var stripH = 18, plotB = H - pad - stripH - 10;
+    function SY(v) { v = Math.max(-geo.ymax, Math.min(geo.ymax, v)); return pad + (geo.ymax - v) / (2 * geo.ymax) * (plotB - pad); }
+
+    // guides at y = +1, 0, -1
+    ctx.strokeStyle = INK; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, SY(0) + .5); ctx.lineTo(W - pad, SY(0) + .5); ctx.stroke();
+    ctx.setLineDash([2, 4]);
+    [1, -1].forEach(function (v) { ctx.beginPath(); ctx.moveTo(pad, SY(v) + .5); ctx.lineTo(W - pad, SY(v) + .5); ctx.stroke(); });
+    ctx.setLineDash([]);
+    ctx.fillStyle = INK; ctx.font = "12px Oswald, sans-serif"; ctx.textAlign = "left";
+    ctx.fillText("+1", 2, SY(1) + 4); ctx.fillText("−1", 2, SY(-1) + 4);
+
+    // curve, clipped to plot area
+    ctx.save();
+    ctx.beginPath(); ctx.rect(pad, pad - 4, W - 2 * pad, plotB - pad + 8); ctx.clip();
+    ctx.lineWidth = 2.2; ctx.beginPath();
+    var steps = 600, x, v, signs = [];
+    for (i = 0; i <= steps; i++) {
+      x = -Math.PI + TAU * i / steps; v = f(x); signs.push(v);
+      if (i) ctx.lineTo(SX(x), SY(v)); else ctx.moveTo(SX(x), SY(v));
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // decision strip
+    var sy = H - pad - stripH;
+    for (i = 0; i < steps; i++) {
+      var x0 = SX(-Math.PI + TAU * i / steps), x1 = SX(-Math.PI + TAU * (i + 1) / steps);
+      ctx.fillStyle = signs[i] >= 0 ? INK : sepPat;
+      ctx.fillRect(x0, sy, x1 - x0 + .6, stripH);
+    }
+    ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.strokeRect(pad + .5, sy + .5, W - 2 * pad - 1, stripH - 1);
+
+    // data points
+    var ok = 0;
+    for (i = 0; i < M; i++) {
+      var px = SX(XS[i]), py = SY(Ylab[i]);
+      ctx.beginPath(); ctx.moveTo(px + .5, py); ctx.lineTo(px + .5, sy); ctx.setLineDash([1, 3]); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(px, py, 8, 0, TAU);
+      ctx.fillStyle = Ylab[i] > 0 ? INK : PAPER; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = INK; ctx.stroke();
+      if ((f(XS[i]) >= 0 ? 1 : -1) === Ylab[i]) ok++;
+    }
+
+    var amax = Math.max.apply(null, alpha.map(Math.abs));
+    document.getElementById("bMin").textContent = fmt(Math.min.apply(null, ev));
+    document.getElementById("bAl").textContent = amax < 1e4 ? amax.toFixed(2) : amax.toExponential(1);
+    document.getElementById("bOk").textContent = ok + " / " + M;
+  }
+
+  cB.addEventListener("input", updateB);
+  sep.addEventListener("click", function (e) {
+    var r = sep.getBoundingClientRect();
+    var sx = (e.clientX - r.left) * sep.width / r.width;
+    var best = -1, bd = 1e9;
+    for (var i = 0; i < M; i++) { var d = Math.abs(SX(XS[i]) - sx); if (d < bd) { bd = d; best = i; } }
+    if (best >= 0 && bd < 40) { Ylab[best] = -Ylab[best]; updateB(); }
+  });
+  document.getElementById("bAlt").addEventListener("click", function () {
+    for (var i = 0; i < M; i++) Ylab[i] = i % 2 ? -1 : 1; updateB();
+  });
+  document.getElementById("bRnd").addEventListener("click", function () {
+    for (var i = 0; i < M; i++) Ylab[i] = Math.random() < .5 ? -1 : 1; updateB();
+  });
+
+  updateA();
+  updateB();
+})();
+</script>
+</body>
+</html>

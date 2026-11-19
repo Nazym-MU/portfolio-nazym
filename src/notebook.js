@@ -121,6 +121,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-17-understanding-deep-learning-requires-rethinking-ge.html",
         date: "2026-11-17",
     },
+    {
+        title: "Quantum feature Hilbert spaces",
+        blurb: "Treats loading data into a quantum state as a way of mapping each input into a huge space where simple straight-line classifiers become powerful, and shows two ways to build a classifier from it: have the quantum device measure similarities between inputs for a standard classical method, or train a quantum circuit to draw the dividing boundary itself.",
+        tags: ["paper of the day", "quantum"],
+        file: "learning/paper-2026-11-19-quantum-machine-learning-in-feature-hilbert-spaces.html",
+        date: "2026-11-19",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
