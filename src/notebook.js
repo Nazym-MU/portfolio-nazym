@@ -128,6 +128,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-19-quantum-machine-learning-in-feature-hilbert-spaces.html",
         date: "2026-11-19",
     },
+    {
+        title: "FoldingNet",
+        blurb: "A network that learns to compress a 3D object, given as a loose cloud of points, into 512 numbers, and to rebuild it by bending and folding a flat sheet of grid points into the object's surface; the numbers it learns are good enough to tell 40 kinds of objects apart with a simple straight-line classifier.",
+        tags: ["paper of the day", "point clouds"],
+        file: "learning/paper-2026-11-20-foldingnet-point-cloud-auto-encoder-via-deep-grid.html",
+        date: "2026-11-20",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
