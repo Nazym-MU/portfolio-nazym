@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tensor Decomposition for Signal Processing and Machine Learning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+.callout .entry{font-size:.8rem;margin-bottom:.5rem}
+.callout .entry-tag{white-space:normal;text-align:right}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+  min-width:7.2em;
+}
+.dial label .katex{text-transform:none}
+.dial output{display:inline-block;min-width:2.4em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.sq{aspect-ratio:1 / 1;max-width:360px;margin:0 auto}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+.btns{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin:.4rem 0 1.1rem}
+.btn{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.8rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+  padding:.45em 1em .4em;
+  cursor:pointer;
+}
+.btn:hover{background:var(--paper-inset)}
+.btn:focus-visible{outline:1px dotted var(--ink);outline-offset:3px}
+.tally{margin:.2rem 0 .3rem}
+.tally .row{display:flex;align-items:center;gap:.7rem;margin-bottom:.55rem}
+.tally .lbl{
+  font-family:var(--font-head);font-weight:500;font-size:.8rem;
+  text-transform:uppercase;letter-spacing:.1em;width:6.5em;flex:none;
+}
+.tally .track{flex:1;height:22px;border:1px solid var(--ink);position:relative;min-width:0}
+.tally .fill{position:absolute;left:0;top:0;bottom:0;width:0}
+.tally .fill.solid{background:var(--ink)}
+.tally .fill.hatch{background:repeating-linear-gradient(45deg, var(--ink) 0 1.4px, transparent 1.4px 6px)}
+.tally .num{font-family:var(--font-head);font-size:.85rem;width:3.6em;text-align:right;font-variant-numeric:tabular-nums;flex:none}
+
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+  .dial{gap:.6rem}
+  .dial label{min-width:6em;font-size:.85rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- a cube equals a sum of three rank-one "chicken feet" -->
+    <svg class="strip" viewBox="0 0 420 72" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <rect x="10" y="22" width="44" height="44"/>
+      <path d="M10 22l12-12h44v44l-12 12M54 22l12-12"/>
+      <path d="M80 38h18M80 46h18"/>
+      <path d="M124 40v28M124 40h40M124 40l26-26"/>
+      <path d="M182 44h16M190 36v16"/>
+      <path d="M216 40v20M216 40h52M216 40l18-26"/>
+      <path d="M286 44h16M294 36v16"/>
+      <path d="M320 40v30M320 40h30M320 40l32-22"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; survey &middot; 2016</p>
+      <h1>Tensor Decomposition</h1>
+    </div>
+    <p class="tagline">Tensor Decomposition for Signal Processing and Machine Learning</p>
+    <p class="tagline-hand">Nicholas D. Sidiropoulos, Lieven De Lathauwer, Xiao Fu et al. &middot; 2016 &middot;
+    <a href="https://arxiv.org/abs/1607.01668">arXiv:1607.01668</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>A long tutorial on data with three or more indices (say user × movie × time). It shows how to split such data into a sum of simple “rank-one” pieces, and why that split, unlike any low-rank factorization of an ordinary matrix, is usually <em>unique</em>.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: unmix two slices</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(AB^\top = (AM)(BM^{-\top})^\top\)</span></div>
+    <p class="entry-desc">Lots of data has three indices: ratings indexed by user, movie and time; radio samples by receiver antenna, code chip and transmitted symbol; word triples by word, word, word. The usual move is to flatten it into a matrix and fit a low-rank model \(X\approx AB^\top\), hoping the columns of \(A\) and \(B\) mean something: one speaker, one user type, one topic.</p>
+    <p class="entry-desc">They can't, in general. For any invertible \(M\), the pair \(AM\) and \(BM^{-\top}\) fits the data equally well. So a matrix factorization pins down a <em>subspace</em>, never the individual factors. You can't separate two mixed signals that way without extra assumptions such as orthogonality, which real sources rarely satisfy.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">sum of rank-one tensors</span></div>
+    <p class="entry-desc">Keep the third index. Write the three-way array as a sum of \(F\) “rank-one” arrays, each an outer product of three vectors: entry \((i,j,k)\) of piece \(f\) is \(a_f(i)\,b_f(j)\,c_f(k)\). This is the <em>canonical polyadic decomposition</em> (CPD), also called PARAFAC.</p>
+    <p class="entry-desc">Seen slice by slice, every matrix \(X_k\) (third index fixed at \(k\)) is \(A\,D_k\,B^\top\). The same \(A\) and \(B\) appear in every slice; only a diagonal weighting \(D_k\) changes. That shared structure leaves no room for an arbitrary \(M\).</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(k_A+k_B+k_C\ge 2F+2\)</span></div>
+    <p class="entry-desc">Under mild conditions, the factors are unique up to the trivial freedom of reordering the pieces and rescaling inside each one. For example, a generic \(I\times J\times K\) array with \(I,J\ge F\) and only \(K=2\) slices already has a unique decomposition. Kruskal's condition (Section II) allows even more pieces than any side length: generic \(10\times10\times10\) arrays are unique up to \(F=14\).</p>
+    <p class="entry-desc">The price is that the matrix intuitions fail elsewhere. Computing tensor rank is NP-hard. A best low-rank approximation may not exist. A random \(2\times2\times2\) real array has rank 2 with probability \(\pi/4\approx0.785\) and rank 3 otherwise. The paper covers the theory, algorithms (alternating least squares, Gauss–Newton, stochastic gradient, ADMM), error bounds, and applications from blind radio decoding to topic models.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Slices share factors</b></p>
+
+  <h3 class="sub">The objects</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(\mathcal X\in\mathbb R^{I\times J\times K}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">the data</span></div>
+    <p class="entry-desc">A three-way array with entries \(x_{ijk}\). Its <em>frontal slices</em> \(X_k := \mathcal X(:,:,k)\) are \(K\) ordinary \(I\times J\) matrices.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(A, B, C\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(I\times F,\ J\times F,\ K\times F\)</span></div>
+    <p class="entry-desc">The <em>factor matrices</em>. Column \(f\) of each (\(a_f, b_f, c_f\)) builds piece \(f\). They are dense and unconstrained by default; the paper also covers non-negative, sparse, orthogonal, Vandermonde (columns \(1, z, z^2,\dots\)) and other structured versions.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(a\circ b\circ c\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">rank one</span></div>
+    <p class="entry-desc">The outer product, with entries \(a(i)b(j)c(k)\). For two vectors it is just \(ab^\top\). The <em>rank</em> of \(\mathcal X\) is the least \(F\) such that \(\mathcal X\) is a sum of \(F\) of these.</p>
+  </div>
+
+  $$\mathcal X=\sum_{f=1}^{F} a_f\circ b_f\circ c_f
+  \quad\Longleftrightarrow\quad
+  X_k = A\,D_k(C)\,B^\top,\qquad D_k(C):=\operatorname{Diag}\big(C(k,:)\big).$$
+
+  <figure>
+    <svg viewBox="0 0 340 150" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <rect x="26" y="18" width="80" height="80"/>
+      <rect x="14" y="30" width="80" height="80" fill="var(--paper)"/>
+      <text x="54" y="76" font-family="Oswald, sans-serif" font-size="16" text-anchor="middle" fill="currentColor" stroke="none">X<tspan dy="5" font-size="11">k</tspan></text>
+      <text x="58" y="134" font-family="Oswald, sans-serif" font-size="11" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">SLICES k = 1, 2, …</text>
+      <path d="M118 64h16M118 72h16"/>
+      <rect x="148" y="30" width="30" height="80"/>
+      <text x="163" y="76" font-family="Oswald, sans-serif" font-size="15" text-anchor="middle" fill="currentColor" stroke="none">A</text>
+      <rect x="190" y="55" width="30" height="30"/>
+      <circle cx="197" cy="62" r="2.2" fill="currentColor"/><circle cx="205" cy="70" r="2.2" fill="currentColor"/><circle cx="213" cy="78" r="2.2" fill="currentColor"/>
+      <text x="205" y="102" font-family="Oswald, sans-serif" font-size="12" text-anchor="middle" fill="currentColor" stroke="none">D<tspan dy="4" font-size="9">k</tspan></text>
+      <rect x="232" y="55" width="90" height="30"/>
+      <text x="277" y="75" font-family="Oswald, sans-serif" font-size="15" text-anchor="middle" fill="currentColor" stroke="none">B<tspan dy="-6" font-size="10">T</tspan></text>
+      <text x="236" y="128" font-family="Oswald, sans-serif" font-size="11" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">SAME A, B IN EVERY SLICE</text>
+    </svg>
+    <figcaption>only the little diagonal changes from slice to slice: row k of C supplies its entries.</figcaption>
+  </figure>
+
+  <p>Stacking the vectorised slices as columns gives the <em>mode-3 unfolding</em>, an ordinary \(IJ\times K\) matrix:</p>
+  $$X_{(3)} := \big[\operatorname{vec}X_1,\dots,\operatorname{vec}X_K\big] = (B\odot A)\,C^\top,\qquad B\odot A := [\,b_1\otimes a_1,\ \dots,\ b_F\otimes a_F\,].$$
+  <p>Here \(\otimes\) is the Kronecker product and \(\odot\) the <em>Khatri–Rao</em> product, which pairs only <em>matching</em> columns. It is the \(F\)-column subset of \(B\otimes A\), coming from \(\operatorname{vec}(A\,\mathrm{Diag}(d)\,B^\top)=(B\odot A)\,d\). So, flattened, a rank-\(F\) tensor is a rank-\(F\) matrix whose left factor has a rigid structure: every column is itself a Kronecker product. Hiding in that structure is everything matrices lack.</p>
+
+  <h3 class="sub">The spectral fact that does the work</h3>
+
+  <p>Take the simplest case: two slices, \(I=J=F\), with \(A\), \(B\) and \(D_1\) invertible. Then</p>
+  $$X_2X_1^{-1} = A D_2 B^\top\,B^{-\top} D_1^{-1}A^{-1} = A\,\big(D_2D_1^{-1}\big)\,A^{-1}.$$
+  <p>That is an eigendecomposition. The columns of \(A\) are the eigenvectors of the (non-symmetric) matrix \(X_2X_1^{-1}\), and the eigenvalues are the ratios \(c_{2f}/c_{1f}\). Eigenvectors are determined exactly up to scale and order, <em>provided the eigenvalues are distinct</em>. That leftover freedom is precisely the permutation and scaling ambiguity, and nothing else. Once \(A\) is known, \(B^\top = (A D_1)^{-1}X_1\) follows.</p>
+  <p>If two ratios coincide, i.e. two columns of \(C\) are proportional, the eigenspace becomes 2-dimensional and any basis of it works: uniqueness breaks for exactly those pieces. The general case (\(I,J\ge F\), rectangular) runs the same argument on the <em>generalized</em> eigenproblem \(X_2 e = \lambda X_1 e\) with pseudo-inverses. With \(K&gt;2\) slices you apply it to two random linear combinations of the slices.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: 2 × 2 × 2, F = 2</span>
+    <p>Take \(A=\begin{pmatrix}1&1\\0&1\end{pmatrix}\), \(B=I\), and \(C=\begin{pmatrix}1&1\\1&2\end{pmatrix}\) (row \(k\) of \(C\) gives the weights for slice \(k\)). Then \(D_1=I\), \(D_2=\mathrm{Diag}(1,2)\), and the data is</p>
+    $$X_1=\begin{pmatrix}1&1\\0&1\end{pmatrix},\qquad X_2=\begin{pmatrix}1&2\\0&2\end{pmatrix}.$$
+    <p>On its own, \(X_1\) has infinitely many rank-2 factorizations (\(X_1 = I\cdot X_1 = A\cdot I = (AM)M^{-1}\), …). But</p>
+    $$X_2X_1^{-1}=\begin{pmatrix}1&2\\0&2\end{pmatrix}\begin{pmatrix}1&-1\\0&1\end{pmatrix}=\begin{pmatrix}1&1\\0&2\end{pmatrix},$$
+    <p>with eigenvalue \(1\) on \((1,0)^\top\) and \(2\) on \((1,1)^\top\): exactly the columns of \(A\), with ratios \(c_{2f}/c_{1f}=1,2\). Then \(B^\top=A^{-1}X_1=I\). The second slice removed every bit of freedom.</p>
+  </div>
+
+  <p>Over \(\mathbb R\) there is a twist. \(X_2X_1^{-1}\) is real but not symmetric, so its eigenvalues may be a complex-conjugate pair. Then no real rank-2 decomposition exists, and the real rank is at least 3 (in fact exactly 3 for \(2\times2\times2\)). For Gaussian random slices this happens with probability \(1-\pi/4\). Over \(\mathbb C\) the rank is 2 almost surely. Tensor rank depends on the field, and real tensors can have several “typical” ranks, each with positive probability. You can sample this in Section III.</p>
+
+  <h3 class="sub">Kruskal rank: the general uniqueness condition</h3>
+
+  <p>The <em>Kruskal rank</em> \(k_A\) is the largest \(k\) such that <em>every</em> set of \(k\) columns of \(A\) is linearly independent. It always satisfies \(k_A\le\operatorname{rank}A\). (In compressed sensing the same quantity appears as spark − 1.)</p>
+  $$k_A+k_B+k_C\;\ge\;2F+2\quad\Longrightarrow\quad \operatorname{rank}\mathcal X=F\ \text{and the CPD is essentially unique.}$$
+  <p>Check it against the eigen argument: if \(A\) and \(B\) have full column rank, then \(k_A=k_B=F\) and the condition reduces to \(k_C\ge2\), i.e. no two columns of \(C\) are proportional, i.e. distinct eigenvalues. The bound is sharp. Generic matrices have \(k=\min(\text{rows},F)\), so for \(10\times10\times10\) tensors \(30\ge2F+2\) gives uniqueness up to \(F=14\) pieces, more than any side length. A matrix can never have rank above its smallest dimension. The paper includes a one-page proof of a weaker version (\(r_C=F\), \(k_A+k_B\ge F+2\)) built on Sylvester's rank inequality and a “permutation lemma”: a matrix that maps every weight-one vector to a weight-one vector is a scaled permutation.</p>
+
+  <div class="callout">
+    <span class="callout-label">Matrix vs tensor, side by side</span>
+    <div class="entry"><span class="entry-name">Factors unique?</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">never (rank ≥ 2) · usually</span></div>
+    <div class="entry"><span class="entry-name">Rank vs size</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">≤ min(I,J) · can exceed max(I,J,K)</span></div>
+    <div class="entry"><span class="entry-name">Computing rank</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">SVD · NP-hard</span></div>
+    <div class="entry"><span class="entry-name">Best rank-r fit</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">truncated SVD · may not exist</span></div>
+    <div class="entry"><span class="entry-name">Rank of random data</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">one value · several over ℝ</span></div>
+  </div>
+
+  <h3 class="sub">The other decomposition: Tucker and the multilinear SVD</h3>
+
+  <p>CPD lets only matching columns interact. The <em>Tucker</em> model lets every column of \(U\) (size \(I\times r_1\)) interact with every column of \(V\) (\(J\times r_2\)) and of \(W\) (\(K\times r_3\)), with strengths stored in a small <em>core</em> array \(\mathcal G\) of size \(r_1\times r_2\times r_3\):</p>
+  $$x_{ijk}=\sum_{\ell,m,n} g_{\ell mn}\,u_{i\ell}\,v_{jm}\,w_{kn}\qquad\Longleftrightarrow\qquad \operatorname{vec}\mathcal X=(U\otimes V\otimes W)\,\operatorname{vec}\mathcal G .$$
+  <p>The <em>multilinear SVD</em> (MLSVD, also called HOSVD) takes \(U\) to be the top left singular vectors of the mode-1 unfolding (the \(I\times JK\) matrix whose columns are the fibers \(\mathcal X(:,j,k)\)), and likewise for \(V, W\). The \(r_n\) are the ranks of those unfoldings (the <em>multilinear rank</em>). Since \(U\otimes V\otimes W\) has orthonormal columns by the mixed-product rule \((U\otimes V)^\top(U\otimes V)=U^\top U\otimes V^\top V=I\), it is an isometry:</p>
+  $$\|\mathcal X\|_F=\|\mathcal G\|_F,\qquad \|\mathcal X-\hat{\mathcal X}\|_F^2=\sum_{\text{dropped}} g_{\ell mn}^2 .$$
+  <p>A diagonal core is impossible in general: a diagonal core would make \(\mathcal X\) a sum of \(\min(I,J,K)\) rank-one terms, and tensor rank can be far larger. What survives is <em>all-orthogonality</em>. Slabs \(\mathcal G(\ell,:,:)\) are mutually orthogonal, and \(\|\mathcal G(\ell,:,:)\|_F\) is the \(\ell\)-th singular value of the mode-1 unfolding (same for other modes). There is no Eckart–Young theorem, though. Truncating the MLSVD is not optimal, only within a factor \(N\) (here 3) of the optimal squared error. Finding the best low-multilinear-rank fit, even rank \((1,1,1)\), is NP-hard. Tucker is not unique either (\(U\mapsto UM\), with \(M^{-1}\) absorbed into the core). It serves compression and subspaces; CPD serves separation.</p>
+
+  <h3 class="sub">Computing a CPD: least squares with a Hadamard shortcut</h3>
+  <p>Fitting is trilinear, hence non-convex, but linear in each factor alone. <em>Alternating least squares</em> cycles through \(C^\top\leftarrow (B\odot A)^\dagger X_{(3)}\) and its two cousins. The normal matrix collapses to a tiny one:</p>
+  $$(B\odot A)^\top(B\odot A) = (B^\top B)\ast(A^\top A)\qquad(\ast = \text{entrywise product, } F\times F).$$
+  <p>Each update therefore inverts one \(F\times F\) matrix. The real cost is the product \((B\odot A)^\top X_{(3)}\), which can be computed without forming the \(IJ\times F\) Khatri–Rao matrix and in time linear in the number of nonzeros of sparse data.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It: Unmix Two Slices</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive<b>Eigenvectors are the factors</b></p>
+
+  <p>A hidden \(2\times2\times2\) tensor is built from two true directions \(a_1, a_2\) (solid lines). Slice 1 weights both pieces by 1. Slice 2 weights piece 1 by 1 and piece 2 by \(s\). A small fixed noise pattern of size \(\varepsilon\) is added to both slices. The page computes the eigenvectors of \(X_2X_1^{-1}\) and draws them dashed.</p>
+  <p><strong>Try:</strong> start at \(s=2.5\), then drag \(s\) slowly to \(1\). <strong>Notice:</strong> far from 1 the dashed lines sit on the solid ones. As the two eigenvalues \(1\) and \(s\) approach each other, the recovered directions swing away, because the noise is amplified roughly like \(1/|s-1|\). Near \(s=1\) the eigenvalues turn complex: this noisy tensor has <em>no</em> real rank-2 decomposition, its real rank is 3. Set \(\varepsilon=0\) and \(s=1\) exactly, and every direction is an eigenvector, which is the matrix-style non-uniqueness.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="sS">\(s\) = <output id="sV" for="sS">2.50</output></label>
+      <input id="sS" type="range" min="-1" max="3" value="2.5" step="0.01">
+    </div>
+    <div class="dial">
+      <label for="eS">\(\varepsilon\) = <output id="eV" for="eS">0.03</output></label>
+      <input id="eS" type="range" min="0" max="0.2" value="0.03" step="0.005">
+    </div>
+    <canvas id="cE" class="sq" width="360" height="360"></canvas>
+    <p class="aside-hand" style="margin:.6rem auto 0">solid: true columns of A &middot; dashed: eigenvectors of \(X_2X_1^{-1}\)</p>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">eigenvalues of \(X_2X_1^{-1}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="oL">–</span></div>
+      <div class="entry"><span class="entry-name">angle errors</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="oA">–</span></div>
+      <div class="entry"><span class="entry-name">verdict</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="oR">–</span></div>
+    </div>
+  </div>
+
+  <h3 class="sub">How often is a random tensor rank 2?</h3>
+  <p>Each click draws random \(2\times2\times2\) tensors with independent standard Gaussian entries. A tensor counts as real rank 2 when the pencil \(\det(X_2-\lambda X_1)=0\) has two real roots; otherwise it is rank 3. <strong>Notice:</strong> the rank-2 share settles near \(\pi/4\approx0.785\), not 1. For random matrices one rank shows up with probability 1. For real tensors, two ranks each show up a positive fraction of the time.</p>
+
+  <div class="bench">
+    <div class="btns">
+      <button class="btn" id="bDraw" type="button">Draw 1,000 tensors</button>
+      <button class="btn" id="bReset" type="button">Reset</button>
+    </div>
+    <div class="tally">
+      <div class="row"><span class="lbl">rank 2</span><span class="track"><span class="fill solid" id="f2"></span></span><span class="num" id="n2">0</span></div>
+      <div class="row"><span class="lbl">rank 3</span><span class="track"><span class="fill hatch" id="f3"></span></span><span class="num" id="n3">0</span></div>
+    </div>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">tensors drawn</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="oN">0</span></div>
+      <div class="entry"><span class="entry-name">share with real rank 2 (theory: 0.785)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="oP">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>From the paper, plus one link</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The best rank-2 fit doesn't exist</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">border rank</span></div>
+    <p class="entry-desc">For unit vectors \(u,v\) that aren't parallel, \(\mathcal X=u\circ u\circ v+u\circ v\circ u+v\circ u\circ u\) has rank 3. Yet</p>
+    $$\mathcal X_n=n\big(u+\tfrac1n v\big)^{\circ3}-n\,u^{\circ3}=\mathcal X+O(1/n),$$
+    <p class="entry-desc">a rank-2 sequence that gets arbitrarily close. The set of rank-\(\le2\) tensors isn't closed, so “minimise the error over rank 2” has an infimum of 0 and no minimiser. Fitting algorithms hit this as two components that grow without bound while cancelling each other. Remedies: constraints (non-negativity, orthogonality) or norm penalties. <em>Quantum aside (not in the paper):</em> with \(u=|0\rangle,\ v=|1\rangle\), \(\mathcal X\) is the unnormalised three-qubit W state \(|001\rangle+|010\rangle+|100\rangle\). That is the standard example of a state that has tensor rank 3 but is a limit of rank-2 (GHZ-type) states.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Tensor rank = number of multiplications</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">4 → 3, 8 → 7</span></div>
+    <p class="entry-desc">A bilinear map is a 3-way tensor, and a rank-\(F\) decomposition with entries in \(\{0,\pm1\}\) computes it with \(F\) multiplications. Complex multiplication \((x_r+ix_i)(y_r+iy_i)\) has slices \(\begin{pmatrix}1&0\\0&-1\end{pmatrix}\) and \(\begin{pmatrix}0&1\\1&0\end{pmatrix}\), and its rank is 3. That gives \(p_1=x_ry_r,\ p_2=x_iy_i,\ p_3=(x_r+x_i)(y_r+y_i)\), then real part \(p_1-p_2\) and imaginary part \(p_3-p_1-p_2\). The \(4\times4\times4\) tensor for multiplying \(2\times2\) matrices has rank 7, not 8: that is Strassen's algorithm.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Third moments find what covariances can't</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">mixtures, topics</span></div>
+    <p class="entry-desc">Take a mixture of \(F\) spherical Gaussians with means \(\mu_f\) (columns of \(M\)) and weights \(\pi_f\). The second moment is \(M\,\mathrm{Diag}(\pi)M^\top+\bar\sigma^2 I\), which is symmetric, PSD and low-rank, but determines \(M\) only up to a rotation. After subtracting a known correction, the third-moment tensor is \(\sum_f\pi_f\,\mu_f\circ\mu_f\circ\mu_f\): a symmetric CPD, unique under the conditions above. Topic models work the same way: the probabilities of word triples drawn from one document form the CPD \(\sum_f\pi_f\,p_f\circ p_f\circ p_f\), whose factors \(p_f\) are the per-topic word distributions.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Decoding radio without the codes</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">blind CDMA</span></div>
+    <p class="entry-desc">In code-division radio, user \(f\) spreads its bit stream \(b_f\) with a secret code \(s_f\). One receiver sees \(Y=SB^\top\), a matrix, so the users can't be separated without knowing \(S\). Two receivers at different spots see \(Y_i=S\,D_i(H)\,B^\top\), where \(H(i,f)\) is the path loss from user \(f\) to receiver \(i\). That is a CPD, so codes, bits and path losses all come out uniquely, even with more users than the code length.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>A matrix factorization \(AB^\top\) is never unique, but once a third index gives you slices \(X_k=A\,D_k\,B^\top\) that share the same factors, \(X_2X_1^{-1}=A(D_2D_1^{-1})A^{-1}\) is an eigendecomposition, and its eigenvectors <em>are</em> the factors.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Tensor Decomposition for Signal Processing and Machine Learning</strong>, by Nicholas D. Sidiropoulos, Lieven De Lathauwer, Xiao Fu, Kejun Huang, Evangelos E. Papalexakis and Christos Faloutsos, 2016.
+  <a href="https://arxiv.org/abs/1607.01668">arxiv.org/abs/1607.01668</a></p>
+  <p class="signoff">Written from the full text (arXiv v2, including the supplementary material). The W-state remark is my addition, not the paper's. The interactives use small synthetic tensors.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3", SOFT = css("--ink-soft") || "#4a463f";
+
+  /* ---------- Interactive 1: eigenvectors of X2 X1^{-1} ---------- */
+  var t1 = 0.35, t2 = 1.25;                      // true directions (radians)
+  var A = [[Math.cos(t1), Math.cos(t2)], [Math.sin(t1), Math.sin(t2)]];
+  var B = [[1, 0.5], [-0.3, 1]];
+  var E1 = [[0.62, -1.1], [0.35, 0.9]], E2 = [[-0.8, 0.25], [1.2, -0.45]];
+
+  function slice(d, E, eps) {
+    var X = [[0, 0], [0, 0]], i, j, f;
+    for (i = 0; i < 2; i++) for (j = 0; j < 2; j++) {
+      var s = 0;
+      for (f = 0; f < 2; f++) s += A[i][f] * d[f] * B[j][f];
+      X[i][j] = s + eps * E[i][j];
+    }
+    return X;
+  }
+  function inv(X) {
+    var det = X[0][0] * X[1][1] - X[0][1] * X[1][0];
+    return [[X[1][1] / det, -X[0][1] / det], [-X[1][0] / det, X[0][0] / det]];
+  }
+  function mul(P, Q) {
+    return [[P[0][0] * Q[0][0] + P[0][1] * Q[1][0], P[0][0] * Q[0][1] + P[0][1] * Q[1][1]],
+            [P[1][0] * Q[0][0] + P[1][1] * Q[1][0], P[1][0] * Q[0][1] + P[1][1] * Q[1][1]]];
+  }
+  function eigvec(M, lam) {
+    var v1 = [M[0][1], lam - M[0][0]], v2 = [lam - M[1][1], M[1][0]];
+    var n1 = Math.hypot(v1[0], v1[1]), n2 = Math.hypot(v2[0], v2[1]);
+    var v = n1 >= n2 ? v1 : v2, n = Math.max(n1, n2);
+    return [v[0] / n, v[1] / n];
+  }
+  function lineAngleDeg(v, t) {               // angle between line span(v) and direction t
+    var c = Math.abs(v[0] * Math.cos(t) + v[1] * Math.sin(t));
+    return Math.acos(Math.min(1, c)) * 180 / Math.PI;
+  }
+
+  var cE = document.getElementById("cE"), ctx = cE.getContext("2d");
+  var W = cE.width, H = cE.height, cx = W / 2, cy = H / 2, R = W * 0.4;
+
+  function line(dx, dy, dashed, width) {
+    ctx.save();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = width;
+    if (dashed) ctx.setLineDash([7, 6]);
+    ctx.beginPath();
+    ctx.moveTo(cx - R * dx, cy + R * dy);
+    ctx.lineTo(cx + R * dx, cy - R * dy);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function label(txt, t) {
+    ctx.fillStyle = INK;
+    ctx.font = "600 17px Oswald, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(txt, cx + (R + 18) * Math.cos(t), cy - (R + 18) * Math.sin(t));
+  }
+
+  function draw(vecs, msg) {
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(0, 0, W, H);
+    // dotted unit circle and faint axes
+    ctx.save();
+    ctx.strokeStyle = SOFT; ctx.lineWidth = 1; ctx.setLineDash([2, 5]);
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - R - 8, cy); ctx.lineTo(cx + R + 8, cy);
+    ctx.moveTo(cx, cy - R - 8); ctx.lineTo(cx, cy + R + 8); ctx.stroke();
+    ctx.restore();
+    line(Math.cos(t1), Math.sin(t1), false, 2.2);
+    line(Math.cos(t2), Math.sin(t2), false, 2.2);
+    label("a\u2081", t1); label("a\u2082", t2);
+    if (vecs) {
+      vecs.forEach(function (v) {
+        line(v[0], v[1], true, 2);
+        ctx.save();
+        ctx.strokeStyle = INK; ctx.fillStyle = PAPER; ctx.lineWidth = 1.8;
+        [1, -1].forEach(function (sg) {
+          ctx.beginPath();
+          ctx.arc(cx + sg * R * v[0], cy - sg * R * v[1], 6, 0, 2 * Math.PI);
+          ctx.fill(); ctx.stroke();
+        });
+        ctx.restore();
+      });
+    }
+    if (msg) {
+      ctx.fillStyle = PAPER;
+      ctx.fillRect(cx - 150, cy + R * 0.55 - 16, 300, 32);
+      ctx.strokeStyle = INK; ctx.lineWidth = 1;
+      ctx.strokeRect(cx - 150, cy + R * 0.55 - 16, 300, 32);
+      ctx.fillStyle = INK;
+      ctx.font = "500 14px Oswald, sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(msg, cx, cy + R * 0.55);
+    }
+  }
+
+  var sS = document.getElementById("sS"), eS = document.getElementById("eS");
+  function f2(x) { return (Math.abs(x) < 0.005 ? 0 : x).toFixed(2); }
+
+  function update1() {
+    var s = +sS.value, eps = +eS.value;
+    document.getElementById("sV").textContent = s.toFixed(2);
+    document.getElementById("eV").textContent = eps.toFixed(3);
+    var X1 = slice([1, 1], E1, eps), X2 = slice([1, s], E2, eps);
+    var M = mul(X2, inv(X1));
+    var tr = M[0][0] + M[1][1], det = M[0][0] * M[1][1] - M[0][1] * M[1][0];
+    var disc = tr * tr - 4 * det;
+    var oL = document.getElementById("oL"), oA = document.getElementById("oA"), oR = document.getElementById("oR");
+
+    var scalar = Math.abs(M[0][1]) < 1e-9 && Math.abs(M[1][0]) < 1e-9 && Math.abs(M[0][0] - M[1][1]) < 1e-9;
+    if (scalar) {
+      draw(null, "X\u2082X\u2081\u207B\u00B9 = \u03BBI: every direction is an eigenvector");
+      oL.textContent = f2(M[0][0]) + ", " + f2(M[0][0]);
+      oA.textContent = "undefined";
+      oR.textContent = "not unique";
+      return;
+    }
+    if (disc < 0) {
+      var re = tr / 2, im = Math.sqrt(-disc) / 2;
+      draw(null, "complex eigenvalues: no real rank-2 fit");
+      oL.textContent = re.toFixed(2) + " \u00B1 " + im.toFixed(2) + "i";
+      oA.textContent = "\u2013";
+      oR.textContent = "real rank 3";
+      return;
+    }
+    var r = Math.sqrt(disc), l1 = (tr + r) / 2, l2 = (tr - r) / 2;
+    var v1 = eigvec(M, l1), v2 = eigvec(M, l2);
+    var e11 = lineAngleDeg(v1, t1), e22 = lineAngleDeg(v2, t2);
+    var e12 = lineAngleDeg(v1, t2), e21 = lineAngleDeg(v2, t1);
+    var errs = (e11 + e22 <= e12 + e21) ? [e11, e22] : [e21, e12];
+    draw([v1, v2], null);
+    oL.textContent = f2(l2) + ", " + f2(l1);
+    oA.textContent = errs[0].toFixed(1) + "\u00B0, " + errs[1].toFixed(1) + "\u00B0";
+    oR.textContent = Math.max(errs[0], errs[1]) < 3 ? "rank 2, factors recovered" : "rank 2, but ill-conditioned";
+  }
+  sS.addEventListener("input", update1);
+  eS.addEventListener("input", update1);
+  update1();
+
+  /* ---------- Interactive 2: typical ranks of randn(2,2,2) ---------- */
+  var n2 = 0, n3 = 0;
+  function gauss() {
+    var u = 0; while (u === 0) u = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * Math.random());
+  }
+  function draw2() {
+    var n = n2 + n3;
+    document.getElementById("n2").textContent = n2;
+    document.getElementById("n3").textContent = n3;
+    document.getElementById("oN").textContent = n.toLocaleString("en-US");
+    document.getElementById("oP").textContent = n ? (n2 / n).toFixed(3) : "\u2013";
+    document.getElementById("f2").style.width = (n ? 100 * n2 / n : 0) + "%";
+    document.getElementById("f3").style.width = (n ? 100 * n3 / n : 0) + "%";
+  }
+  document.getElementById("bDraw").addEventListener("click", function () {
+    for (var t = 0; t < 1000; t++) {
+      var q11 = gauss(), q12 = gauss(), q21 = gauss(), q22 = gauss();   // X1
+      var p11 = gauss(), p12 = gauss(), p21 = gauss(), p22 = gauss();   // X2
+      // det(X2 - lambda X1) = a lambda^2 + b lambda + c
+      var a = q11 * q22 - q12 * q21;
+      var b = -(p11 * q22 + q11 * p22 - p12 * q21 - q12 * p21);
+      var c = p11 * p22 - p12 * p21;
+      if (b * b - 4 * a * c > 0) n2++; else n3++;
+    }
+    draw2();
+  });
+  document.getElementById("bReset").addEventListener("click", function () { n2 = 0; n3 = 0; draw2(); });
+  draw2();
+})();
+</script>
+</body>
+</html>

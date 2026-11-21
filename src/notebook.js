@@ -135,6 +135,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-20-foldingnet-point-cloud-auto-encoder-via-deep-grid.html",
         date: "2026-11-20",
     },
+    {
+        title: "Tensor decomposition",
+        blurb: "A tutorial on splitting data that has three or more indices, such as user, movie and time, into a sum of simple pieces, and on why that split is usually unique when the same split of an ordinary table never is, which is what lets you pull apart mixed signals or recover hidden topics.",
+        tags: ["paper of the day", "tensors"],
+        file: "learning/paper-2026-11-21-tensor-decomposition-for-signal-processing-and-mac.html",
+        date: "2026-11-21",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
