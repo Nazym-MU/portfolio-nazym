@@ -6,6 +6,11 @@
 // in-modal iframe reader; the back chip returns to the grid. To add an entry,
 // drop the page in public/learning/ and append one object to NOTEBOOK_ENTRIES.
 // Each entry has a `date` (YYYY-MM-DD); cards are shown newest first.
+//
+// Sharing: every entry has a link, `/?note=<slug>`, where the slug is the
+// page's file name without `.html`. The airplane button in the reader bar
+// shares (phones) or copies (desktop) that link, and the address bar shows it
+// while a page is open. main.js opens the linked page on load.
 // ---------------------------------------------------------------------------
 
 export const NOTEBOOK_ENTRIES = [
@@ -167,6 +172,43 @@ export const NOTEBOOK_ENTRIES = [
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
+const slugOf = (entry) => entry.file.split("/").pop().replace(/\.html$/, "");
+
+function noteUrl(entry) {
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.hash = "";
+    url.searchParams.set("note", slugOf(entry));
+    return url.toString();
+}
+
+function setAddressBar(entry) {
+    const url = new URL(window.location.href);
+    if (entry) url.searchParams.set("note", slugOf(entry));
+    else url.searchParams.delete("note");
+    history.replaceState(history.state, "", url);
+}
+
+async function copyText(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch {
+        // Older browsers / non-secure contexts: fall back to a hidden textarea.
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand("copy"); } catch { ok = false; }
+        ta.remove();
+        return ok;
+    }
+}
+
 function formatDate(iso) {
     if (!iso) return "";
     const [y, m, d] = iso.split("-").map(Number);
@@ -187,6 +229,10 @@ export function initNotebook(modalEl) {
     const frame = modalEl.querySelector("#notebook-frame");
     const readerTitle = modalEl.querySelector("#notebook-reader-title");
     const backBtn = modalEl.querySelector("#notebook-back");
+    const shareBtn = modalEl.querySelector("#notebook-share");
+    const shareLabel = modalEl.querySelector("#notebook-share-label");
+    let current = null;
+    let labelTimer = 0;
 
     // ---- Card grid (entries + a ghost "more soon" placeholder) ----
     grid.innerHTML = SHOWN.map((entry, i) => `
@@ -203,6 +249,8 @@ export function initNotebook(modalEl) {
         </div>`;
 
     function openReader(entry) {
+        current = entry;
+        setAddressBar(entry);
         readerTitle.textContent = entry.title;
         frame.src = entry.file; // lazy: only loaded when a card is opened
         home.hidden = true;
@@ -214,6 +262,8 @@ export function initNotebook(modalEl) {
     }
 
     function closeReader() {
+        current = null;
+        setAddressBar(null);
         reader.hidden = true;
         home.hidden = false;
         modalEl.classList.remove("reading");
@@ -225,6 +275,31 @@ export function initNotebook(modalEl) {
         const card = e.target.closest(".notebook-card[data-entry]");
         if (!card) return;
         openReader(SHOWN[Number(card.dataset.entry)]);
+    });
+
+    function flashLabel(text) {
+        shareLabel.textContent = text;
+        shareBtn.classList.add("flash");
+        clearTimeout(labelTimer);
+        labelTimer = setTimeout(() => {
+            shareLabel.textContent = "";
+            shareBtn.classList.remove("flash");
+        }, 1800);
+    }
+
+    shareBtn.addEventListener("click", async () => {
+        if (!current) return;
+        const url = noteUrl(current);
+        // Phones get the native share sheet; desktop copies the link.
+        if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
+            try {
+                await navigator.share({ title: current.title, url });
+                return;
+            } catch (err) {
+                if (err && err.name === "AbortError") return; // user closed the sheet
+            }
+        }
+        flashLabel((await copyText(url)) ? "Link copied" : "Couldn't copy");
     });
 
     backBtn.addEventListener("click", () => {
@@ -239,4 +314,14 @@ export function initNotebook(modalEl) {
     new MutationObserver(() => {
         if (modalEl.style.display === "none" && !reader.hidden) closeReader();
     }).observe(modalEl, { attributes: true, attributeFilter: ["style"] });
+
+    return {
+        // Opens the entry a shared link points at. Returns false for unknown slugs.
+        openBySlug(slug) {
+            const entry = SHOWN.find((e) => slugOf(e) === slug);
+            if (!entry) return false;
+            openReader(entry);
+            return true;
+        },
+    };
 }

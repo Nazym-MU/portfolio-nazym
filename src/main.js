@@ -72,7 +72,7 @@ const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
 const isTouchLike = () => coarsePointerQuery.matches;
 
 // "Things I read and learn" — card grid + in-modal iframe reader (src/notebook.js)
-initNotebook(modals.notebook);
+const notebook = initNotebook(modals.notebook);
 
 // Modal interactions
 document.querySelectorAll(".window-control").forEach(button => {
@@ -137,6 +137,12 @@ const hideModal = (modal) => {
         }
     });
 }
+
+// Shared Notebook links (`/?note=<slug>`) open straight onto that page. The
+// modal sits above the room loader, so it can open before the room finishes.
+const sharedNote = new URLSearchParams(window.location.search).get("note");
+const openedFromLink = Boolean(sharedNote) && notebook.openBySlug(sharedNote);
+if (openedFromLink) showModal(modals.notebook);
 
 let manchesterObject = null;
 let roomCube = null; // live Rubik's cube replacing the baked prop (see room-cube.js)
@@ -520,7 +526,8 @@ manager.onLoad = function () {
     });
     gsap.to(canvas, { opacity: 1, duration: 0.8, ease: "power2.out" });
     gsap.to(hintButton, { autoAlpha: 1, duration: 0.6, delay: 0.5 });
-    gsap.delayedCall(0.9, showWelcome);
+    // Visitors who arrived on a shared Notebook page skip the welcome card.
+    if (!openedFromLink) gsap.delayedCall(0.9, showWelcome);
 };
 
 // ---- Guided tour ------------------------------------------------------------
