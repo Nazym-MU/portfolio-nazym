@@ -142,6 +142,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-21-tensor-decomposition-for-signal-processing-and-mac.html",
         date: "2026-11-21",
     },
+    {
+        title: "Object detection with deep learning",
+        blurb: "A survey of how neural networks learned to find every object in a photo, draw a box around it and name it, tracing the path from slow systems that examined two thousand candidate crops one by one to single networks fast enough for live video.",
+        tags: ["paper of the day", "computer-vision"],
+        file: "learning/paper-2026-11-22-object-detection-with-deep-learning-a-review.html",
+        date: "2026-11-22",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
