@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Summer at Gusto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(1.9rem, 5vw, 3rem);
+  line-height:1.2;
+  max-width:18em;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+/* sub-heads inside a section */
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+/* section regime line */
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+/* math inside caps rows must keep its own case */
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:1.4em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.maps{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:clamp(.6rem, 3vw, 1.4rem);
+}
+.maps figure{margin:0}
+.maps figcaption{font-size:1.05rem}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.sq{aspect-ratio:1 / 1}
+.bench .spectrum{margin:1.2rem 0 0}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+}
+
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+
+/* ---------- registry figure ---------- */
+.registry{
+  max-width:30rem;
+  margin:1.6rem auto;
+  border:1px solid var(--ink);
+  padding:1rem 1.2rem .8rem;
+}
+.registry .entry{font-size:.85rem;margin-bottom:.45rem;max-width:none}
+.registry .entry-name{font-family:ui-monospace, Menlo, monospace;text-transform:none;letter-spacing:0;font-size:.9rem}
+.registry .entry.new{opacity:.55}
+.registry .entry.new .entry-tag{font-style:italic}
+
+/* ---------- try it: chat mock ---------- */
+.seg{
+  display:flex;
+  border:1px solid var(--ink);
+  width:max-content;
+  margin:0 auto 1rem;
+}
+.seg button{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.8rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  background:var(--paper);
+  color:var(--ink);
+  border:0;
+  padding:.45rem 1.1rem;
+  cursor:pointer;
+}
+.seg button + button{border-left:1px solid var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.seg button:focus-visible, .pill:focus-visible, .act:focus-visible, .linkish:focus-visible{outline:1px dotted var(--ink);outline-offset:3px}
+
+.peek{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:.5rem;
+  font-family:var(--font-head);
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  color:var(--ink-soft);
+  margin-bottom:1rem;
+  cursor:pointer;
+}
+.peek input{accent-color:var(--ink)}
+.peek[hidden]{display:none}
+
+.log{
+  border:1px solid var(--ink);
+  background:var(--paper);
+  padding:1rem;
+  min-height:16rem;
+  display:flex;
+  flex-direction:column;
+  gap:.8rem;
+  font-size:.95rem;
+  line-height:1.55;
+}
+.msg{max-width:88%}
+.msg .who{
+  font-family:var(--font-head);
+  font-size:.65rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  display:block;
+  margin-bottom:.15rem;
+}
+.msg.user{align-self:flex-end;text-align:right}
+.msg.user .bubble{background:var(--paper-inset);border:1px solid var(--ink);padding:.45rem .8rem;display:inline-block;text-align:left}
+.msg.bot .bubble{padding:0}
+.msg.bot.wall .bubble{border-left:3px solid var(--ink);padding-left:.8rem}
+.clicked{font-family:var(--font-hand);font-size:1.1rem;color:var(--ink-soft);margin-left:.3rem}
+
+.pills{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.6rem}
+.pill{
+  font-family:var(--font-body);
+  font-size:.9rem;
+  background:var(--paper);
+  color:var(--ink);
+  border:1px solid var(--ink);
+  border-radius:999px;
+  padding:.25rem .85rem;
+  cursor:pointer;
+}
+.pill:hover:not(:disabled){background:var(--paper-inset)}
+.pill:disabled{cursor:default;opacity:.45}
+.pill.chosen{opacity:1;background:var(--ink);color:var(--paper)}
+
+.tbl{border-collapse:collapse;margin-top:.6rem;font-size:.88rem;width:100%;max-width:26rem}
+.tbl th, .tbl td{border:1px solid var(--ink);padding:.3rem .6rem;text-align:left}
+.tbl th{font-family:var(--font-head);font-weight:500;text-transform:uppercase;letter-spacing:.1em;font-size:.7rem;background:var(--paper-inset)}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tr.hit td{font-weight:600}
+
+.act{
+  margin-top:.7rem;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  background:var(--ink);
+  color:var(--paper);
+  border:1px solid var(--ink);
+  padding:.45rem 1rem;
+  cursor:pointer;
+}
+.act:disabled{opacity:.5;cursor:default}
+.draft{
+  border:1px dashed var(--ink);
+  padding:.7rem .9rem;
+  margin-top:.6rem;
+  font-size:.9rem;
+  background:var(--paper-inset);
+}
+.draft .subj{font-family:var(--font-head);font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;margin-bottom:.3rem}
+.done{font-family:var(--font-hand);font-size:1.25rem;margin-top:.4rem}
+
+.call{
+  display:none;
+  font-family:ui-monospace, Menlo, monospace;
+  font-size:.75rem;
+  line-height:1.45;
+  white-space:pre-wrap;
+  border:1px dotted var(--ink-soft);
+  color:var(--ink-soft);
+  padding:.45rem .6rem;
+  margin-top:.5rem;
+}
+.show-calls .call{display:block}
+
+.composer{
+  display:flex;
+  gap:.5rem;
+  margin-top:auto;
+  padding-top:.6rem;
+  border-top:1px solid var(--ink);
+}
+.composer input{
+  flex:1;
+  min-width:0;
+  font:inherit;
+  font-size:.9rem;
+  background:transparent;
+  border:0;
+  color:var(--ink-soft);
+}
+.linkish{
+  font-family:var(--font-head);
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  background:none;
+  border:0;
+  border-bottom:1px solid var(--ink);
+  color:var(--ink);
+  cursor:pointer;
+  padding:0;
+}
+.bench-foot{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:.8rem;flex-wrap:wrap}
+.bench-foot .note{font-family:var(--font-hand);font-size:1.1rem;color:var(--ink-soft)}
+@media(max-width:560px){
+  .msg{max-width:100%}
+  .log{padding:.75rem}
+}
+@media (prefers-reduced-motion: reduce){ .fade{animation:none!important} }
+.fade{animation:fade .25s ease-out}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#how">How It Works</a>
+      <a href="#try">Try It</a>
+      <a href="#learned">Learned</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- three pills (silhouette) -->
+    <svg class="strip" viewBox="0 0 420 60" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <rect x="20" y="18" width="110" height="28" rx="14"/>
+      <rect x="150" y="18" width="120" height="28" rx="14" fill="currentColor"/>
+      <rect x="290" y="18" width="110" height="28" rx="14"/>
+    </svg>
+    <div class="plaque">
+      <h1>What I built and learned this summer as a software engineering intern at Gusto</h1>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>If you're new here, I usually write about papers in this format, and this time it's about my own project. It opens with a 60-second summary, then explains how it works, then gives you something interactive to try, and closes with what I learned.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#how"><div class="entry"><span class="entry-name">How it works</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#learned"><div class="entry"><span class="entry-name">What I learned</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+</nav>
+
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <p>This summer I was a software engineering intern at Gusto, on the team that builds tools for customer support. One of them is an internal AI assistant that support advocates use to ask questions while handling customer cases.</p>
+  <p>Before I joined, an advocate had to know exactly what to ask, and the answer came back as a chunk of text. A huge chunk of text, while a customer waited on the line. My project was to make the assistant proactive. By the end of the summer, it could do three new things: ask a clarifying question when it isn't sure, show its answer as interactive UI elements, like a table or cards, instead of a paragraph, and act, starting with drafting an email the advocate can send in one click.</p>
+</section>
+
+<section id="how">
+  <h2 class="sec"><span>II &middot; How It Works</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <p>A language model only outputs text. So how does it produce a button?</p>
+  <p>It doesn't, directly. The model is given <em>tools</em>, which are functions it can call, each with a schema that spells out its arguments. When the assistant decides a question is ambiguous, it doesn't write "Did you mean A or B?" as text. It calls a tool with a structured list of options, and that call streams to the frontend as data, not text.</p>
+  <p>On the frontend, I built a <em>registry</em> that maps each tool to a component. When a tool call arrives, the interface renders the match: clickable pills, a table, cards, or an action button. Clicking a pill sends that option back to the model as the next message, so the conversation continues without the advocate typing anything.</p>
+  <p>If you've used Claude or another AI chat app, you've probably seen this pattern. When it's unsure what you want, it asks a multiple-choice question, you pick A, B, or C, and it answers with your choice in mind. It's essentially the same idea.</p>
+
+  <p>I didn't want the pills to be a one-off, so I built the layer they run on. The registry works as a dictionary, where each entry pairs a tool's name with the component that draws it. To teach the assistant something new, say a date picker, an engineer builds the tool and its component, then adds one line to the registry to connect them. Nothing else in the interface has to change.</p>
+
+  <figure>
+    <div class="registry" role="img" aria-label="A registry mapping tool names to components: ask to pills, show_table to table, show_cards to cards, draft_email to action button, and a future pick_date to date picker.">
+      <div class="entry"><span class="entry-name">ask</span><span class="entry-dots"></span><span class="entry-tag">Pills</span></div>
+      <div class="entry"><span class="entry-name">show_table</span><span class="entry-dots"></span><span class="entry-tag">Table</span></div>
+      <div class="entry"><span class="entry-name">show_cards</span><span class="entry-dots"></span><span class="entry-tag">Cards</span></div>
+      <div class="entry"><span class="entry-name">draft_email</span><span class="entry-dots"></span><span class="entry-tag">Action button</span></div>
+      <div class="entry new"><span class="entry-name">pick_date</span><span class="entry-dots"></span><span class="entry-tag">Date picker (one new line)</span></div>
+    </div>
+    <figcaption>A simplified example of what a registry looks like. Tool names here are illustrative.</figcaption>
+  </figure>
+</section>
+
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <p>Ask the assistant a vague question and compare the two answers.</p>
+
+  <div class="bench">
+    <div class="seg" role="group" aria-label="Which assistant">
+      <button type="button" id="mode-before" aria-pressed="true">Before</button>
+      <button type="button" id="mode-after" aria-pressed="false">After</button>
+    </div>
+    <label class="peek" id="peek-wrap" hidden><input type="checkbox" id="peek"> Show what the model sends</label>
+    <div class="log" id="log" aria-live="polite"></div>
+    <div class="bench-foot">
+      <span class="note" id="note"></span>
+      <button type="button" class="linkish" id="reset">Start over</button>
+    </div>
+  </div>
+</section>
+
+<section id="learned">
+  <h2 class="sec"><span>IV &middot; What I Learned</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <p><strong>Watch people work before writing code.</strong> This project took me beyond writing code. I got to sit in on live calls and watch people that actually use the assistant. Three problems kept coming up. First, the assistant guessed instead of asking. Second, plain text was slow to scan mid-call. Third, advocates had to switch tabs constantly. Sending one email could mean three tools and pasting the subject and body by hand. Watching the users directly shaped what I built.</p>
+
+  <p><strong>Test it in the room.</strong> I tested the features I built at an onsite, where advocates used them on live calls while our team watched. One told us it would save them a lot of time. Hearing that from people I'd been watching work for weeks was one of the best moments of my summer.</p>
+
+  <p><strong>Work with people you enjoy.</strong> The environment matters a lot. I was surrounded by supportive people I liked being around, and we came up with a lot of ideas along the way. I had a great time building this, and I think the work was better for it.</p>
+
+  <p><strong>Learn the system, don't just prompt it.</strong> With AI, it's tempting to tell Claude what to build and move on. At Minerva, my university, we spend a lot of time on the science of learning, and one of the earliest lessons I implemented during my internship was to use AI to understand, not just to produce. When I was ramping up on an agent backend I'd never touched before May, I used Claude's learning mode to understand the architecture before writing much code. It was slower at first, but I moved faster later because I knew what I was writing.</p>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="signoff">That's it, thank you for reading till the end. Bye!</p>
+  <p class="cite">The Try It demo is a made-up example built for this page. It isn't the real interface, and the names and numbers in it are invented. The text is written by me; the page itself was generated with AI and reviewed by me.</p>
+</footer>
+
+</div>
+
+<script>
+(() => {
+  const log = document.getElementById('log');
+  const note = document.getElementById('note');
+  const peek = document.getElementById('peek');
+  const btnBefore = document.getElementById('mode-before');
+  const btnAfter = document.getElementById('mode-after');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wait = ms => new Promise(r => setTimeout(r, reduce ? 0 : ms));
+
+  const QUESTION = "Customer says their employee's paycheck is lower this month. Why?";
+
+  const WALL = "A paycheck can be lower for several reasons. First, check whether the employee's hours changed this pay period, including overtime or unpaid time off. Second, review deductions: a new benefits enrollment, a change to retirement contributions, or a garnishment that started this period. Third, tax withholding may have changed if the employee submitted a new withholding form, moved to a different state, or crossed a wage limit. Fourth, if last month included a bonus or commission, the comparison may be misleading. Fifth, check the pay schedule, since a month with an extra pay date splits earnings differently. You may also want to look at reimbursements and any manual adjustments made by the admin. To investigate, open the employee's pay stubs for both periods, compare them line by line, and then explain the difference to the customer.";
+
+  const OPTIONS = {
+    "Hours changed": {
+      text: "Fewer hours this period. Gross pay dropped with them.",
+      cols: ["Line", "Last month", "This month"],
+      rows: [["Regular hours", "80", "72", true], ["Overtime hours", "6", "0", true], ["Gross pay", "$2,180", "$1,872", true]],
+      email: "The difference comes from hours worked: this period had 72 regular hours and no overtime, compared with 80 regular and 6 overtime hours last month."
+    },
+    "New deduction": {
+      text: "Gross pay is the same. A new health insurance deduction started this period.",
+      cols: ["Line", "Last month", "This month"],
+      rows: [["Gross pay", "$2,180", "$2,180"], ["Health insurance", "$0", "$142", true], ["Retirement (401k)", "$109", "$109"], ["Net pay", "$1,702", "$1,560", true]],
+      email: "Gross pay didn't change. The difference is a new health insurance deduction of $142 that started this pay period."
+    },
+    "Tax withholding changed": {
+      text: "Gross pay is the same. Federal withholding went up after a form update.",
+      cols: ["Line", "Last month", "This month"],
+      rows: [["Gross pay", "$2,180", "$2,180"], ["Federal withholding", "$198", "$261", true], ["State withholding", "$84", "$84"], ["Net pay", "$1,702", "$1,639", true]],
+      email: "Gross pay didn't change. Federal tax withholding increased by $63 after the employee updated their withholding form."
+    },
+    "Not sure yet": {
+      text: "Here are both pay stubs side by side. Only one line changed.",
+      cols: ["Line", "Last month", "This month"],
+      rows: [["Gross pay", "$2,180", "$2,180"], ["Federal withholding", "$198", "$198"], ["State withholding", "$84", "$84"], ["Health insurance", "$0", "$142", true], ["Net pay", "$1,702", "$1,560", true]],
+      email: "Gross pay and taxes didn't change. The difference is a new health insurance deduction of $142 that started this pay period."
+    }
+  };
+
+  let mode = 'before';
+  let run = 0; // invalidates pending async steps on reset
+
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function msg(who, cls) {
+    const m = el('div', 'msg fade ' + cls);
+    m.appendChild(el('span', 'who', who));
+    const b = el('div', 'bubble');
+    m.appendChild(b);
+    log.insertBefore(m, log.querySelector('.composer'));
+    return b;
+  }
+  function call(obj) {
+    return el('pre', 'call', 'tool call → ' + JSON.stringify(obj, null, 2));
+  }
+  function composer(placeholder) {
+    const c = el('div', 'composer');
+    const i = el('input');
+    i.type = 'text'; i.disabled = true; i.placeholder = placeholder;
+    i.setAttribute('aria-label', 'Message box (demo, disabled)');
+    c.appendChild(i);
+    log.appendChild(c);
+  }
+
+  async function start() {
+    const my = ++run;
+    log.innerHTML = '';
+    msg('Advocate', 'user').textContent = QUESTION;
+    await wait(450); if (my !== run) return;
+
+    if (mode === 'before') {
+      const b = msg('Assistant', 'bot wall');
+      b.textContent = WALL;
+      note.textContent = '';
+      return;
+    }
+
+    const b = msg('Assistant', 'bot');
+    b.appendChild(el('p', null, "A lower paycheck usually comes from one of a few places. Which fits this case?"));
+    const pills = el('div', 'pills');
+    Object.keys(OPTIONS).forEach(label => {
+      const p = el('button', 'pill', label);
+      p.type = 'button';
+      p.addEventListener('click', () => choose(label, pills, p));
+      pills.appendChild(p);
+    });
+    b.appendChild(pills);
+    b.appendChild(call({ tool: 'ask', options: Object.keys(OPTIONS) }));
+    note.textContent = 'Pick one.';
+  }
+
+  async function choose(label, pills, chosen) {
+    const my = run;
+    pills.querySelectorAll('.pill').forEach(p => { p.disabled = true; });
+    chosen.classList.add('chosen');
+    const u = msg('Advocate', 'user');
+    u.textContent = label;
+    await wait(450); if (my !== run) return;
+
+    const o = OPTIONS[label];
+    const b = msg('Assistant', 'bot');
+    b.appendChild(el('p', null, o.text));
+    const t = el('table', 'tbl');
+    const hr = el('tr');
+    o.cols.forEach(c => hr.appendChild(el('th', null, c)));
+    const thead = el('thead'); thead.appendChild(hr); t.appendChild(thead);
+    const tb = el('tbody');
+    o.rows.forEach(r => {
+      const tr = el('tr', r[3] ? 'hit' : null);
+      tr.appendChild(el('td', null, r[0]));
+      tr.appendChild(el('td', 'num', r[1]));
+      tr.appendChild(el('td', 'num', r[2]));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    b.appendChild(t);
+    b.appendChild(call({ tool: 'show_table', columns: o.cols, rows: o.rows.length }));
+
+    const a = el('button', 'act', 'Draft email to customer');
+    a.type = 'button';
+    b.appendChild(a);
+    b.appendChild(call({ tool: 'draft_email', label: 'Draft email to customer' }));
+    note.textContent = 'Scan the table instead of reading a paragraph.';
+    a.addEventListener('click', () => draft(o, b, a));
+  }
+
+  async function draft(o, b, a) {
+    const my = run;
+    a.disabled = true;
+    await wait(350); if (my !== run) return;
+    const d = el('div', 'draft fade');
+    d.appendChild(el('div', 'subj', 'Subject: About this month\'s paycheck'));
+    d.appendChild(el('p', null, 'Hi! Thanks for reaching out. ' + o.email + ' Let me know if you have any other questions.'));
+    const send = el('button', 'act', 'Send to email composer');
+    send.type = 'button';
+    d.appendChild(send);
+    b.appendChild(d);
+    send.addEventListener('click', () => {
+      send.disabled = true;
+      d.appendChild(el('p', 'done fade', '✓ Placed in the composer, ready to review and send.'));
+      note.textContent = 'One click instead of copy, switch tabs, paste.';
+    });
+  }
+
+  const peekWrap = document.getElementById('peek-wrap');
+  function setMode(m) {
+    mode = m;
+    peekWrap.hidden = (m !== 'after');
+    if (m !== 'after') { peek.checked = false; log.classList.remove('show-calls'); }
+    btnBefore.setAttribute('aria-pressed', String(m === 'before'));
+    btnAfter.setAttribute('aria-pressed', String(m === 'after'));
+    start();
+  }
+
+  btnBefore.addEventListener('click', () => setMode('before'));
+  btnAfter.addEventListener('click', () => setMode('after'));
+  document.getElementById('reset').addEventListener('click', start);
+  peek.addEventListener('change', () => log.classList.toggle('show-calls', peek.checked));
+  start();
+})();
+</script>
+</body>
+</html>
