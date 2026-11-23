@@ -149,6 +149,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-22-object-detection-with-deep-learning-a-review.html",
         date: "2026-11-22",
     },
+    {
+        title: "Tracking animal body parts without markers",
+        blurb: "How retraining an image-recognition network on about two hundred hand-labelled video frames lets researchers follow a mouse's fingers or a fly's legs in every frame, about as accurately as a person clicking on them, with no markers glued to the animal.",
+        tags: ["paper of the day", "computer-vision"],
+        file: "learning/paper-2026-11-23-markerless-tracking-of-user-defined-features-with.html",
+        date: "2026-11-23",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
