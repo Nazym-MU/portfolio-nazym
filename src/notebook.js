@@ -156,6 +156,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-23-markerless-tracking-of-user-defined-features-with.html",
         date: "2026-11-23",
     },
+    {
+        title: "What I built and learned at Gusto",
+        blurb: "My summer as a software engineering intern: teaching an AI assistant for customer support to ask, show, and act instead of answering in walls of text. With a before/after demo you can click through.",
+        tags: ["internship", "ai products"],
+        file: "learning/gusto-internship.html",
+        date: "2026-11-23",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
