@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parameterized Quantum Circuits as Machine Learning Models</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.4rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 .7rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.85rem;
+  white-space:nowrap;
+  min-width:7.2em;
+}
+.dial output{display:inline-block;min-width:2.6em;text-align:left;font-variant-numeric:tabular-nums}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench figure{margin:.8rem 0 0}
+.bench figcaption{font-size:1.05rem}
+.ink-btn{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  color:var(--ink);
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+  padding:.5em 1.1em .4em;
+  cursor:pointer;
+  display:block;
+  margin:.9rem auto 0;
+}
+.ink-btn:active{background:var(--ink);color:var(--paper)}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+  max-width:var(--measure);
+  margin-left:auto;margin-right:auto;
+  line-height:1.35;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+  .dial{gap:.6rem}
+  .dial label{min-width:6.4em;font-size:.78rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- a three-wire circuit: gates on wires, one meter at the end -->
+    <svg class="strip" viewBox="0 0 420 60" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M6 12h408M6 30h408M6 48h408" stroke-width="1.5"/>
+      <g fill="currentColor">
+        <rect x="34" y="3" width="26" height="18"/><rect x="34" y="21" width="26" height="18"/><rect x="34" y="39" width="26" height="18"/>
+        <circle cx="96" cy="12" r="4.5"/><circle cx="96" cy="30" r="4.5"/>
+        <circle cx="124" cy="30" r="4.5"/><circle cx="124" cy="48" r="4.5"/>
+        <rect x="156" y="3" width="26" height="18"/><rect x="156" y="39" width="26" height="18"/>
+        <circle cx="218" cy="12" r="4.5"/><circle cx="218" cy="48" r="4.5"/>
+        <rect x="250" y="21" width="26" height="18"/>
+        <circle cx="308" cy="12" r="4.5"/><circle cx="308" cy="30" r="4.5"/>
+        <rect x="336" y="3" width="26" height="18"/><rect x="336" y="39" width="26" height="18"/>
+      </g>
+      <path d="M96 12v18M124 30v18M218 12v36M308 12v18"/>
+      <rect x="382" y="19" width="30" height="22" style="fill:var(--paper)"/>
+      <path d="M388 36a9 9 0 0 1 18 0M397 36l7-11" stroke-width="1.5"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; Quantum Science and Technology 2019</p>
+      <h1>Circuits That Learn</h1>
+    </div>
+    <p class="tagline">Parameterized Quantum Circuits as Machine Learning Models</p>
+    <p class="tagline-hand">Marcello Benedetti, Erika Lloyd, Stefan Sack et al. &middot; 2019 &middot; cited 1,529 times &middot;
+    <a href="https://arxiv.org/abs/1906.07682">arXiv:1906.07682</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>A review of how a small, noisy quantum computer can be used as a trainable model: a quantum circuit whose gates have adjustable rotation angles produces the predictions, and an ordinary computer adjusts those angles, step by step, until the predictions fit the data.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: a gradient from two runs</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">tens of noisy qubits</span></div>
+    <p class="entry-desc">A quantum computer works on <em>qubits</em>, two-level quantum systems, by applying a sequence of elementary operations called <em>gates</em>. The machines that exist have a few tens of qubits and can run only a short sequence of gates before noise swamps the answer. The famous algorithms, such as Shor's for factoring integers, need long sequences on far larger, error-corrected machines, so they are out of reach.</p>
+    <p class="entry-desc">The question is what a short, noisy circuit is good for today.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">a hybrid loop</span></div>
+    <p class="entry-desc">Treat the circuit as a machine learning model. Some of its gates are rotations by an adjustable angle; those angles are the model's parameters, exactly like the weights of a neural network. The quantum computer does one thing: prepare the state the circuit prescribes and measure it. An ordinary (classical) computer does everything else: it turns the measurement results into a prediction, scores the prediction against the training data, and proposes better angles.</p>
+    <p class="entry-desc">The two run in a closed loop. Such a circuit is called a <em>parameterized quantum circuit</em>.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">15 hardware demos</span></div>
+    <p class="entry-desc">This is a review, so the result is a map. Every model splits into the same parts: a circuit that loads a data point, a circuit with trainable angles, a measurement, and classical post-processing. One recipe covers classification, regression, generating new samples, and tasks whose data are themselves quantum states.</p>
+    <p class="entry-desc">The paper tabulates 15 experiments on real hardware. All but one use between 1 and 6 qubits (the exception, a clustering experiment, uses 19). The authors say plainly that every supervised-learning experiment so far used scaled-down, often trivial, datasets. Whether these models beat classical ones on a real task is still open.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Unitaries with two eigenvalues</b></p>
+
+  <p>The state of \(n\) qubits is a unit vector in \(\mathbb C^{2^n}\), with one coordinate per bit string of length \(n\). The joint state of independent qubits is the tensor (Kronecker) product of their individual states, which is why each added qubit doubles the dimension.</p>
+
+  <h3 class="sub">The objects</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(|0\rangle\in\mathbb C^{2^n}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">start</span></div>
+    <p class="entry-desc">The starting state: the first standard basis vector \((1,0,\dots,0)\), meaning every qubit reads 0. \(\langle 0|\) is its conjugate transpose, a row vector.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(U_{\phi(x)}\), unitary \(2^n\times 2^n\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">encoder</span></div>
+    <p class="entry-desc">The <em>encoder circuit</em>. \(x\) is one data vector and \(\phi\) is a classical pre-processing function that turns \(x\) into gate angles. This is the only place the data enters.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(U_\theta\), unitary \(2^n\times 2^n\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">trainable</span></div>
+    <p class="entry-desc">The <em>variational circuit</em>: a product of \(J\) gates, \(U_\theta=U_J\cdots U_1\), where gate \(j\) depends on one real angle \(\theta_j\). The vector \(\theta\in\mathbb R^J\) is what training adjusts. \(J\) grows polynomially in \(n\), while the group of all unitaries on \(\mathbb C^{2^n}\) has \(4^n\) real dimensions, so the circuit reaches only a thin slice of it. That restriction is the model's structure.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(M\), Hermitian \(2^n\times 2^n\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">observable</span></div>
+    <p class="entry-desc">The quantity measured at the end. Its spectral decomposition is \(M=\sum_i\lambda_iP_i\), with real eigenvalues \(\lambda_i\) and \(P_i\) the orthogonal projector onto the \(i\)-th eigenspace.</p>
+  </div>
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 190" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1.2"/>
+        </pattern>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M1 1 9 5 1 9" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        </marker>
+      </defs>
+      <!-- wires -->
+      <path d="M52 46h330M52 68h330M52 90h330" stroke-width="1.5"/>
+      <g font-family="Oswald, sans-serif" font-size="13" fill="currentColor" stroke="none" text-anchor="end">
+        <text x="46" y="51">|0&#10217;</text><text x="46" y="73">|0&#10217;</text><text x="46" y="95">|0&#10217;</text>
+      </g>
+      <!-- encoder -->
+      <rect x="78" y="32" width="84" height="72" style="fill:var(--paper)"/>
+      <!-- variational, hatched -->
+      <rect x="196" y="32" width="96" height="72" style="fill:var(--paper)"/>
+      <rect x="196" y="32" width="96" height="72" fill="url(#hatch)"/>
+      <!-- meter -->
+      <rect x="326" y="32" width="56" height="72" style="fill:var(--paper)"/>
+      <path d="M338 80a16 16 0 0 1 32 0M354 80l12-20" stroke-width="1.6"/>
+      <g font-family="Oswald, sans-serif" font-size="12" letter-spacing="1.5" fill="currentColor" stroke="none" text-anchor="middle">
+        <text x="120" y="22">ENCODER</text>
+        <text x="244" y="22">VARIATIONAL</text>
+        <text x="354" y="22">MEASURE M</text>
+        <text x="120" y="72" font-size="13">angles &#966;(x)</text>
+        <text x="120" y="166">DATA x</text>
+        <text x="300" y="166" font-size="11">CLASSICAL: LOSS, THEN NEW &#952;</text>
+      </g>
+      <!-- data in -->
+      <path d="M120 150V110" stroke-width="1.5" marker-end="url(#arr)"/>
+      <!-- classical box and loop -->
+      <rect x="196" y="146" width="208" height="32"/>
+      <path d="M354 104v38" stroke-width="1.5" marker-end="url(#arr)"/>
+      <path d="M244 146v-36" stroke-width="1.5" marker-end="url(#arr)"/>
+    </svg>
+    <figcaption>hatched: the part training changes. the quantum device only prepares and measures; the loop closes through a classical computer.</figcaption>
+  </figure>
+
+  <h3 class="sub">Measurement is a trace against a rank-one projector</h3>
+
+  <p>Write \(U\) for the whole circuit and \(\rho=U|0\rangle\langle 0|U^\dagger\) for the projector onto the final state (\(\dagger\) is the conjugate transpose). \(\rho\) is positive semidefinite with rank one and trace one. The <em>Born rule</em> says one run of the circuit returns a single eigenvalue of \(M\), at random, with probability \(p(\lambda_i)=\operatorname{tr}(P_i\rho)\). Averaging gives the paper's first equation, the <em>expectation value</em>:</p>
+  $$\langle M\rangle=\sum_i\lambda_i\,p(\lambda_i)=\operatorname{tr}(M\rho)=\langle 0|U^\dagger MU|0\rangle .$$
+  <p>This number is the model's raw output. It is never read off directly; it is estimated by running the circuit many times (each run is a <em>shot</em>) and averaging.</p>
+
+  <div class="callout">
+    <span class="callout-label">The model is a linear function of a matrix</span>
+    <p>Split the circuit as \(U=U_\theta U_{\phi(x)}\) and let \(\rho(x)=U_{\phi(x)}|0\rangle\langle0|U_{\phi(x)}^\dagger\) be the projector onto the encoded data point. Cycling the trace,</p>
+    $$\langle M\rangle_{x,\theta}=\operatorname{tr}\!\big(W_\theta\,\rho(x)\big),\qquad W_\theta=U_\theta^\dagger MU_\theta .$$
+    <p>So the output is the trace inner product of a data-dependent matrix \(\rho(x)\) with a weight matrix \(W_\theta\): a linear classifier in the \(4^n\)-dimensional real space of Hermitian matrices. \(W_\theta\) is unitarily similar to \(M\), so its eigenvalues never change. Training only rotates its eigenvectors.</p>
+  </div>
+
+  <h3 class="sub">The encoder is a feature map, and it defines a kernel</h3>
+
+  <p>A <em>feature map</em> sends each data point to a vector in a bigger space where the problem may be easier; a <em>kernel</em> is the similarity score between two mapped points. Here the map is \(x\mapsto U_{\phi(x)}|0\rangle\), and the kernel is the squared overlap of two encoded states:</p>
+  $$k(x,x')=\big|\langle0|U_{\phi(x')}^\dagger U_{\phi(x)}|0\rangle\big|^2=\operatorname{tr}\!\big(\rho(x)\rho(x')\big).$$
+  <p>The second form shows that the matrix of all pairwise kernel values is a Gram matrix (of the \(\rho\)'s under the trace inner product), hence symmetric positive semidefinite. That is exactly what classical kernel methods, such as the support vector machine, need.</p>
+  <p>The simplest encoder, <em>qubit encoding</em>, uses one qubit per input component \(x_i\in[0,1]\) and rotates it by an angle set by \(x_i\):</p>
+  $$x\;\mapsto\;\bigotimes_{i=1}^{n}\begin{pmatrix}\cos(x_i\pi/2)\\ \sin(x_i\pi/2)\end{pmatrix},\qquad k(x,x')=\prod_{i=1}^{n}\cos^2\!\Big(\frac{\pi}{2}(x_i-x'_i)\Big).$$
+  <p>The kernel formula follows because inner products multiply across a tensor product, and \(\cos a\cos b+\sin a\sin b=\cos(a-b)\).</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>One qubit, \(x=0\) and \(x'=0.5\). The states are \((1,0)\) and \((\cos45^\circ,\sin45^\circ)=(0.707,\,0.707)\). Their inner product is \(0.707\), so \(k=0.5\).</p>
+    <p>Two qubits with \(x=(0,0)\), \(x'=(0.5,0.5)\): the states live in \(\mathbb C^4\), \((1,0,0,0)\) and \((0.5,0.5,0.5,0.5)\). Inner product \(0.5=0.707^2\), so \(k=0.25\). The overlaps multiplied.</p>
+  </div>
+
+  <p>The opposite extreme is <em>amplitude encoding</em>: write a unit data vector with \(2^n\) entries directly as the state of \(n\) qubits. Memory use is exponentially small, but for generic data the circuit that prepares the state is expected to need exponentially many gates.</p>
+
+  <h3 class="sub">The spectral fact: each trainable gate has only two eigenvalues</h3>
+
+  <p>The <em>Pauli matrices</em> are the \(2\times2\) matrices</p>
+  $$X=\begin{pmatrix}0&amp;1\\1&amp;0\end{pmatrix},\quad Y=\begin{pmatrix}0&amp;-i\\i&amp;0\end{pmatrix},\quad Z=\begin{pmatrix}1&amp;0\\0&amp;-1\end{pmatrix}.$$
+  <p>A <em>Pauli string</em> \(P\) is a tensor product of \(n\) factors, each one of \(I, X, Y, Z\). It is both Hermitian and unitary, so \(P^2=I\) and its eigenvalues are \(\pm1\). In the most common parameterization, trainable gate \(j\) is the exponential of a Pauli string \(P_j\):</p>
+  $$U_j=\exp\!\Big(-\frac{i}{2}\theta_jP_j\Big)=\cos\frac{\theta_j}{2}\,I-i\sin\frac{\theta_j}{2}\,P_j .$$
+  <p>The closed form is the power series collapsing because \(P_j^2=I\). The gate's eigenvalues are just \(e^{-i\theta_j/2}\) and \(e^{+i\theta_j/2}\).</p>
+  <p>Now see how one gate \(U=cI-isP\) (with \(c=\cos\frac\theta2\), \(s=\sin\frac\theta2\)) transforms any Hermitian \(M\). Multiplying out and using the double-angle identities:</p>
+  $$U^\dagger MU=\frac{M+PMP}{2}+\cos\theta\,\frac{M-PMP}{2}+\sin\theta\,\frac{i}{2}\,(PM-MP).$$
+  <p>Only \(\cos\theta\) and \(\sin\theta\) appear, because the two eigenvalues' phases differ by exactly \(\theta\). So, holding every other angle fixed, the expectation value as a function of one angle is a single sinusoid, for constants \(a,b,c\) that depend on the rest of the circuit:</p>
+  $$\langle M\rangle(\theta_j)=a+b\cos\theta_j+c\sin\theta_j .$$
+  <p>A sinusoid's derivative is the same sinusoid shifted by a quarter period. That gives the <em>parameter shift rule</em>, the paper's Eq. (5), where \(e_j\) is the \(j\)-th standard basis vector of \(\mathbb R^J\):</p>
+  $$\frac{\partial\langle M\rangle_\theta}{\partial\theta_j}=\frac{\langle M\rangle_{\theta+\frac{\pi}{2}e_j}-\langle M\rangle_{\theta-\frac{\pi}{2}e_j}}{2}.$$
+  <p>It is exact, with no small step size, and uses the same circuit run at two shifted angles.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>One qubit, gate \(e^{-i\theta X/2}\), measure \(Z\). The state is \((\cos\frac\theta2,\,-i\sin\frac\theta2)\), so \(\langle Z\rangle=\cos^2\frac\theta2-\sin^2\frac\theta2=\cos\theta\). In the formula above, \(XZX=-Z\) kills the constant term and leaves \(U^\dagger ZU=\cos\theta\,Z+\sin\theta\,Y\).</p>
+    <p>At \(\theta=\pi/3\): outcome probabilities \(0.75\) and \(0.25\), \(\langle Z\rangle=0.5\), true derivative \(-\sin\frac\pi3=-0.866\).</p>
+    <p>Shift rule: \(\tfrac12\big[\cos\tfrac{5\pi}{6}-\cos(-\tfrac{\pi}{6})\big]=\tfrac12[-0.866-0.866]=-0.866\). Exact.</p>
+  </div>
+
+  <p>Why this matters: a quantum state cannot be inspected mid-circuit without destroying it, so there is no stored forward pass to run backpropagation on. The alternative, a finite difference \([L(\theta+\Delta e_j)-L(\theta-\Delta e_j)]/2\Delta\) with small \(\Delta\), is biased and divides noisy measurements by a small number. The shift rule gives an unbiased gradient from \(2J\) runs of circuits the hardware can already execute.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It: A Gradient From Two Runs</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive<b>Shift versus finite difference</b></p>
+
+  <p>This is the one-qubit example: gate \(e^{-i\theta X/2}\), measure \(Z\), so the curve is \(\langle Z\rangle=\cos\theta\). Each shot returns \(+1\) or \(-1\); the two filled dots are averages over the chosen number of shots at \(\theta+s\) and \(\theta-s\). Open circles are the exact values. Two formulas turn the dots into a slope: the finite difference divides their gap by \(2s\); the shift formula divides by \(2\sin s\), which is exact for a sinusoid at any shift \(s\) and becomes the paper's rule at \(s=\pi/2\).</p>
+  <p><strong>Try:</strong> set the shift to its smallest value and press <em>measure again</em> a few times. Then slide the shift to \(\pi/2\) and do the same. <strong>Notice:</strong> at a small shift the dashed estimated slope swings wildly, because shot noise is divided by a tiny number (spread about 1.2 at 100 shots, larger than the slope itself). At \(\pi/2\) the spread falls to about 0.04. There the finite-difference formula is also systematically wrong, reading \(2/\pi\approx0.64\) of the true slope, while the shift formula is right on average.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="gTh">&theta; = <output id="gThV" for="gTh">1.00</output></label>
+      <input id="gTh" type="range" min="0" max="6.28" value="1" step="0.01">
+    </div>
+    <div class="dial">
+      <label for="gSh">shift = <output id="gShV" for="gSh">0.20</output></label>
+      <input id="gSh" type="range" min="0.05" max="1.5708" value="0.2" step="0.0001">
+    </div>
+    <div class="dial">
+      <label for="gN">shots = <output id="gNV" for="gN">100</output></label>
+      <input id="gN" type="range" min="1" max="4" value="2" step="0.25">
+    </div>
+    <figure>
+      <canvas id="cG" width="640" height="320"></canvas>
+      <figcaption>solid line: true slope at \(\theta\) &middot; dashed: slope estimated by the shift formula</figcaption>
+    </figure>
+    <button class="ink-btn" id="gAgain" type="button">Measure again</button>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">true derivative \(-\sin\theta\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gT">–</span></div>
+      <div class="entry"><span class="entry-name">finite difference, gap / \(2s\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gF">–</span></div>
+      <div class="entry"><span class="entry-name">shift formula, gap / \(2\sin s\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gS">–</span></div>
+      <div class="entry"><span class="entry-name">shot-noise spread of the estimate</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="gE">–</span></div>
+    </div>
+  </div>
+
+  <h3 class="sub">A second dial: repeating the encoding sharpens the kernel</h3>
+
+  <p>Take a one-number input \(x\in[0,1]\) and encode it into \(m\) qubits, each by the same rotation. Because overlaps multiply across tensor products, the kernel is \(k(x,x')=\cos^{2m}\!\big(\tfrac\pi2(x-x')\big)\). The plot shows \(k\) against the gap \(x-x'\).</p>
+  <p><strong>Try:</strong> raise \(m\) from 1 to 16. <strong>Notice:</strong> the bump narrows like \(1/\sqrt m\) and settles onto the dotted curve \(e^{-m\pi^2(x-x')^2/4}\), a Gaussian kernel. Copies of the same qubit make nearby inputs look more different: this is the redundancy the paper says lets a circuit fit more non-linear functions.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="kM">m = <output id="kMV" for="kM">1</output></label>
+      <input id="kM" type="range" min="1" max="16" value="1" step="1">
+    </div>
+    <figure>
+      <canvas id="cK" width="640" height="260"></canvas>
+      <figcaption>solid: the circuit's kernel &middot; dotted: Gaussian with matching width</figcaption>
+    </figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">feature space dimension \(2^m\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="kD">2</span></div>
+      <div class="entry"><span class="entry-name">similarity of inputs 0.25 apart</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="kA">–</span></div>
+      <div class="entry"><span class="entry-name">similarity of inputs 0.5 apart</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="kB">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>From the review</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">A linear circuit, a non-linear model</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">no activations</span></div>
+    <p class="entry-desc">Every gate is unitary, hence linear, so there is nothing like a neural network's activation function inside the circuit. The non-linearity comes from the two ends: the data enters through \(\cos\) and \(\sin\) of rotation angles, and the output is quadratic in the state's entries. Repeating the encoding on more qubits raises the degree, as in the second dial above.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Gradients cannot explode, but they vanish</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">barren plateaus</span></div>
+    <p class="entry-desc">A unitary has all singular values equal to 1, so a signal passed through many layers never blows up. Classical recurrent networks are sometimes constrained to be unitary to get this property; circuits have it for free.</p>
+    <p class="entry-desc">The opposite failure is severe. For circuits with randomly chosen angles and reasonable depth, the gradient's variance shrinks exponentially with the number of qubits (McClean et al.). The cause is concentration of measure: a smooth function on the unit sphere of \(\mathbb C^{2^n}\) is nearly constant almost everywhere. The landscape is an exponentially large flat plateau, and the optimizer cannot tell the gradient from shot noise.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">A sampler you cannot evaluate</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">Born machine</span></div>
+    <p class="entry-desc">Drop the encoder and measure every qubit. Bit string \(v\) comes out with probability \(q_\theta(v)=|\langle v|U_\theta|0\rangle|^2\), the squared magnitude of one entry of a unit vector, so the probabilities sum to 1 with no normalizing constant to compute. This generative model is the <em>quantum circuit Born machine</em>.</p>
+    <p class="entry-desc">Drawing a sample is one run of the circuit. Computing \(q_\theta(v)\) for a given \(v\) is believed intractable beyond small circuits. The parameter shift rule still gives gradients, even though the samples are discrete, which is exactly where classical generative models of this kind struggle.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">A kernel built to be hard classically</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">2 qubits so far</span></div>
+    <p class="entry-desc">Havlíček et al. use the encoder \(\exp\!\big(i\sum_{j,k}\phi_{j,k}(x)Z_jZ_k\big)H^{\otimes n}\), where \(Z_j\) is Pauli \(Z\) on qubit \(j\) and \(H\) is the Hadamard gate, which sends \(|0\rangle\) to an equal mix of 0 and 1. The first factor spreads the state evenly over all \(2^n\) coordinates; the second is a diagonal unitary that multiplies each coordinate by a data-dependent phase. They conjecture that two such layers give a kernel no classical computer can estimate efficiently.</p>
+    <p class="entry-desc">The quantum device then only estimates kernel values, and a classical support vector machine does the learning. It was demonstrated on 2 superconducting qubits. Whether a kernel being hard to compute makes it <em>useful</em> is, the authors stress, an open empirical question.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>A trainable quantum gate is \(e^{-i\theta P/2}\) with \(P^2=I\), so it has just two eigenvalues, the measured output is a plain sinusoid in each angle, and its exact derivative is half the difference of two runs of the same circuit shifted by \(\pm\pi/2\). That is what lets a classical optimizer train a quantum circuit it can never look inside.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Parameterized quantum circuits as machine learning models</strong>, by Marcello Benedetti, Erika Lloyd, Stefan Sack and Mattia Fiorentini (Cambridge Quantum Computing), <em>Quantum Science and Technology</em>, 2019.
+  <a href="https://arxiv.org/abs/1906.07682">arxiv.org/abs/1906.07682</a></p>
+  <p class="signoff">Written from the full text (arXiv v2). The trace form of the model, the sinusoid derivation, the any-shift formula and the Gaussian limit of the kernel are standard facts worked out for this page; the paper states the results they lead to. Both interactives simulate one idealised, noise-free qubit.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3", SOFT = css("--ink-soft") || "#4a463f";
+  var FONT = "22px Oswald, sans-serif";
+  function fmt(v, d) { return v.toFixed(d).replace("-", "\u2212"); }
+  function $(id) { return document.getElementById(id); }
+
+  /* ============ 1. shift rule vs finite difference ============ */
+  (function () {
+    var cv = $("cG"), ctx = cv.getContext("2d");
+    var W = cv.width, H = cv.height;
+    var T0 = -1.75, T1 = 2 * Math.PI + 1.75, V = 1.35;
+    var padT = 14, padB = 40;
+    function X(t) { return W * (t - T0) / (T1 - T0); }
+    function Y(v) { return padT + (H - padT - padB) * (V - v) / (2 * V); }
+
+    var sTh = $("gTh"), sSh = $("gSh"), sN = $("gN");
+    var yp = 0, ym = 0;
+
+    function shots() { return Math.round(Math.pow(10, +sN.value)); }
+
+    // Average of N shots, each +1 with probability (1 + cos t)/2, else -1.
+    function sample(t, N) {
+      var p = (1 + Math.cos(t)) / 2, c = 0;
+      for (var i = 0; i < N; i++) if (Math.random() < p) c++;
+      return 2 * c / N - 1;
+    }
+
+    function measure() {
+      var th = +sTh.value, s = +sSh.value, N = shots();
+      yp = sample(th + s, N);
+      ym = sample(th - s, N);
+      render();
+    }
+
+    function slopeLine(th, slope, dashed) {
+      var half = 1.0, y0 = Math.cos(th);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, padT, W, H - padT - padB); ctx.clip();
+      ctx.setLineDash(dashed ? [9, 7] : []);
+      ctx.lineWidth = dashed ? 3 : 1.5;
+      ctx.beginPath();
+      ctx.moveTo(X(th - half), Y(y0 - slope * half));
+      ctx.lineTo(X(th + half), Y(y0 + slope * half));
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function render() {
+      var th = +sTh.value, s = +sSh.value, N = shots();
+      $("gThV").textContent = th.toFixed(2);
+      $("gShV").textContent = s > 1.5707 ? "\u03C0/2" : s.toFixed(2);
+      $("gNV").textContent = N;
+
+      ctx.setLineDash([]);
+      ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = INK; ctx.fillStyle = INK;
+
+      // axis + ticks
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, Y(0)); ctx.lineTo(W, Y(0)); ctx.stroke();
+      ctx.font = FONT; ctx.textAlign = "center";
+      var ticks = [[0, "0"], [Math.PI, "\u03C0"], [2 * Math.PI, "2\u03C0"]];
+      ticks.forEach(function (t) {
+        ctx.beginPath(); ctx.moveTo(X(t[0]), Y(0) - 6); ctx.lineTo(X(t[0]), Y(0) + 6); ctx.stroke();
+        ctx.fillStyle = SOFT; ctx.fillText(t[1], X(t[0]), H - 10); ctx.fillStyle = INK;
+      });
+
+      // the curve cos(theta)
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (var i = 0; i <= 320; i++) {
+        var t = T0 + (T1 - T0) * i / 320;
+        if (i === 0) ctx.moveTo(X(t), Y(Math.cos(t))); else ctx.lineTo(X(t), Y(Math.cos(t)));
+      }
+      ctx.stroke();
+
+      // dashed drop lines at theta +/- s
+      ctx.save();
+      ctx.setLineDash([3, 6]); ctx.lineWidth = 1.2;
+      [th + s, th - s].forEach(function (t) {
+        ctx.beginPath(); ctx.moveTo(X(t), padT); ctx.lineTo(X(t), H - padB); ctx.stroke();
+      });
+      ctx.restore();
+
+      // slopes
+      var est = (yp - ym) / (2 * Math.sin(s));
+      slopeLine(th, -Math.sin(th), false);
+      slopeLine(th, est, true);
+
+      // exact values (open) and measured averages (filled)
+      [[th + s, yp], [th - s, ym]].forEach(function (q) {
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(X(q[0]), Y(Math.cos(q[0])), 8, 0, 2 * Math.PI);
+        ctx.fillStyle = PAPER; ctx.fill(); ctx.stroke();
+        ctx.fillStyle = INK;
+        ctx.beginPath(); ctx.arc(X(q[0]), Y(q[1]), 5.5, 0, 2 * Math.PI); ctx.fill();
+      });
+
+      // theta marker
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(X(th), H - padB); ctx.lineTo(X(th), H - padB + 10); ctx.stroke();
+      ctx.fillStyle = INK;
+      ctx.fillText("\u03B8", X(th), H - 10);
+
+      // ledger
+      var vp = (1 - Math.pow(Math.cos(th + s), 2)) / N, vm = (1 - Math.pow(Math.cos(th - s), 2)) / N;
+      $("gT").textContent = fmt(-Math.sin(th), 3);
+      $("gF").textContent = fmt((yp - ym) / (2 * s), 3);
+      $("gS").textContent = fmt(est, 3);
+      $("gE").textContent = "\u00B1 " + (Math.sqrt(vp + vm) / (2 * Math.sin(s))).toFixed(3);
+    }
+
+    sTh.addEventListener("input", measure);
+    sSh.addEventListener("input", measure);
+    sN.addEventListener("input", measure);
+    $("gAgain").addEventListener("click", measure);
+    measure();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+  })();
+
+  /* ============ 2. kernel of repeated qubit encoding ============ */
+  (function () {
+    var cv = $("cK"), ctx = cv.getContext("2d");
+    var W = cv.width, H = cv.height;
+    var padL = 20, padR = 20, padT = 18, padB = 40;
+    function X(d) { return padL + (W - padL - padR) * (d + 1) / 2; }
+    function Y(v) { return padT + (H - padT - padB) * (1 - v); }
+    var sM = $("kM");
+    function k(d, m) { return Math.pow(Math.cos(Math.PI * d / 2), 2 * m); }
+
+    function render() {
+      var m = +sM.value, i, d;
+      $("kMV").textContent = m;
+      ctx.setLineDash([]);
+      ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = INK;
+
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(padL, Y(0)); ctx.lineTo(W - padR, Y(0)); ctx.stroke();
+      ctx.font = FONT; ctx.textAlign = "center"; ctx.fillStyle = SOFT;
+      [[-1, "\u22121"], [0, "x \u2212 x\u2032 = 0"], [1, "1"]].forEach(function (t) {
+        ctx.beginPath(); ctx.moveTo(X(t[0]), Y(0) - 6); ctx.lineTo(X(t[0]), Y(0) + 6); ctx.stroke();
+        ctx.fillText(t[1], X(t[0]), H - 10);
+      });
+
+      // Gaussian limit, dotted
+      ctx.save();
+      ctx.setLineDash([2, 7]); ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (i = 0; i <= 300; i++) {
+        d = -1 + 2 * i / 300;
+        var g = Math.exp(-m * Math.PI * Math.PI * d * d / 4);
+        if (i === 0) ctx.moveTo(X(d), Y(g)); else ctx.lineTo(X(d), Y(g));
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // the circuit's kernel
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      for (i = 0; i <= 300; i++) {
+        d = -1 + 2 * i / 300;
+        if (i === 0) ctx.moveTo(X(d), Y(k(d, m))); else ctx.lineTo(X(d), Y(k(d, m)));
+      }
+      ctx.stroke();
+
+      $("kD").textContent = Math.pow(2, m).toLocaleString("en-US");
+      $("kA").textContent = k(0.25, m).toFixed(3);
+      $("kB").textContent = k(0.5, m).toFixed(3);
+    }
+
+    sM.addEventListener("input", render);
+    render();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+  })();
+})();
+</script>
+</body>
+</html>

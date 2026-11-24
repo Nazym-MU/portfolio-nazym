@@ -168,6 +168,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/gusto-internship.html",
         date: "2026-11-23",
     },
+    {
+        title: "Quantum circuits as machine learning models",
+        blurb: "A review of how today's small, noisy quantum computers can be used as trainable models: a quantum circuit with adjustable rotation angles makes the predictions, and an ordinary computer nudges those angles step by step until the predictions fit the data.",
+        tags: ["paper of the day", "quantum"],
+        file: "learning/paper-2026-11-24-parameterized-quantum-circuits-as-machine-learning.html",
+        date: "2026-11-24",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
