@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ITensor: Tensor Network Calculations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+/* sub-heads inside a section */
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+/* section regime line */
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+/* math inside caps rows must keep its own case */
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+code{
+  font-family:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size:.86em;
+  background:var(--paper-inset);
+  padding:.05em .3em;
+}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+.callout code{background:var(--paper)}
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:1.4em;text-align:left}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.picks{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.5rem;
+  margin:.2rem 0 .9rem;
+}
+.picks button{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--ink);
+  background:var(--paper);
+  border:1px solid var(--ink);
+  border-radius:0;
+  padding:.4em .8em .3em;
+  cursor:pointer;
+}
+.picks button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.picks button:focus-visible{outline:1px dotted var(--ink);outline-offset:3px}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench figure{margin:0 0 1rem}
+.bench figcaption{font-size:1.05rem}
+.bench .small{max-width:300px;margin:0 auto 1rem}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- a chain of small tensors: nodes joined by bonds, one free leg each (silhouette) -->
+    <svg class="strip" viewBox="0 0 420 60" fill="currentColor" aria-hidden="true">
+      <rect x="30" y="16.5" width="360" height="3"/>
+      <rect x="28.5" y="18" width="3" height="38"/><circle cx="30" cy="18" r="9"/>
+      <rect x="73.5" y="18" width="3" height="38"/><circle cx="75" cy="18" r="9"/>
+      <rect x="118.5" y="18" width="3" height="38"/><circle cx="120" cy="18" r="9"/>
+      <rect x="163.5" y="18" width="3" height="38"/><circle cx="165" cy="18" r="9"/>
+      <rect x="208.5" y="18" width="3" height="38"/><circle cx="210" cy="18" r="9"/>
+      <rect x="253.5" y="18" width="3" height="38"/><circle cx="255" cy="18" r="9"/>
+      <rect x="298.5" y="18" width="3" height="38"/><circle cx="300" cy="18" r="9"/>
+      <rect x="343.5" y="18" width="3" height="38"/><circle cx="345" cy="18" r="9"/>
+      <rect x="388.5" y="18" width="3" height="38"/><circle cx="390" cy="18" r="9"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; SciPost Physics Codebases</p>
+      <h1>ITensor</h1>
+    </div>
+    <p class="tagline">The ITensor Software Library for Tensor Network Calculations</p>
+    <p class="tagline-hand">Matthew Fishman, Steven R. White, E. Miles Stoudenmire &middot; 2020 &middot; 1,416 citations &middot;
+    <a href="https://arxiv.org/abs/2007.14822">arXiv:2007.14822</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>This paper describes a software library for computing with arrays far too large to store, such as the state of a hundred quantum particles, by keeping them as networks of small arrays. Its central design choice is that every array index is an object that knows which vector space it stands for, so products and factorizations are worked out by matching spaces instead of counting axis positions.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: a vector as a chain</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(2^{100}\) numbers</span></div>
+    <p class="entry-desc">A <em>tensor</em> is an array of numbers with any number of indices: a vector has one, a matrix two. The memory cost grows exponentially with the number of indices. The standard example is quantum: a <em>spin</em> is a two-level system whose state is a unit vector in \(\mathbb C^2\), and \(N\) spins together have a state in the tensor product \((\mathbb C^2)^{\otimes N}\). That is an array with \(N\) indices, each taking 2 values, so \(2^N\) numbers. For 100 spins that is about \(1.3\times10^{30}\).</p>
+    <p class="entry-desc">A <em>tensor network</em> avoids storing the big array. It writes it as a product of many small tensors, with sums over the indices they share (each such sum is a <em>contraction</em>). The programming is the hard part. In an ordinary array library an index is only a position (first axis, second axis), so every product makes you track which axis of which array pairs with which, and transpose to match. One slip gives a wrong answer with no error message.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">indices with identity</span></div>
+    <p class="entry-desc">ITensor (&ldquo;intelligent tensor&rdquo;) is a library, written first in C++ and then again in the Julia programming language, built around one object: the <code>Index</code>. An <code>Index</code> has a dimension and a unique ID number, and it stands for one specific vector space. Two indices created separately are different even if their dimensions agree.</p>
+    <p class="entry-desc">A tensor is then defined by its <em>set</em> of indices, in no particular order. Writing <code>A * B</code> sums over exactly the indices the two tensors share. To factor a tensor you name which indices play the role of rows. Indices can also carry symmetry labels, and then the library stores only the blocks a symmetry allows to be non-zero. On top of this sit ready-made algorithms for chains of tensors.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">about 20 lines</span></div>
+    <p class="entry-desc">The paper's showcase is about 20 lines of code. It finds the lowest eigenvalue of a \(2^{100}\times2^{100}\) Hermitian matrix: the energy operator of 100 spins in a row, each interacting with its neighbours. Five passes of the algorithm, a few seconds each, give \(-44.12774\) with the state stored as a chain of 100 small tensors.</p>
+    <p class="entry-desc">Using a symmetry of that operator pays off heavily. On a harder chain, at the same bond dimension of 1,000 (the size of the small tensors), the run drops from about 3,300 seconds to about 170 (one thread, read off the paper's plots). The newer Julia version is on par with or faster than the hand-tuned C++ one in most of the benchmarks shown. About 450 research papers used ITensor between 2009 and 2021.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Reshape, then SVD</b></p>
+
+  <h3 class="sub">An index is a vector space, not a position</h3>
+
+  <p>Take a tensor \(T\) with indices \(i,j,k\) and a matrix \(M\) with indices \(k,n\). Contracting them over the shared index \(k\) gives a tensor \(R\) with the indices left over:</p>
+  $$R_{ijn}=\sum_{k}T_{ijk}\,M_{kn}.$$
+  <p>In ITensor this is <code>R = T * M</code>. The library finds \(k\) in both tensors by its ID, wherever it sits in memory. The one operator covers three familiar cases:</p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">No shared index</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">outer product</span></div>
+    <p class="entry-desc">Vectors \(v_i\) and \(w_j\) give \(x_{ij}=v_iw_j\), the tensor product \(v\otimes w\).</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">All indices shared</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">inner product</span></div>
+    <p class="entry-desc">\(\sum_{ijk}A_{ijk}B_{kij}\), a single number. The storage order of the indices in \(A\) and \(B\) does not matter.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Some shared</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">matrix product</span></div>
+    <p class="entry-desc">With \(A\) on indices \((i,j)\) and \(B\) on \((k,j)\), a matrix library needs \(AB^{\top}\). Here <code>A * B</code> is already that, and stays correct if someone later stores \(B\) as \((j,k)\).</p>
+  </div>
+
+  <p>A linear map from a space to itself needs two indices for the same space, and they must not contract with each other. ITensor gives one of them a <em>prime</em>: \(i'\) is a copy of \(i\) that compares as different. An operator is then a tensor on \((i', i)\), and applying it to a vector on \(i\) leaves a vector on \(i'\).</p>
+
+  <h3 class="sub">Any tensor becomes a matrix once you choose the rows</h3>
+
+  <p>QR and the singular value decomposition (SVD) are defined for matrices. To use them on a tensor \(W\) with indices \(i,j,m,k\), pick a subset to act as rows, say \((j,i)\). Treat that pair as one index of dimension \(d_jd_i\) (the product of the two dimensions) and the rest \((m,k)\) as one column index. This is the canonical identification \(V_j\otimes V_i\cong\mathbb C^{d_jd_i}\), nothing more. The call <code>U,S,V = svd(W,(j,i))</code> does the regrouping, factors the matrix, and ungroups:</p>
+  $$W_{(ji),(mk)}=\sum_{a}U_{(ji),a}\;\sigma_a\;V_{a,(mk)},\qquad \sigma_1\ge\sigma_2\ge\dots\ge0 .$$
+  <p>\(U\) has orthonormal columns, \(V\) has orthonormal rows, and the \(\sigma_a\) are the singular values. The new index \(a\) is created by the call, so <code>U * S * V</code> rebuilds \(W\) with no bookkeeping.</p>
+
+  <div class="callout">
+    <span class="callout-label">The fact that does the work: truncation error is the discarded tail</span>
+    <p>Keep only the \(\chi\) largest singular values and call the result \(W_\chi\). By the Eckart&ndash;Young theorem this is the best approximation of rank \(\chi\) in the Frobenius norm (root of the sum of squared entries), and the error is exactly what was thrown away:</p>
+    $$\|W-W_\chi\|_F^2=\sum_{a>\chi}\sigma_a^2 .$$
+    <p>ITensor exposes this as two knobs. <code>maxdim</code> caps \(\chi\). <code>cutoff</code> drops singular values from the smallest upward for as long as the discarded sum of squares stays under a tolerance such as \(10^{-8}\), so \(\chi\) adapts to the tensor.</p>
+  </div>
+
+  <h3 class="sub">Matrix product state: that SVD at every bond</h3>
+
+  <p>Now the \(2^N\) problem. Let \(\psi\) be the state of \(N\) spins, a tensor with indices \(s_1,\dots,s_N\), each of dimension \(d\) (\(d=2\) for a spin). A <em>matrix product state</em>, MPS for short (also called a tensor train), writes it as a chain:</p>
+  $$\psi^{s_1s_2\cdots s_N}=\sum_{\alpha_1,\dots,\alpha_{N-1}}A^{s_1}_{\alpha_1}\,A^{s_2}_{\alpha_1\alpha_2}\,A^{s_3}_{\alpha_2\alpha_3}\cdots A^{s_N}_{\alpha_{N-1}} .$$
+  <p>Each \(A\) is a small tensor with one <em>site</em> index \(s_j\) and one or two <em>bond</em> indices \(\alpha\) shared with its neighbours. For a fixed value of \(s_j\), \(A^{s_j}\) is a matrix, and an entry of \(\psi\) is a product of \(N\) matrices, hence the name. The largest bond dimension, written \(\chi\), sets the cost: at most \(Nd\chi^2\) numbers instead of \(d^N\).</p>
+
+  <figure class="wide">
+    <svg viewBox="0 0 480 140" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1.2"/>
+        </pattern>
+      </defs>
+      <!-- one big tensor -->
+      <path d="M35 60v30M59 60v30M83 60v30M107 60v30M131 60v30M155 60v30"/>
+      <rect x="20" y="28" width="150" height="34" rx="17" fill="url(#hatch)"/>
+      <text x="95" y="116" font-family="Oswald, sans-serif" font-size="13" letter-spacing="2" text-anchor="middle" fill="currentColor" stroke="none">ONE TENSOR, N LEGS</text>
+      <!-- equals -->
+      <path d="M192 41h18M192 49h18"/>
+      <!-- chain -->
+      <path d="M240 45h200"/>
+      <path d="M240 45v45M280 45v45M320 45v45M360 45v45M400 45v45M440 45v45"/>
+      <g fill="#f4efe3">
+        <circle cx="240" cy="45" r="10"/><circle cx="280" cy="45" r="10"/><circle cx="320" cy="45" r="10"/>
+        <circle cx="360" cy="45" r="10"/><circle cx="400" cy="45" r="10"/><circle cx="440" cy="45" r="10"/>
+      </g>
+      <text x="340" y="116" font-family="Oswald, sans-serif" font-size="13" letter-spacing="2" text-anchor="middle" fill="currentColor" stroke="none">N SMALL TENSORS</text>
+      <text x="300" y="22" font-family="Oswald, sans-serif" font-size="11" letter-spacing="1.5" text-anchor="middle" fill="currentColor" stroke="none">BOND</text>
+      <path d="M300 26v14" stroke-width="1"/>
+      <text x="455" y="88" font-family="Oswald, sans-serif" font-size="11" letter-spacing="1.5" fill="currentColor" stroke="none">SITE</text>
+    </svg>
+    <figcaption>a line leaving a shape is an index; a line joining two shapes is an index summed over. the hanging legs are the site indices, the horizontal lines the bonds.</figcaption>
+  </figure>
+
+  <p>How large must \(\chi\) be? Cut the chain between sites \(j\) and \(j+1\). Group \(s_1,\dots,s_j\) as rows and the rest as columns, so \(\psi\) becomes a \(d^{\,j}\times d^{\,N-j}\) matrix. The chain is exact only if the bond at that cut has dimension at least the rank of this matrix. Truncating the bond to \(\chi\) costs the sum of squares of the dropped singular values, by the callout above. So an MPS is cheap exactly when these cut matrices have fast-decaying singular values. Physicists call that low <em>entanglement</em> between the two halves.</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: two spins, one cut</span>
+    <p>For \(N=2\) the state is already a \(2\times2\) matrix \(\Psi\) with entries \(\psi^{s_1s_2}\). Compare</p>
+    $$\Psi_1=\tfrac12\begin{pmatrix}1&amp;1\\1&amp;1\end{pmatrix},\qquad \Psi_2=\tfrac12\begin{pmatrix}1&amp;1\\1&amp;-1\end{pmatrix}.$$
+    <p>\(\Psi_1\) has singular values \((1,0)\). It is rank one, \(\Psi_1=uu^{\top}\) with \(u=(1,1)/\sqrt2\), so the state is the product \(u\otimes u\) and bond dimension 1 is exact.</p>
+    <p>\(\Psi_2\) is \(1/\sqrt2\) times an orthogonal matrix, so its singular values are \((1/\sqrt2,\,1/\sqrt2)\). It needs bond dimension 2, and cutting to 1 discards weight \(\tfrac12\), half the state. One sign separates a state with no entanglement from one with the most two spins can have.</p>
+  </div>
+
+  <p>One more piece of structure makes truncation safe. ITensor keeps an MPS in <em>orthogonal form</em> around a chosen centre site: every tensor to its left, reshaped with rows \((\alpha_{j-1},s_j)\) and columns \(\alpha_j\), has orthonormal columns, and mirror-wise on the right. Such maps are isometries, which preserve the Frobenius norm. So the norm of the whole \(d^N\)-entry state equals the norm of the one centre tensor, and the best truncation of that small tensor is the best truncation of the whole state at that bond. The call is <code>orthogonalize!(psi, j)</code>, and the library remembers which tensors are already orthogonal so it never redoes work.</p>
+
+  <h3 class="sub">The operator, and a giant eigenproblem solved in small pieces</h3>
+
+  <p>The energy operator of a quantum system is called its <em>Hamiltonian</em>, \(H\): a Hermitian matrix whose eigenvalues are the possible energies. The eigenvector of the smallest eigenvalue is the <em>ground state</em>. The paper's running example is the Heisenberg chain, a basic model of a magnet:</p>
+  $$H=\sum_{j=1}^{N-1}\Big(S^z_jS^z_{j+1}+\tfrac12S^+_jS^-_{j+1}+\tfrac12S^-_jS^+_{j+1}\Big),\quad S^z=\tfrac12\begin{pmatrix}1&amp;0\\0&amp;-1\end{pmatrix},\ S^+=\begin{pmatrix}0&amp;1\\0&amp;0\end{pmatrix},\ S^-=(S^+)^{\top}.$$
+  <p>The subscript says which spin a \(2\times2\) matrix acts on: \(S^z_j\) means \(I\otimes\cdots\otimes S^z\otimes\cdots\otimes I\) with \(S^z\) in slot \(j\). So \(H\) is a real symmetric, very sparse \(2^N\times2^N\) matrix. It is stored as a <em>matrix product operator</em> (MPO): the same chain as an MPS, except each tensor has two site indices, \(s_j'\) for the output and \(s_j\) for the input. For this \(H\) the bonds need dimension only 5, whatever \(N\) is. In code you type the three terms of the sum, and a routine called AutoMPO builds the chain, compressing it with SVDs.</p>
+
+  <p>The eigenvector is found by DMRG (the density matrix renormalization group, a 1992 algorithm whose name predates the tensor-network view of it). It minimises the Rayleigh quotient \(\langle\psi|H|\psi\rangle/\langle\psi|\psi\rangle\) over matrix product states, two neighbouring tensors at a time:</p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">1 &middot; Freeze all but two tensors</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(\psi=Pb\)</span></div>
+    <p class="entry-desc">Merge the tensors at sites \(j,j+1\) into one tensor \(b\) with at most \(\chi^2d^2\) entries. With the MPS in orthogonal form, the frozen tensors make up a matrix \(P\) with orthonormal columns that embeds \(b\) into the full space.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">2 &middot; Solve a small eigenproblem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">\(P^{\dagger}HP\)</span></div>
+    <p class="entry-desc">Because \(P^{\dagger}P=I\), the quotient becomes \(b^{\dagger}(P^{\dagger}HP)\,b/b^{\dagger}b\). The matrix \(P^{\dagger}HP\) is Hermitian of size \(\chi^2d^2\). Its lowest eigenvector is found by the Lanczos method, which needs only products of this matrix with a vector, and those are contractions of \(b\) with a few MPO tensors.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">3 &middot; Split and truncate</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">SVD</span></div>
+    <p class="entry-desc">SVD the new \(b\) with rows \((\alpha_{j-1},s_j)\), keep the top \(\chi\) singular values, and move one site along. A full pass down the chain and back is a <em>sweep</em>.</p>
+  </div>
+
+  <p>Since \(P\) is an isometry, the smallest eigenvalue of \(P^{\dagger}HP\) is never below that of \(H\). Every energy DMRG reports is an upper bound on the true one. In the paper's 100-spin run the bound moves from \(-44.0625\) after sweep 1 to \(-44.127739883\) after sweep 5, with \(\chi\) allowed to grow from 10 to 200 and settling at 139.</p>
+
+  <h3 class="sub">Symmetry makes the tensors block-sparse</h3>
+
+  <p>Many Hamiltonians conserve something: particle number, or total spin along an axis. In matrix terms, there is a Hermitian operator \(\hat N\) with integer eigenvalues that commutes with \(H\). The eigenvalue is called a <em>quantum number</em>. Each index space then splits as a direct sum of eigenspaces of \(\hat N\), \(V=\bigoplus_qV_q\), and an <code>Index</code> can record that split. The paper's example, <code>Index(QN(0)=&gt;2, QN(1)=&gt;3)</code>, is a 5-dimensional space with a 2-dimensional \(q=0\) part and a 3-dimensional \(q=1\) part.</p>
+  <p>Split a tensor \(T\) into blocks accordingly, with \(T_{q'q}\) mapping \(V_q\) to \(V_{q'}\). ITensor requires every tensor to have a definite <em>flux</em> \(f\), meaning it changes the quantum number by the same amount everywhere:</p>
+  $$[\hat N,T]=\hat NT-T\hat N=f\,T\quad\Longleftrightarrow\quad T_{q'q}=0\ \text{ unless }\ q'-q=f .$$
+  <p>The equivalence is one line: the \((q',q)\) block of \(\hat NT-T\hat N\) is \((q'-q)\,T_{q'q}\). Only the allowed blocks are stored. Contraction, QR and SVD run block by block, and blocks can be processed in parallel. (For tensors with more indices, each index is marked as outgoing or incoming, and flux is the sum of outgoing quantum numbers minus incoming ones.)</p>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example: the paper's operator \(a\)</span>
+    <p>One site that holds 0 or 1 particles has basis \(|0\rangle,|1\rangle\) and \(\hat N=\operatorname{diag}(0,1)\). The operator that removes a particle is \(a=\begin{pmatrix}0&amp;1\\0&amp;0\end{pmatrix}\).</p>
+    <p>\(\hat Na=0\) and \(a\hat N=a\), so \([\hat N,a]=-a\): flux \(-1\). Its only allowed block is (row \(q'=0\), column \(q=1\)), and ITensor stores that single number.</p>
+    <p>The operator that counts particles, \(n=\operatorname{diag}(0,1)\), has flux 0 and lives on the two diagonal blocks.</p>
+  </div>
+
+  <p>The Heisenberg \(H\) above commutes with total \(S^z=\sum_jS^z_j\), so it has flux 0 and every tensor in the calculation is block-sparse. That is the source of the 3,300-to-170-second drop quoted earlier.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It: A Vector as a Chain</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive<b>Matrix product state</b></p>
+
+  <p>Take a vector \(v\) with 1,024 entries, drawn below as a curve. Write the position \(x\) of an entry in binary, \(x=s_1s_2\cdots s_{10}\). Now \(v\) is a tensor with ten indices of dimension 2, the same shape as the state of ten spins. The page compresses it into a matrix product state by sweeping left to right, taking an SVD at each of the nine bonds and keeping at most the number of singular values on the slider.</p>
+  <p><strong>Try:</strong> on the smooth wave, drag the bond dimension from 1 up to about 6. Then switch to the chirp, then to noise. <strong>Notice:</strong> the smooth wave is matched closely by a chain holding a few hundred numbers or fewer, and the chirp needs more. Noise is not matched until bond dimension 32, the full rank of the middle cut, where the chain stores more numbers than the vector it represents. The bars are the singular values of the \(32\times32\) matrix you get by cutting after \(s_5\): the faster they fall, the smaller the chain.</p>
+
+  <div class="bench">
+    <div class="picks" role="group" aria-label="Choose the vector">
+      <button type="button" data-kind="smooth" aria-pressed="true">Smooth wave</button>
+      <button type="button" data-kind="chirp" aria-pressed="false">Chirp</button>
+      <button type="button" data-kind="noise" aria-pressed="false">Noise</button>
+    </div>
+    <div class="dial">
+      <label for="chi">bond dim &le; <output id="chiv" for="chi">3</output></label>
+      <input id="chi" type="range" min="1" max="32" value="3" step="1">
+    </div>
+    <figure>
+      <canvas id="cCurve" width="640" height="260"></canvas>
+      <figcaption>thin line: the original 1,024 entries &middot; heavy line: rebuilt from the chain</figcaption>
+    </figure>
+    <figure>
+      <canvas id="cBars" width="640" height="130"></canvas>
+      <figcaption>singular values across the middle cut: kept ones solid, dropped ones outlined</figcaption>
+    </figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">numbers stored in the chain, vs 1,024</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lP">&ndash;</span></div>
+      <div class="entry"><span class="entry-name">largest bond dimension actually used</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lR">&ndash;</span></div>
+      <div class="entry"><span class="entry-name">relative error of the rebuilt vector</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="lE">&ndash;</span></div>
+    </div>
+  </div>
+
+  <h3 class="sub">Which blocks may be non-zero?</h3>
+
+  <p>A second, smaller one, for the flux rule. The space here is the paper's example index with particle-number parts \(q=0,1,2\) of dimensions 1, 3 and 2, six dimensions in all. The grid is an operator on that space: columns are labelled by the particle number going in, rows by the number coming out. Pick a flux \(f\) and the hatched blocks are the ones with \(q'-q=f\), the only entries ITensor would store.</p>
+  <p><strong>Try:</strong> step through the five values. <strong>Notice:</strong> flux 0 gives a block-diagonal matrix, 14 entries of 36. Other fluxes shift the blocks off the diagonal, and no choice of flux fills the matrix: a tensor that respects the symmetry is always mostly zeros.</p>
+
+  <div class="bench">
+    <div class="picks" role="group" aria-label="Choose the flux">
+      <button type="button" data-f="-2" aria-pressed="false">f = &minus;2</button>
+      <button type="button" data-f="-1" aria-pressed="false">f = &minus;1</button>
+      <button type="button" data-f="0" aria-pressed="true">f = 0</button>
+      <button type="button" data-f="1" aria-pressed="false">f = +1</button>
+      <button type="button" data-f="2" aria-pressed="false">f = +2</button>
+    </div>
+    <figure class="small">
+      <canvas id="cFlux" width="360" height="360"></canvas>
+      <figcaption>top labels: particles in &middot; side labels: particles out</figcaption>
+    </figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">entries stored, of 36</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="fN">&ndash;</span></div>
+      <div class="entry"><span class="entry-name">such an operator</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="fW">&ndash;</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>Tricks worth keeping</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">A \(2^{100}\)-sized matrix is a \(5\times5\) table</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">bond dim 5</span></div>
+    <p class="entry-desc">The paper says the Heisenberg \(H\) is exactly an MPO of bond dimension 5 and leaves the construction to its references. The standard one is a \(5\times5\) matrix whose entries are themselves \(2\times2\) operators, repeated at every site:</p>
+    $$W=\begin{pmatrix}I&amp;0&amp;0&amp;0&amp;0\\S^+&amp;0&amp;0&amp;0&amp;0\\S^-&amp;0&amp;0&amp;0&amp;0\\S^z&amp;0&amp;0&amp;0&amp;0\\0&amp;\tfrac12S^-&amp;\tfrac12S^+&amp;S^z&amp;I\end{pmatrix}$$
+    <p class="entry-desc">Multiply \(N\) copies as matrices, using \(\otimes\) between entries, and read the bottom-left entry of the product: it is \(H\). The bond index works as the state of a small machine walking along the chain. State 5 means &ldquo;no term started yet&rdquo;, states 2 to 4 mean &ldquo;first half of a term placed, waiting for its partner&rdquo;, and state 1 means &ldquo;term finished&rdquo;. \(W\) is lower triangular, so the machine never goes back.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The gradient is the network with a hole in it</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">multilinear</span></div>
+    <p class="entry-desc">A contracted network is linear in each of its tensors separately. So its derivative with respect to one tensor is the same network with that tensor deleted, and the dangling indices left behind are the gradient's indices. With indices that keep their identity, deleting a tensor needs no relabelling. The authors plan to build automatic differentiation on this.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Excited states by a rank-one penalty</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">deflation</span></div>
+    <p class="entry-desc">To get the second-lowest eigenvector after finding the lowest, \(\psi_0\), ITensor runs the same algorithm on \(H+w\,|\psi_0\rangle\langle\psi_0|\), where \(|\psi_0\rangle\langle\psi_0|\) is the orthogonal projector onto \(\psi_0\) and \(w&gt;0\) is a weight. This raises \(\psi_0\)'s eigenvalue by \(w\) and leaves every other eigenpair alone, so the old runner-up is now the minimum. The projector is never built: applying it is two inner products of matrix product states.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Every contraction ends as one matrix multiply</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">permute, reshape</span></div>
+    <p class="entry-desc">To contract two dense tensors the backend permutes each so the shared indices sit together, reshapes both into matrices, and calls the standard optimised matrix-multiplication routine (from BLAS, the library nearly all numerical software relies on). The permutation costs time proportional to the tensor's size, while the multiply costs more, so for large tensors the reshuffle is nearly free. Block-sparse tensors do this once per pair of matching blocks.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>If every index remembers which vector space it is, then contracting tensors, reshaping one into a matrix for an SVD, and skipping the blocks a symmetry forbids all become automatic, and a \(2^{100}\)-dimensional eigenproblem reduces to a loop of small SVDs whose discarded singular values tell you exactly what you lost.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>The ITensor Software Library for Tensor Network Calculations</strong>, by Matthew Fishman, Steven R. White and E. Miles Stoudenmire, 2020. SciPost Physics Codebases.
+  <a href="https://arxiv.org/abs/2007.14822">arxiv.org/abs/2007.14822</a></p>
+  <p class="signoff">Written from the full text (arXiv v2). Timings are read off the paper's benchmark plots, so they are approximate. The paper describes the interface; the step-by-step account of DMRG, the rank reading of the bond dimension and the 5&times;5 operator table are standard background from the reviews it cites. The interactives use made-up vectors, not physics data.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3", SOFT = css("--ink-soft") || "#4a463f";
+
+  // Diagonal pen hatching.
+  function hatch(ctx) {
+    var t = document.createElement("canvas");
+    t.width = 8; t.height = 8;
+    var h = t.getContext("2d");
+    h.strokeStyle = INK; h.lineWidth = 1.4;
+    h.beginPath();
+    h.moveTo(-1, 1); h.lineTo(1, -1);
+    h.moveTo(0, 8); h.lineTo(8, 0);
+    h.moveTo(7, 9); h.lineTo(9, 7);
+    h.stroke();
+    return ctx.createPattern(t, "repeat");
+  }
+
+  function press(group, btn) {
+    var all = group.querySelectorAll("button");
+    for (var n = 0; n < all.length; n++) all[n].setAttribute("aria-pressed", all[n] === btn ? "true" : "false");
+  }
+
+  /* ================= A. vector -> matrix product state ================= */
+  var NS = 10, LEN = 1 << NS;
+
+  // Deterministic PRNG so "noise" is the same on every load.
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function makeVec(kind) {
+    var v = [], rnd = mulberry32(20200729), i, x, s = 0;
+    for (i = 0; i < LEN; i++) {
+      x = (i + 0.5) / LEN;
+      if (kind === "smooth") v.push(Math.exp(-Math.pow((x - 0.5) / 0.22, 2)) * Math.cos(9 * Math.PI * x));
+      else if (kind === "chirp") v.push(Math.sin(2 * Math.PI * (2 * x + 14 * x * x)));
+      else v.push(2 * rnd() - 1);
+      s += v[i] * v[i];
+    }
+    s = Math.sqrt(s);
+    for (i = 0; i < LEN; i++) v[i] /= s;   // unit norm
+    return v;
+  }
+
+  // Jacobi rotations on the ROWS of W until they are mutually orthogonal.
+  // Q accumulates the rotations so that (original rows) = Q * (rotated rows).
+  function jacobi(W, Q, len, R) {
+    var sweep, p, q, y, m;
+    for (sweep = 0; sweep < 40; sweep++) {
+      var off = 0;
+      for (p = 0; p < R - 1; p++) for (q = p + 1; q < R; q++) {
+        var wp = W[p], wq = W[q], a = 0, b = 0, g = 0;
+        for (y = 0; y < len; y++) { a += wp[y] * wp[y]; b += wq[y] * wq[y]; g += wp[y] * wq[y]; }
+        if (a < 1e-26 || b < 1e-26) continue;
+        var rel = Math.abs(g) / Math.sqrt(a * b);
+        if (rel < 1e-12) continue;
+        if (rel > off) off = rel;
+        var z = (b - a) / (2 * g);
+        var t = (z >= 0 ? 1 : -1) / (Math.abs(z) + Math.sqrt(1 + z * z));
+        var c = 1 / Math.sqrt(1 + t * t), sn = c * t, u, w;
+        for (y = 0; y < len; y++) { u = wp[y]; w = wq[y]; wp[y] = c * u - sn * w; wq[y] = sn * u + c * w; }
+        for (m = 0; m < R; m++) { u = Q[m][p]; w = Q[m][q]; Q[m][p] = c * u - sn * w; Q[m][q] = sn * u + c * w; }
+      }
+      if (off < 1e-10) break;
+    }
+  }
+
+  // Left-to-right sweep of truncated SVDs. Returns the chain and the singular values at each bond.
+  function compress(vec, chi) {
+    var cores = [], sv = [], r = 1, cols = LEN, C = [vec.slice()], k, a, s, b, p, q, y;
+    for (k = 0; k < NS - 1; k++) {
+      var half = cols >> 1, R = 2 * r, W = [], Q = [];
+      // rows (a, s_k), columns (s_{k+1} ... s_N)
+      for (a = 0; a < r; a++) for (s = 0; s < 2; s++) W.push(C[a].slice(s * half, (s + 1) * half));
+      for (p = 0; p < R; p++) { Q.push([]); for (q = 0; q < R; q++) Q[p].push(p === q ? 1 : 0); }
+      jacobi(W, Q, half, R);
+      var nrm = [], order = [];
+      for (p = 0; p < R; p++) {
+        var n2 = 0;
+        for (y = 0; y < half; y++) n2 += W[p][y] * W[p][y];
+        nrm.push(Math.sqrt(n2)); order.push(p);
+      }
+      order.sort(function (i, j) { return nrm[j] - nrm[i]; });
+      sv.push(order.map(function (i) { return nrm[i]; }));
+      var keep = 0;
+      while (keep < R && keep < chi && keep < half && nrm[order[keep]] > 1e-10) keep++;
+      if (keep < 1) keep = 1;
+      var core = [];
+      for (a = 0; a < r; a++) {
+        core.push([[], []]);
+        for (s = 0; s < 2; s++) for (b = 0; b < keep; b++) core[a][s].push(Q[a * 2 + s][order[b]]);
+      }
+      cores.push(core);
+      var Cn = [];
+      for (b = 0; b < keep; b++) Cn.push(W[order[b]]);
+      C = Cn; r = keep; cols = half;
+    }
+    return { cores: cores, last: C, sv: sv };
+  }
+
+  // Multiply the chain back out into all 1,024 entries.
+  function expand(mps) {
+    var L = [[1]], k, x, s, a, b, acc;
+    for (k = 0; k < mps.cores.length; k++) {
+      var core = mps.cores[k], r = core.length, rn = core[0][0].length, Ln = [];
+      for (x = 0; x < L.length; x++) for (s = 0; s < 2; s++) {
+        var row = [];
+        for (b = 0; b < rn; b++) {
+          acc = 0;
+          for (a = 0; a < r; a++) acc += L[x][a] * core[a][s][b];
+          row.push(acc);
+        }
+        Ln.push(row);
+      }
+      L = Ln;
+    }
+    var out = [];
+    for (x = 0; x < L.length; x++) for (s = 0; s < 2; s++) {
+      acc = 0;
+      for (a = 0; a < L[x].length; a++) acc += L[x][a] * mps.last[a][s];
+      out.push(acc);
+    }
+    return out;
+  }
+
+  function drawCurve(canvas, orig, appr) {
+    var ctx = canvas.getContext("2d"), W = canvas.width, H = canvas.height, pad = 12, i, m = 0;
+    for (i = 0; i < LEN; i++) m = Math.max(m, Math.abs(orig[i]));
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+    function X(i) { return pad + (W - 2 * pad) * i / (LEN - 1); }
+    function Y(v) { return H / 2 - (H / 2 - pad) * v / m; }
+    ctx.strokeStyle = INK; ctx.lineWidth = 1;
+    ctx.save(); ctx.setLineDash([2, 4]);
+    ctx.beginPath(); ctx.moveTo(pad, H / 2 + 0.5); ctx.lineTo(W - pad, H / 2 + 0.5); ctx.stroke();
+    ctx.restore();
+    function line(v, color, width) {
+      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineJoin = "round";
+      ctx.beginPath();
+      for (i = 0; i < LEN; i++) { if (i === 0) ctx.moveTo(X(i), Y(v[i])); else ctx.lineTo(X(i), Y(v[i])); }
+      ctx.stroke();
+    }
+    line(orig, SOFT, 1);
+    line(appr, INK, 2.4);
+  }
+
+  function drawBars(canvas, s, chi) {
+    var ctx = canvas.getContext("2d"), W = canvas.width, H = canvas.height, n = s.length, k;
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+    var pad = 12, bw = (W - 2 * pad) / n, top = s[0] || 1;
+    ctx.strokeStyle = INK; ctx.fillStyle = INK; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(pad, H - pad + 0.5); ctx.lineTo(W - pad, H - pad + 0.5); ctx.stroke();
+    for (k = 0; k < n; k++) {
+      var h = Math.max(1.5, (H - 2 * pad) * s[k] / top);
+      var x = pad + k * bw + bw * 0.15, w = bw * 0.7;
+      if (k < chi) ctx.fillRect(x, H - pad - h, w, h);
+      else if (h > 3) ctx.strokeRect(x + 0.75, H - pad - h + 0.75, w - 1.5, h - 1.5);
+      else ctx.fillRect(x, H - pad - 1.5, w, 1.5);
+    }
+    if (chi < n) {
+      var cx = pad + chi * bw;
+      ctx.save(); ctx.setLineDash([4, 5]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx, 4); ctx.lineTo(cx, H - pad); ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  var slider = document.getElementById("chi");
+  var cCurve = document.getElementById("cCurve"), cBars = document.getElementById("cBars");
+  var vec = null, midSV = null;
+
+  function setVec(kind) {
+    vec = makeVec(kind);
+    midSV = compress(vec, 64).sv[NS / 2 - 1];   // untruncated: true singular values at the middle cut
+    refresh();
+  }
+
+  function refresh() {
+    var chi = +slider.value, mps = compress(vec, chi), ap = expand(mps), i, e = 0, count = 0, maxr = 1;
+    for (i = 0; i < LEN; i++) { var d = vec[i] - ap[i]; e += d * d; }
+    for (i = 0; i < mps.cores.length; i++) {
+      var r = mps.cores[i].length, rn = mps.cores[i][0][0].length;
+      count += r * 2 * rn;
+      if (rn > maxr) maxr = rn;
+    }
+    count += mps.last.length * 2;
+    document.getElementById("chiv").textContent = chi;
+    document.getElementById("lP").textContent = count.toLocaleString("en-US") + " / 1,024";
+    document.getElementById("lR").textContent = maxr;
+    document.getElementById("lE").textContent = Math.sqrt(e) < 5e-5 ? "0.0000" : Math.sqrt(e).toFixed(4);
+    drawCurve(cCurve, vec, ap);
+    drawBars(cBars, midSV, chi);
+  }
+
+  var kindGroup = document.querySelector('.picks[aria-label="Choose the vector"]');
+  kindGroup.addEventListener("click", function (ev) {
+    var btn = ev.target.closest ? ev.target.closest("button") : null;
+    if (!btn) return;
+    press(kindGroup, btn);
+    setVec(btn.getAttribute("data-kind"));
+  });
+  slider.addEventListener("input", refresh);
+  setVec("smooth");
+
+  /* ================= B. flux blocks ================= */
+  var DIMS = [1, 3, 2], OFFS = [0, 1, 4, 6];
+  var WHAT = {
+    "-2": "removes two particles",
+    "-1": "removes one particle",
+    "0": "conserves the number",
+    "1": "adds one particle",
+    "2": "adds two particles"
+  };
+  var cFlux = document.getElementById("cFlux");
+  var fctx = cFlux.getContext("2d"), fpat = hatch(fctx);
+
+  function drawFlux(f) {
+    var ctx = fctx, S = cFlux.width, m = 48, g = (S - m - 12) / 6, qr, qc, k, stored = 0;
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, S, S);
+    // allowed blocks
+    for (qr = 0; qr < 3; qr++) for (qc = 0; qc < 3; qc++) {
+      if (qr - qc !== f) continue;
+      stored += DIMS[qr] * DIMS[qc];
+      ctx.fillStyle = fpat;
+      ctx.fillRect(m + OFFS[qc] * g, m + OFFS[qr] * g, DIMS[qc] * g, DIMS[qr] * g);
+    }
+    // thin cell grid
+    ctx.strokeStyle = INK; ctx.lineWidth = 0.6;
+    ctx.save(); ctx.setLineDash([2, 4]);
+    for (k = 1; k < 6; k++) {
+      ctx.beginPath(); ctx.moveTo(m + k * g, m); ctx.lineTo(m + k * g, m + 6 * g); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(m, m + k * g); ctx.lineTo(m + 6 * g, m + k * g); ctx.stroke();
+    }
+    ctx.restore();
+    // block boundaries
+    ctx.lineWidth = 2;
+    ctx.strokeRect(m, m, 6 * g, 6 * g);
+    for (k = 1; k < 3; k++) {
+      ctx.beginPath(); ctx.moveTo(m + OFFS[k] * g, m); ctx.lineTo(m + OFFS[k] * g, m + 6 * g); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(m, m + OFFS[k] * g); ctx.lineTo(m + 6 * g, m + OFFS[k] * g); ctx.stroke();
+    }
+    // sector labels
+    ctx.fillStyle = INK;
+    ctx.font = "500 22px Oswald, sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (k = 0; k < 3; k++) {
+      var mid = m + (OFFS[k] + DIMS[k] / 2) * g;
+      ctx.fillText(String(k), mid, m / 2);
+      ctx.fillText(String(k), m / 2, mid);
+    }
+    document.getElementById("fN").textContent = stored + " / 36";
+    document.getElementById("fW").textContent = WHAT[String(f)];
+  }
+
+  var fluxGroup = document.querySelector('.picks[aria-label="Choose the flux"]');
+  fluxGroup.addEventListener("click", function (ev) {
+    var btn = ev.target.closest ? ev.target.closest("button") : null;
+    if (!btn) return;
+    press(fluxGroup, btn);
+    drawFlux(+btn.getAttribute("data-f"));
+  });
+  drawFlux(0);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () {
+    var on = fluxGroup.querySelector('button[aria-pressed="true"]');
+    drawFlux(on ? +on.getAttribute("data-f") : 0);
+  });
+})();
+</script>
+</body>
+</html>

@@ -175,6 +175,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-24-parameterized-quantum-circuits-as-machine-learning.html",
         date: "2026-11-24",
     },
+    {
+        title: "ITensor: a library for tensor networks",
+        blurb: "A software library for calculating with arrays of numbers far too large to store, such as the state of a hundred quantum particles, by keeping them as chains of small arrays; its trick is that every array index remembers what it stands for, so the code multiplies and factorises them without bookkeeping mistakes.",
+        tags: ["paper of the day", "tensors"],
+        file: "learning/paper-2026-11-26-the-itensor-software-library-for-tensor-network-ca.html",
+        date: "2026-11-26",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
