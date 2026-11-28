@@ -182,6 +182,13 @@ export const NOTEBOOK_ENTRIES = [
         file: "learning/paper-2026-11-26-the-itensor-software-library-for-tensor-network-ca.html",
         date: "2026-11-26",
     },
+    {
+        title: "Neural networks that decode movement from brain waves",
+        blurb: "Shows that neural networks fed raw scalp brain recordings can tell which limb a person is moving about as accurately as the best hand-designed method (84% against 82% on a four-way choice), and then nudges the input one frequency at a time to check that the networks rely on the same brain rhythms neuroscientists expect.",
+        tags: ["paper of the day", "brain-computer interfaces"],
+        file: "learning/paper-2026-11-27-deep-learning-with-convolutional-neural-networks-f.html",
+        date: "2026-11-27",
+    },
 ];
 
 const SHOWN = [...NOTEBOOK_ENTRIES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));

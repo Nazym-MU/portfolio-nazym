@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConvNets for EEG Decoding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1b1a17;
+  --ink-soft:#4a463f;
+  --paper:#f4efe3;
+  --paper-inset:#ece4d3;
+  --rule:#1b1a17;
+  --measure:70ch;
+
+  --font-script:"Kaushan Script", cursive;
+  --font-display:"Bebas Neue", sans-serif;
+  --font-head:"Oswald", sans-serif;
+  --font-body:"Spectral", Georgia, serif;
+  --font-hand:"Caveat", cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:18px;
+  line-height:1.65;
+  padding:18px;
+  overflow-wrap:break-word;
+}
+
+.sheet{
+  border:1px solid var(--ink);
+  padding:clamp(1.2rem, 4vw, 3.2rem) clamp(1rem, 5vw, 4rem);
+  max-width:960px;
+  margin:0 auto;
+}
+
+a{color:var(--ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding-bottom:.9rem;
+  border-bottom:1px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.wordmark{
+  font-family:var(--font-script);
+  font-size:1.35rem;
+  color:var(--ink);
+}
+.topbar nav{
+  display:flex;
+  gap:1.4rem;
+  flex-wrap:wrap;
+}
+.topbar nav a{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{border-bottom-color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{text-align:center;margin-bottom:3rem}
+.hero .strip{width:min(420px, 82%);margin:0 auto .4rem;display:block}
+.plaque{
+  display:inline-block;
+  background:var(--paper);
+  box-shadow:0 0 0 1px var(--ink), 0 0 0 5px var(--paper), 0 0 0 6px var(--ink);
+  padding:1.4rem clamp(1.2rem, 5vw, 3rem) 1.6rem;
+  margin:1.2rem auto 1.6rem;
+  max-width:92%;
+}
+.plaque .kicker{
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink-soft);
+  margin-bottom:.5rem;
+}
+h1{
+  font-family:var(--font-script);
+  font-weight:400;
+  font-size:clamp(2.6rem, 7vw, 4.5rem);
+  line-height:1.1;
+}
+.tagline{
+  font-family:var(--font-head);
+  font-weight:400;
+  font-size:.92rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  max-width:34em;
+  margin:0 auto .6rem;
+}
+.tagline-hand{
+  font-family:var(--font-hand);
+  font-size:1.35rem;
+  color:var(--ink-soft);
+  line-height:1.35;
+}
+
+/* ---------- premise ---------- */
+.premise{
+  max-width:var(--measure);
+  margin:0 auto 3rem;
+}
+.premise p{margin-bottom:1rem}
+
+/* ---------- contents ---------- */
+.contents{
+  max-width:44rem;
+  margin:0 auto 3.4rem;
+}
+.contents h2{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  text-align:center;
+  margin-bottom:1.2rem;
+}
+.contents a{
+  color:var(--ink);
+  text-decoration:none;
+  display:block;
+}
+.contents .entry{margin-bottom:.55rem;font-size:.85rem}
+.contents a:hover .entry-name{border-bottom:1px solid var(--ink)}
+
+/* ---------- section headers ---------- */
+section{margin-bottom:3.4rem}
+h2.sec{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:clamp(1.05rem, 2.6vw, 1.35rem);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  text-align:center;
+  margin-bottom:.4rem;
+}
+h2.sec::before, h2.sec::after{
+  content:"";
+  flex:1;
+  border-top:1px solid var(--rule);
+}
+.orn{width:60px;display:block;margin:.5rem auto 1.4rem}
+
+/* sub-heads inside a section */
+h3.sub{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.95rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  text-align:center;
+  max-width:var(--measure);
+  margin:2.4rem auto 1rem;
+  line-height:1.4;
+}
+
+/* section regime line */
+.regime{
+  text-align:center;
+  font-family:var(--font-head);
+  font-weight:500;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.26em;
+  color:var(--ink-soft);
+  margin-bottom:1.3rem;
+}
+.regime b{
+  font-weight:600;
+  color:var(--ink);
+  border:1px solid var(--ink);
+  padding:.15em .6em .1em;
+  margin-left:.5em;
+  display:inline-block;
+}
+
+/* ---------- dotted leader entries ---------- */
+.entry{
+  display:flex;
+  align-items:baseline;
+  gap:.5rem;
+  font-family:var(--font-head);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:500;
+  font-size:.95rem;
+  max-width:var(--measure);
+  margin:0 auto;
+}
+.entry-name{min-width:0}
+.entry-dots{
+  flex:1;
+  border-bottom:1.5px dotted var(--ink);
+  transform:translateY(-.25em);
+}
+.entry-tag{white-space:nowrap;font-weight:400;color:var(--ink-soft)}
+@media(max-width:560px){
+  .entry{flex-wrap:wrap}
+  .entry-dots{display:none}
+}
+/* math inside caps rows must keep its own case */
+.entry .katex, .sub .katex, .regime .katex{text-transform:none;letter-spacing:0}
+
+.entry-desc, section > p, section li{
+  max-width:var(--measure);
+  margin:.5rem auto 1rem;
+}
+section p{max-width:var(--measure);margin-left:auto;margin-right:auto;margin-bottom:1rem}
+.entry-block{margin-bottom:1.6rem}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--paper-inset);
+  border:1px solid var(--ink);
+  padding:1.1rem 1.4rem;
+  max-width:calc(var(--measure) - 4ch);
+  margin:1.6rem auto;
+}
+.callout .callout-label{
+  font-family:var(--font-head);
+  font-weight:600;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  display:block;
+  margin-bottom:.5rem;
+}
+.callout p{margin-bottom:.4rem}
+.callout p:last-child{margin-bottom:0}
+
+
+/* ---------- math ---------- */
+.katex{font-size:1.08em}
+.katex-display{
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-width:100%;
+  padding:.3rem 0;
+  margin:1rem auto;
+}
+
+/* ---------- hand asides ---------- */
+.aside-hand{
+  font-family:var(--font-hand);
+  font-size:1.3rem;
+  color:var(--ink-soft);
+  max-width:var(--measure);
+  margin:.2rem auto 1.2rem;
+  text-align:center;
+  line-height:1.4;
+}
+
+/* ---------- figures ---------- */
+figure{
+  max-width:var(--measure);
+  margin:1.8rem auto;
+  text-align:center;
+}
+figure svg{
+  width:min(440px, 100%);
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+figure.wide svg{width:min(560px, 100%)}
+figcaption{
+  font-family:var(--font-hand);
+  font-size:1.2rem;
+  color:var(--ink-soft);
+  margin-top:.5rem;
+  line-height:1.4;
+}
+
+/* ---------- interactive ---------- */
+.bench{
+  border:1px solid var(--ink);
+  max-width:var(--measure);
+  margin:1.6rem auto;
+  padding:1.1rem clamp(.8rem, 3vw, 1.4rem) 1.2rem;
+}
+.dial{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin:.4rem 0 1rem;
+}
+.dial label{
+  font-family:var(--font-head);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:.95rem;
+  white-space:nowrap;
+}
+.dial output{display:inline-block;min-width:1.8em;text-align:right}
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  min-width:0;
+  height:22px;
+  background:transparent;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-moz-range-track{height:0;border-top:1.5px solid var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:1px dotted var(--ink);outline-offset:4px}
+.bench figure{margin:0}
+.bench canvas{
+  width:100%;
+  display:block;
+  border:1px solid var(--ink);
+  background:var(--paper);
+}
+.bench canvas.sq{aspect-ratio:1 / 1;max-width:380px;margin:0 auto}
+.bench .strip-fig{margin:1.2rem 0 0}
+.ledger{margin-top:1.2rem}
+.ledger .entry{font-size:.85rem;margin-bottom:.45rem}
+.ledger .entry-tag{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- motifs ---------- */
+.m{width:44px;display:inline-block;vertical-align:middle}
+.divider{
+  width:min(320px, 70%);
+  display:block;
+  margin:0 auto 1.2rem;
+}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:1px solid var(--ink);
+  margin-top:2.5rem;
+  padding-top:1.8rem;
+  text-align:center;
+}
+footer .cite{
+  max-width:var(--measure);
+  margin:1rem auto .6rem;
+  font-size:.95rem;
+}
+footer .signoff{
+  font-family:var(--font-hand);
+  font-size:1.4rem;
+  color:var(--ink-soft);
+  margin-top:.6rem;
+}
+footer .colophon{
+  font-family:var(--font-head);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--ink-soft);
+  margin-top:.8rem;
+}
+
+@media(max-width:560px){
+  .m{width:32px}
+  .callout{padding:1rem}
+  .dial{flex-wrap:wrap;gap:.2rem 1rem}
+}
+
+@media print{
+  body{padding:0}
+  .sheet{border:none;max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark" aria-hidden="true">N.</span>
+    <nav aria-label="Sections">
+      <a href="#sixty">60 Seconds</a>
+      <a href="#algebra">Linear Algebra</a>
+      <a href="#try">Try It</a>
+      <a href="#cool">Cool Things</a>
+      <a href="#remember">Remember</a>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <!-- three scalp traces; the top rhythm weakens halfway, as it does when a hand moves -->
+    <svg class="strip" viewBox="0 0 420 60" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <path d="M0 12q6 -10 12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0q6 -3 12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0t12 0"/>
+      <path d="M0 30q10 -9 20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0"/>
+      <path d="M0 48q7 -6 14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0t14 0"/>
+    </svg>
+    <div class="plaque">
+      <p class="kicker">Paper of the day &middot; Human Brain Mapping 2017</p>
+      <h1>ConvNets for EEG</h1>
+    </div>
+    <p class="tagline">Deep Learning with Convolutional Neural Networks for EEG Decoding and Visualization</p>
+    <p class="tagline-hand">Robin Tibor Schirrmeister, Jost Tobias Springenberg, Lukas Dominique Josef Fiederer et al. &middot; 2017 &middot;
+    <a href="https://arxiv.org/abs/1703.05051">arXiv:1703.05051</a></p>
+  </div>
+</header>
+
+<main>
+
+<div class="premise">
+  <p>The paper trains neural networks directly on raw scalp voltage recordings to tell which limb a person is moving, shows they match the best hand-designed method, and then probes the trained networks to check they are listening to real brain rhythms.</p>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <h2>Contents</h2>
+  <a href="#sixty"><div class="entry"><span class="entry-name">In 60 seconds</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">I</span></div></a>
+  <a href="#algebra"><div class="entry"><span class="entry-name">The linear algebra</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">II</span></div></a>
+  <a href="#try"><div class="entry"><span class="entry-name">Try it: two filters</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">III</span></div></a>
+  <a href="#cool"><div class="entry"><span class="entry-name">Cool things</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">IV</span></div></a>
+  <a href="#remember"><div class="entry"><span class="entry-name">If you remember one thing</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">V</span></div></a>
+</nav>
+
+<!-- ================= I. IN 60 SECONDS ================= -->
+<section id="sixty">
+  <h2 class="sec"><span>I &middot; In 60 Seconds</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Problem</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">288 examples per person</span></div>
+    <p class="entry-desc">EEG (electroencephalography) records voltage over time from electrodes on the scalp. A brain–computer interface has to <em>decode</em> it: given a four-second recording, say whether the person moved (or imagined moving) their left hand, right hand or feet, or rested. Guessing gets 25%.</p>
+    <p class="entry-desc">The standard decoder is a hand-built pipeline called filter bank common spatial patterns (FBCSP). It keeps one frequency band at a time, finds weighted sums of electrodes whose signal strength differs most between movements, and classifies on the logarithm of that strength. Every step encodes what neuroscientists already know about movement rhythms.</p>
+    <p class="entry-desc">Convolutional networks, the models that took over image recognition by learning their own features from raw pixels, might do the same from raw voltages. But EEG is noisy, and there is very little of it: 288 training recordings per person in the public benchmark, against millions of images. It was unclear whether such networks could even match the pipeline.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Idea</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">filter, combine, square, log</span></div>
+    <p class="entry-desc">Build networks whose first two layers mirror the pipeline: a learned filter along time, then a learned weighted sum across all electrodes. A two-layer “shallow” network follows these with squaring, averaging and a logarithm, so it <em>is</em> the pipeline with every step trainable. A five-layer “deep” network keeps going with generic layers and no built-in notion of signal strength.</p>
+    <p class="entry-desc">To stretch the data, each recording is cut into 625 overlapping two-second windows that all share its label. And to see what was learned, the authors randomly nudge the strength of individual frequencies in the input and watch how the predictions move.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Result</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">84.0% vs 82.1%</span></div>
+    <p class="entry-desc">Averaged over 29 people in two datasets, FBCSP scores 82.1%, the deep network 84.0% and the shallow one 83.2%. With slow signals below 4&nbsp;Hz removed (to keep eye movements out), FBCSP scores 81.9% and the shallow network 85.3%. The networks match the pipeline and are sometimes slightly, significantly better, never by more than 3.5 points.</p>
+    <p class="entry-desc">That parity depends on three then-recent training techniques; without them the deep network is clearly worse than FBCSP. The probing shows the deep network learned, unprompted, to use the strength of the same three frequency bands the pipeline is built around.</p>
+  </div>
+</section>
+
+<!-- ================= II. THE LINEAR ALGEBRA ================= -->
+<section id="algebra">
+  <h2 class="sec"><span>II &middot; The Linear Algebra</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Machinery<b>Quadratic forms of a covariance</b></p>
+
+  <p>Each electrode picks up a weighted sum of many electrical sources in the brain, and the same sources reach every electrode. So the channels are strongly correlated, nothing about the signal is local in space, and the natural operation across electrodes is a linear combination that undoes the mixing. In time, by contrast, the signal is made of rhythms at several scales. Every design choice below follows from that asymmetry.</p>
+
+  <h3 class="sub">The objects</h3>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(X\in\mathbb R^{E\times T}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">one recording</span></div>
+    <p class="entry-desc">Rows are the \(E\) electrodes, columns the \(T\) time samples. In the paper's own dataset \(E=44\) electrodes over the motor cortex, sampled 250 times a second; the network sees windows of about 2 seconds, \(T=534\).</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(k\in\mathbb R^{L}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">temporal kernel</span></div>
+    <p class="entry-desc">A short list of weights slid along every row: \((x*k)(t)=\sum_{n}k_n\,x(t+n)\). As a matrix acting on a row it is banded and constant along diagonals (Toeplitz). The shallow network learns 40 kernels of length \(L=25\) (0.1&nbsp;s); the deep one 25 kernels of length 10.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(w\in\mathbb R^{E}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">spatial filter</span></div>
+    <p class="entry-desc">One weight per electrode. It collapses the \(E\) rows into a single “virtual channel” \(s=w^{\top}X\in\mathbb R^{T}\). It spans all electrodes at once; it is not a small sliding patch.</p>
+  </div>
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">\(\Sigma_c\in\mathbb R^{E\times E}\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">symmetric PSD</span></div>
+    <p class="entry-desc">The electrode-by-electrode covariance for movement class \(c\): the average of \(\tfrac1T XX^{\top}\) over that class's recordings (each row has mean zero). The variance, or <em>power</em>, of a virtual channel is then a quadratic form: \(\operatorname{Var}(w^{\top}X)=w^{\top}\Sigma_c\,w\).</p>
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">The fact that does the work: one basis diagonalises two covariances</span>
+    <p>Movements show up in EEG mainly as changes in the power of rhythms. For instance, a 7–13&nbsp;Hz rhythm over the brain's hand area weakens when that hand moves. So for two classes we want the \(w\) whose output power differs most between them. That is a ratio of quadratic forms (a Rayleigh quotient), and maximising it is a <em>generalised</em> eigenvalue problem:</p>
+    $$\max_{w}\ \frac{w^{\top}\Sigma_1 w}{w^{\top}(\Sigma_1+\Sigma_2)\,w}\quad\Longrightarrow\quad \Sigma_1 w=\lambda\,(\Sigma_1+\Sigma_2)\,w .$$
+    <p>Because both matrices are symmetric and the sum is positive definite, the \(E\) solutions can be stacked as the columns of one invertible matrix \(W\) with</p>
+    $$W^{\top}(\Sigma_1+\Sigma_2)W=I,\qquad W^{\top}\Sigma_1W=\Lambda,\qquad W^{\top}\Sigma_2W=I-\Lambda,$$
+    <p>where \(\Lambda\) is diagonal with entries \(\lambda_i\in[0,1]\). The virtual channels are uncorrelated in both classes at once. A filter with \(\lambda\) near 1 carries power almost only in class 1, one near 0 almost only in class 2, so the useful filters sit at <em>both ends</em> of the spectrum. \(W\) is not orthogonal; its columns are orthonormal in the inner product defined by \(\Sigma_1+\Sigma_2\).</p>
+    <p>This is “common spatial patterns” (CSP). The feature it passes on is the log-variance \(\log\big(\tfrac1T\,w^{\top}XX^{\top}w\big)\). FBCSP repeats it for a bank of frequency bands 6 to 8&nbsp;Hz wide. The paper describes CSP in words and cites these equations rather than printing them.</p>
+  </div>
+
+  <div class="callout">
+    <span class="callout-label">Tiny example</span>
+    <p>Two electrodes: \(\Sigma_1=\begin{pmatrix}2&1\\1&2\end{pmatrix},\ \Sigma_2=\begin{pmatrix}2&-1\\-1&2\end{pmatrix}\). Each electrode alone has variance 2 in both classes, so neither tells them apart.</p>
+    <p>Here \(\Sigma_1+\Sigma_2=4I\), so the problem reduces to \(\Sigma_1w=4\lambda w\). \(\Sigma_1\) has eigenvalues 3 and 1 with eigenvectors \((1,1)/\sqrt2\) and \((1,-1)/\sqrt2\), giving \(\lambda=\tfrac34,\tfrac14\).</p>
+    <p>The sum channel \(w=(1,1)/\sqrt2\) has variance \(w^{\top}\Sigma_1w=3\) in class 1 and \(w^{\top}\Sigma_2w=1\) in class 2; the difference channel has the reverse. All the information was in the off-diagonal entries: how the electrodes move together.</p>
+  </div>
+
+  <h3 class="sub">The shallow network is that pipeline, made trainable</h3>
+
+  <figure>
+    <svg viewBox="0 0 360 200" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <g font-family="Oswald, sans-serif" fill="currentColor" stroke="none" text-anchor="middle">
+        <text x="58" y="40" font-size="15" letter-spacing="1">X</text>
+        <text x="58" y="56" font-size="10" letter-spacing="1">E &#215; T, RAW</text>
+        <text x="180" y="40" font-size="15" letter-spacing="1">&#8727; k</text>
+        <text x="180" y="56" font-size="10" letter-spacing="1">ALONG TIME</text>
+        <text x="302" y="40" font-size="15" letter-spacing="1">w&#7488; &#183;</text>
+        <text x="302" y="56" font-size="10" letter-spacing="1">ACROSS ELECTRODES</text>
+        <text x="58" y="146" font-size="15" letter-spacing="1">( &#183; )&#178;</text>
+        <text x="180" y="140" font-size="15" letter-spacing="1">MEAN</text>
+        <text x="180" y="156" font-size="10" letter-spacing="1">0.3 S WINDOWS</text>
+        <text x="302" y="146" font-size="15" letter-spacing="1">LOG</text>
+        <text x="180" y="82" font-size="10" letter-spacing="1.5">&#8593; BAND-PASS</text>
+        <text x="302" y="82" font-size="10" letter-spacing="1.5">&#8593; CSP</text>
+        <text x="180" y="184" font-size="10" letter-spacing="1.5">&#8593; TOGETHER: LOG-VARIANCE &#8593;</text>
+      </g>
+      <rect x="10" y="20" width="96" height="46"/>
+      <rect x="132" y="20" width="96" height="46"/>
+      <rect x="254" y="20" width="96" height="46"/>
+      <rect x="10" y="120" width="96" height="46"/>
+      <rect x="132" y="120" width="96" height="46"/>
+      <rect x="254" y="120" width="96" height="46"/>
+      <path d="M106 43h22M124 39l5 4-5 4M228 43h22M246 39l5 4-5 4"/>
+      <path d="M106 143h22M124 139l5 4-5 4M228 143h22M246 139l5 4-5 4"/>
+      <path d="M340 66v30H22v20M18 111l4 6 4-6" stroke-width="1.5"/>
+    </svg>
+    <figcaption>six steps of the shallow network; the labels underneath name the hand-built step each one replaces.</figcaption>
+  </figure>
+
+  <p>With \(k_f\) the temporal kernels and \(w_{g,f}\in\mathbb R^{E}\) the spatial weights that output channel \(g\) puts on kernel \(f\), the network computes, for each of its 40 channels \(g\) and each of 30 windows \(j\) of 75 samples (0.3&nbsp;s),</p>
+  $$s_g(t)=\sum_{f=1}^{40} w_{g,f}^{\top}\,(X*k_f)(t),\qquad \phi_{g,j}=\log\Big(\frac1{75}\sum_{t\in\text{window }j}s_g(t)^2\Big).$$
+  <p>Since \(s_g\) has mean near zero, the mean of squares is its variance: \(\phi\) is the CSP log-variance. A final linear layer turns the \(40\times30\) features into four class scores. Two things differ from FBCSP. The kernels and spatial weights are found by gradient descent on the classification error, all at once, rather than by fixing bands and solving eigenproblems. And there are 30 windows per input, so the network can see power <em>changing</em> during a movement.</p>
+
+  <h3 class="sub">Why variance of a filtered signal means “band power”</h3>
+
+  <p>Sliding a kernel commutes with shifting time, so pure oscillations are its eigenvectors: \(k*e^{i\omega t}=\hat k(\omega)\,e^{i\omega t}\), where \(\hat k(\omega)=\sum_n k_n e^{i\omega n}\) is the kernel's Fourier transform. (Exactly true for a signal that wraps around; true away from the edges otherwise.) In the Fourier basis the temporal layer is a diagonal matrix that multiplies frequency \(\omega\) by \(\hat k(\omega)\).</p>
+  <p>Let \(C(\omega)\in\mathbb C^{E\times E}\) be the covariance between electrodes <em>at frequency</em> \(\omega\) (Hermitian, PSD; these sum over \(\omega\) to \(\Sigma\)). Then one kernel and one spatial filter give</p>
+  $$\operatorname{Var}\big(w^{\top}(X*k)\big)=\sum_{\omega}\ |\hat k(\omega)|^{2}\;w^{\top}C(\omega)\,w .$$
+  <p>The kernel chooses which frequencies count, through \(|\hat k|^2\); the spatial filter chooses a direction in electrode space; the output is power in that band along that direction. The first interactive below is the \(w\) half of this formula and the second is the \(\hat k\) half.</p>
+
+  <h3 class="sub">Splitting the first layer: a factorisation, but not a low-rank one</h3>
+
+  <p>There is no nonlinearity between the temporal and spatial layers, so together they are one linear map. Its effective filter for channel \(g\) is an \(E\times L\) matrix, a weight for every electrode at every time lag:</p>
+  $$M_g=\sum_{f} w_{g,f}\,k_f^{\top}\in\mathbb R^{E\times L},\qquad s_g(t)=\big\langle M_g,\ X_{[t,\,t+L)}\big\rangle .$$
+  <p>Each term \(w\,k^{\top}\) is rank one: a filter that separates into “which electrodes” times “which waveform”. The paper says the split “implicitly regularizes” the layer. A check the paper leaves out: with 40 kernels of length 25, the \(k_f\) generically span \(\mathbb R^{25}\), so <em>every</em> \(44\times25\) matrix is reachable. The split even has more parameters (\(40\cdot25+40\cdot40\cdot44=71{,}400\)) than learning the \(M_g\) directly (\(40\cdot44\cdot25=44{,}000\)). So the set of functions is unchanged; only the parametrisation, and hence the path gradient descent takes, differs. It helped most for the shallow network on unfiltered data, the one case where the gain was statistically significant.</p>
+
+  <h3 class="sub">Asking a trained network what it listens to</h3>
+
+  <p>Take the Fourier transform of each row of \(X\) (a unitary change of basis), write each coefficient as amplitude times phase, add Gaussian noise \(\delta\) with mean 0 and variance 1 to the amplitudes, keep the phases, and transform back. Record the change \(\Delta f\) in the network's four class scores. Do this 400 times and correlate \(\delta\) at each (electrode, frequency) with \(\Delta f\) for each class.</p>
+  <p>To first order \(\Delta f\approx J\delta\), where \(J\) is the Jacobian of the scores with respect to the spectral amplitudes. Because the entries of \(\delta\) are independent, each correlation is proportional to one entry of \(J\). So the map is a sampled estimate of that Jacobian, and unlike a correlation between naturally occurring features and outputs, it is causal: the amplitude was changed by hand.</p>
+</section>
+
+<!-- ================= III. TRY IT ================= -->
+<section id="try">
+  <h2 class="sec"><span>III &middot; Try It: Two Filters</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Interactive 1<b>Turn the spatial filter</b></p>
+
+  <p>Two electrodes and the two covariances from the tiny example. Each ellipse is the one-standard-deviation contour of a class. The slider turns the spatial filter \(w=(\cos\theta,\sin\theta)\); the dots on the line mark how far each class spreads along it, which is \(\sqrt{w^{\top}\Sigma_c w}\).</p>
+  <p><strong>Try:</strong> start at \(0^\circ\) (electrode 1 alone), then \(90^\circ\) (electrode 2 alone), then \(45^\circ\) and \(135^\circ\). <strong>Notice:</strong> on either single electrode the dots coincide and the log-ratio is 0, so the classes are indistinguishable. At \(45^\circ\) the variances are 3 and 1; at \(135^\circ\) they swap. Those two angles are the generalised eigenvectors, the peak and trough of the curve.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="th">&theta; = <output id="thv" for="th">0</output>&deg;</label>
+      <input id="th" type="range" min="0" max="180" value="0" step="1">
+    </div>
+    <figure><canvas id="cE" class="sq" width="480" height="480"></canvas>
+      <figcaption>solid ellipse and filled dots: class 1 &middot; dashed ellipse and rings: class 2</figcaption></figure>
+    <figure class="strip-fig"><canvas id="cL" width="640" height="150"></canvas>
+      <figcaption>the feature gap \(\log(w^{\top}\Sigma_1w)-\log(w^{\top}\Sigma_2w)\) as \(\theta\) runs from \(0^\circ\) to \(180^\circ\)</figcaption></figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">class 1 variance \(w^{\top}\Sigma_1w\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="vA">–</span></div>
+      <div class="entry"><span class="entry-name">class 2 variance \(w^{\top}\Sigma_2w\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="vB">–</span></div>
+      <div class="entry"><span class="entry-name">share in class 1 (\(\lambda\))</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="vL">–</span></div>
+      <div class="entry"><span class="entry-name">log-variance gap</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="vG">–</span></div>
+    </div>
+  </div>
+
+  <p class="regime" style="margin-top:2.6rem">Interactive 2<b>A kernel is a band-pass</b></p>
+
+  <p>The top strip is one temporal kernel: a cosine at the chosen frequency under a smooth bump, \(L\) samples long at 250 samples per second. The bottom curve is its gain \(|\hat k(\omega)|\), the factor by which it scales each frequency, drawn relative to its peak. Dashed lines mark 10&nbsp;Hz and 24&nbsp;Hz, two rhythms a motor decoder cares about.</p>
+  <p><strong>Try:</strong> with \(L=25\) (the shallow network's length), sweep the tuning from 0 to 40&nbsp;Hz and watch the bump follow. Park it at 10&nbsp;Hz and read how much 24&nbsp;Hz still leaks through. Then drag \(L\) down to 10 (the deep network's length). <strong>Notice:</strong> a kernel can only resolve frequencies about \(250/L\) Hz apart. At \(L=10\) the kernel lasts 40&nbsp;ms, under half a cycle of a 10&nbsp;Hz rhythm, and the bump smears into a broad hump that lets much more of the 24&nbsp;Hz line through. One such layer cannot isolate a rhythm; the deep network has to build that selectivity over several layers, each seeing a longer stretch of time.</p>
+
+  <div class="bench">
+    <div class="dial">
+      <label for="fq">tuned to <output id="fqv" for="fq">10</output> Hz</label>
+      <input id="fq" type="range" min="0" max="60" value="10" step="1">
+    </div>
+    <div class="dial">
+      <label for="ln">length L = <output id="lnv" for="ln">25</output></label>
+      <input id="ln" type="range" min="6" max="50" value="25" step="1">
+    </div>
+    <figure><canvas id="cK" width="640" height="130"></canvas>
+      <figcaption>the kernel's \(L\) weights</figcaption></figure>
+    <figure class="strip-fig"><canvas id="cG" width="640" height="210"></canvas>
+      <figcaption>gain at each frequency, 0 to 125 Hz</figcaption></figure>
+    <div class="ledger">
+      <div class="entry"><span class="entry-name">kernel duration</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="kD">–</span></div>
+      <div class="entry"><span class="entry-name">resolution \(250/L\)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="kR">–</span></div>
+      <div class="entry"><span class="entry-name">gain at 10 Hz (peak = 1)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="g10">–</span></div>
+      <div class="entry"><span class="entry-name">gain at 24 Hz (peak = 1)</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag" id="g24">–</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IV. COOL THINGS ================= -->
+<section id="cool">
+  <h2 class="sec"><span>IV &middot; Cool Things</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+  <p class="regime">Findings<b>From the paper's results</b></p>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Three training tricks decide the outcome</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">p &lt; 0.001</span></div>
+    <p class="entry-desc">The deep network matches FBCSP only with all three of: <em>batch normalisation</em> (rescaling each layer's outputs to mean 0 and variance 1 over a batch of examples), <em>dropout</em> (zeroing half of a layer's inputs at random during training), and <em>exponential linear units</em> (the activation \(f(x)=x\) for \(x&gt;0\), \(e^{x}-1\) otherwise). Remove all three and it is significantly worse than the hand-built pipeline. Swapping only the activation for the common \(\max(x,0)\) also hurt significantly, and the authors say they cannot explain why.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">Thirty-one layers lose to five, and five tie with two</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">80.6% vs 84.0%</span></div>
+    <p class="entry-desc">A 31-layer residual network, the architecture then winning image benchmarks, scored 80.6%: below the 5-layer network (84.0%) and below FBCSP (82.1%). The 2-layer shallow network was as good as the deep one. The authors' reading: either a few hundred recordings are too few, or the informative part of EEG simply has little of the part-within-part hierarchy that depth exploits in images.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">625 training examples from one recording</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">p &lt; 10⁻⁵</span></div>
+    <p class="entry-desc">Sliding a two-second window one sample at a time gives 625 crops per recording; at test time the 625 predictions are averaged. Neighbouring crops overlap almost entirely, and because convolutions commute with shifts their intermediate outputs are shared, so all crops are computed in a single pass rather than 625. For the deep network on data above 4&nbsp;Hz this raised accuracy for almost every person. The authors' explanation: the same rhythm appears at every shift, so the network cannot memorise where the peaks fall and is pushed toward power.</p>
+  </div>
+
+  <div class="entry-block">
+    <div class="entry"><span class="entry-name">The network rediscovered the physiology, with a caveat</span><span class="entry-dots" aria-hidden="true"></span><span class="entry-tag">3 peaks</span></div>
+    <p class="entry-desc">The perturbation maps for the deep network peak in three bands: 7–13&nbsp;Hz, 13–31&nbsp;Hz and 71–91&nbsp;Hz, the same bands where plain CSP decodes best. Over the scalp, the sensitive electrodes for each hand sit above the opposite side's motor area, and for the feet at the top of the head, as textbooks predict. The perturbed inputs were still classified at over 99.5% of the original accuracy, so the probe stayed on realistic data.</p>
+    <p class="entry-desc">The caveat is linear algebra: the map shows where the <em>network</em> is sensitive, not where the brain signal is. A filter can weight an electrode heavily just to subtract noise it shares with another, exactly as the difference channel \((1,-1)\) does in the tiny example.</p>
+  </div>
+</section>
+
+<!-- ================= V. REMEMBER ================= -->
+<section id="remember">
+  <h2 class="sec"><span>V &middot; If You Remember One Thing</span></h2>
+  <svg class="orn" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6h20M58 6H38"/><circle cx="30" cy="6" r="4"/></svg>
+
+  <div class="callout">
+    <span class="callout-label">The one thing to remember</span>
+    <p>Decoding movement from EEG comes down to the log of a quadratic form \(w^{\top}\Sigma\,w\) of a band-limited covariance matrix; a network that filters in time, combines electrodes, squares, averages and takes a log computes exactly that with every piece learned, and trained on raw recordings it matches the hand-built eigenvector method.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="divider" viewBox="0 0 320 56" fill="currentColor" aria-hidden="true"><path d="M0 56 62 10 104 40 158 4 210 44 262 14 320 56z"/></svg>
+  <svg class="m" viewBox="0 0 120 66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 60a42 42 0 0 1 84 0"/><path d="M60 6v10M28 16l6 8M92 16l-6 8M8 40l10 3M112 40l-10 3"/></svg>
+  <p class="cite"><strong>Deep learning with convolutional neural networks for EEG decoding and visualization</strong>, by Robin Tibor Schirrmeister, Jost Tobias Springenberg, Lukas Dominique Josef Fiederer, Martin Glasstetter, Katharina Eggensperger, Michael Tangermann, Frank Hutter, Wolfram Burgard and Tonio Ball (University of Freiburg), Human Brain Mapping, 2017.
+  <a href="https://arxiv.org/abs/1703.05051">arxiv.org/abs/1703.05051</a></p>
+  <p class="signoff">Written from the full text of the arXiv preprint (v5), which carries an older title; accuracies are from its Tables 2 and 4. The CSP equations are the standard ones the paper cites, and the remarks on kernel span, parameter counts and the Jacobian are my own working, not the paper's. Both interactives use made-up matrices and kernels, not EEG data.</p>
+  <p class="colophon">Set in ink on cream &middot; paper of the day</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  var INK = css("--ink") || "#1b1a17", PAPER = css("--paper") || "#f4efe3", SOFT = css("--ink-soft") || "#4a463f";
+  var HEAD = "Oswald, sans-serif";
+  function el(id) { return document.getElementById(id); }
+  function clear(ctx, c) { ctx.setLineDash([]); ctx.fillStyle = PAPER; ctx.fillRect(0, 0, c.width, c.height); }
+
+  /* ============ 1. spatial filter on two covariances ============ */
+  // Sigma1 = [[2,1],[1,2]], Sigma2 = [[2,-1],[-1,2]]
+  var th = el("th"), cE = el("cE"), cL = el("cL");
+  var H = Math.SQRT1_2, R3 = Math.sqrt(3), LN3 = Math.log(3);
+
+  function ellipse(ctx, cx, cy, sc, a, b, ux, uy, dash) {
+    ctx.beginPath();
+    for (var i = 0; i <= 96; i++) {
+      var t = i / 96 * 2 * Math.PI, p = a * Math.cos(t), q = b * Math.sin(t);
+      var x = p * ux - q * uy, y = p * uy + q * ux;
+      if (i) ctx.lineTo(cx + sc * x, cy - sc * y); else ctx.moveTo(cx + sc * x, cy - sc * y);
+    }
+    ctx.setLineDash(dash); ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  function drawSpatial() {
+    var deg = +th.value, t = deg * Math.PI / 180;
+    var wx = Math.cos(t), wy = Math.sin(t);
+    var vA = 2 + Math.sin(2 * t), vB = 2 - Math.sin(2 * t);
+    var ctx = cE.getContext("2d"), W = cE.width, cx = W / 2, cy = W / 2, sc = W / 4.8;
+    clear(ctx, cE);
+    ctx.strokeStyle = INK; ctx.fillStyle = INK;
+
+    // axes
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(10, cy + 0.5); ctx.lineTo(W - 10, cy + 0.5);
+    ctx.moveTo(cx + 0.5, 10); ctx.lineTo(cx + 0.5, W - 10); ctx.stroke();
+    ctx.font = "500 17px " + HEAD;
+    ctx.fillStyle = SOFT;
+    ctx.textAlign = "right"; ctx.fillText("ELECTRODE 1", W - 12, cy - 8);
+    ctx.textAlign = "left"; ctx.fillText("ELECTRODE 2", cx + 8, 26);
+
+    // class contours
+    ctx.lineWidth = 2.5;
+    ellipse(ctx, cx, cy, sc, R3, 1, H, H, []);
+    ellipse(ctx, cx, cy, sc, R3, 1, H, -H, [9, 7]);
+
+    // the filter direction
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 2.3 * sc * wx, cy + 2.3 * sc * wy);
+    ctx.lineTo(cx + 2.3 * sc * wx, cy - 2.3 * sc * wy);
+    ctx.stroke();
+    ctx.fillStyle = INK; ctx.textAlign = "center"; ctx.font = "600 20px " + HEAD;
+    ctx.fillText("w", cx + 2.18 * sc * wx - 16 * wy, cy - 2.18 * sc * wy - 16 * wx + 6);
+
+    // spread of each class along w
+    var sA = Math.sqrt(vA), sB = Math.sqrt(vB), s;
+    for (s = -1; s <= 1; s += 2) {
+      ctx.beginPath(); ctx.arc(cx + s * sA * sc * wx, cy - s * sA * sc * wy, 6, 0, 2 * Math.PI); ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx + s * sB * sc * wx, cy - s * sB * sc * wy, 11, 0, 2 * Math.PI); ctx.stroke();
+    }
+
+    // log-ratio curve
+    var c2 = cL.getContext("2d"), W2 = cL.width, H2 = cL.height, pad = 16, mid = H2 / 2;
+    clear(c2, cL);
+    c2.strokeStyle = INK; c2.fillStyle = INK;
+    c2.lineWidth = 1;
+    c2.beginPath(); c2.moveTo(pad, mid + 0.5); c2.lineTo(W2 - pad, mid + 0.5); c2.stroke();
+    function X(d) { return pad + d / 180 * (W2 - 2 * pad); }
+    function Y(v) { return mid - v / LN3 * (mid - pad - 6); }
+    function gap(d) { var a = Math.sin(2 * d * Math.PI / 180); return Math.log((2 + a) / (2 - a)); }
+    c2.lineWidth = 2.5;
+    c2.beginPath();
+    for (var d = 0; d <= 180; d++) { if (d) c2.lineTo(X(d), Y(gap(d))); else c2.moveTo(X(d), Y(gap(d))); }
+    c2.stroke();
+    c2.lineWidth = 1; c2.setLineDash([4, 5]);
+    c2.beginPath(); c2.moveTo(X(deg), 6); c2.lineTo(X(deg), H2 - 6); c2.stroke();
+    c2.setLineDash([]);
+    c2.beginPath(); c2.arc(X(deg), Y(gap(deg)), 6, 0, 2 * Math.PI); c2.fill();
+    c2.font = "500 15px " + HEAD; c2.fillStyle = SOFT;
+    c2.textAlign = "left"; c2.fillText("0°", pad, H2 - 6);
+    c2.textAlign = "center"; c2.fillText("90°", X(90), H2 - 6);
+    c2.textAlign = "right"; c2.fillText("180°", W2 - pad, H2 - 6);
+
+    el("thv").textContent = deg;
+    el("vA").textContent = vA.toFixed(2);
+    el("vB").textContent = vB.toFixed(2);
+    el("vL").textContent = (vA / 4).toFixed(2);
+    var g = Math.log(vA / vB);
+    el("vG").textContent = (g >= 0 ? "+" : "−") + Math.abs(g).toFixed(2);
+  }
+
+  /* ============ 2. temporal kernel as a band-pass ============ */
+  var fq = el("fq"), ln = el("ln"), cK = el("cK"), cG = el("cG");
+  var FS = 250;
+
+  function kernel(f, L) {
+    var k = [], c = (L - 1) / 2;
+    for (var n = 0; n < L; n++) {
+      var win = 0.5 - 0.5 * Math.cos(2 * Math.PI * (n + 1) / (L + 1));
+      k.push(win * Math.cos(2 * Math.PI * f * (n - c) / FS));
+    }
+    return k;
+  }
+  function gain(k, nu) {
+    var re = 0, im = 0, a = 2 * Math.PI * nu / FS;
+    for (var n = 0; n < k.length; n++) { re += k[n] * Math.cos(a * n); im += k[n] * Math.sin(a * n); }
+    return Math.sqrt(re * re + im * im);
+  }
+
+  function drawKernel() {
+    var f = +fq.value, L = +ln.value, k = kernel(f, L), n;
+    // stems
+    var ctx = cK.getContext("2d"), W = cK.width, Hh = cK.height, pad = 16, mid = Hh / 2;
+    clear(ctx, cK);
+    ctx.strokeStyle = INK; ctx.fillStyle = INK;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, mid + 0.5); ctx.lineTo(W - pad, mid + 0.5); ctx.stroke();
+    var step = (W - 2 * pad) / L, amp = mid - 14;
+    for (n = 0; n < L; n++) {
+      var x = pad + (n + 0.5) * step, y = mid - k[n] * amp;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(x, mid); ctx.lineTo(x, y); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, 2 * Math.PI); ctx.fill();
+    }
+
+    // gain curve
+    var c2 = cG.getContext("2d"), W2 = cG.width, H2 = cG.height;
+    var pl = 16, pr = 16, pt = 30, pb = 30, base = H2 - pb;
+    clear(c2, cG);
+    c2.strokeStyle = INK; c2.fillStyle = INK;
+    var g = [], peak = 0, nu;
+    for (nu = 0; nu <= 125; nu += 0.5) { var v = gain(k, nu); g.push(v); if (v > peak) peak = v; }
+    function X(h) { return pl + h / 125 * (W2 - pl - pr); }
+    function Y(v) { return base - v / peak * (base - pt); }
+    c2.lineWidth = 1;
+    c2.beginPath(); c2.moveTo(pl, base + 0.5); c2.lineTo(W2 - pr, base + 0.5); c2.stroke();
+    c2.font = "500 15px " + HEAD; c2.fillStyle = SOFT; c2.textAlign = "center";
+    for (nu = 0; nu <= 125; nu += 25) {
+      c2.beginPath(); c2.moveTo(X(nu), base); c2.lineTo(X(nu), base + 5); c2.stroke();
+      c2.textAlign = nu === 0 ? "left" : (nu === 125 ? "right" : "center");
+      c2.fillText(nu + (nu === 125 ? " Hz" : ""), X(nu), H2 - 8);
+    }
+    // marked rhythms
+    c2.setLineDash([4, 5]);
+    [10, 24].forEach(function (h) {
+      c2.beginPath(); c2.moveTo(X(h), pt - 8); c2.lineTo(X(h), base); c2.stroke();
+    });
+    c2.setLineDash([]);
+    c2.textAlign = "center";
+    c2.fillText("10", X(10), 16); c2.fillText("24", X(24), 16);
+    // curve
+    c2.lineWidth = 2.5; c2.strokeStyle = INK;
+    c2.beginPath();
+    for (n = 0; n < g.length; n++) { if (n) c2.lineTo(X(n * 0.5), Y(g[n])); else c2.moveTo(X(0), Y(g[0])); }
+    c2.stroke();
+    c2.fillStyle = INK;
+    [10, 24].forEach(function (h) {
+      c2.beginPath(); c2.arc(X(h), Y(gain(k, h)), 5, 0, 2 * Math.PI); c2.fill();
+    });
+
+    el("fqv").textContent = f;
+    el("lnv").textContent = L;
+    el("kD").textContent = (L * 1000 / FS).toFixed(0) + " ms";
+    el("kR").textContent = (FS / L).toFixed(1) + " Hz";
+    el("g10").textContent = (gain(k, 10) / peak).toFixed(2);
+    el("g24").textContent = (gain(k, 24) / peak).toFixed(2);
+  }
+
+  th.addEventListener("input", drawSpatial);
+  fq.addEventListener("input", drawKernel);
+  ln.addEventListener("input", drawKernel);
+
+  function drawAll() { drawSpatial(); drawKernel(); }
+  drawAll();
+  // canvas labels use a web font; redraw once it has loaded
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawAll);
+})();
+</script>
+</body>
+</html>
